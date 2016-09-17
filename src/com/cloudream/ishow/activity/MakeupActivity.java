@@ -54,20 +54,10 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 	private Bitmap bmp_raw;
 	private Bitmap bmp_step;     // used to undo(Ctrl +　Z) modification
 	
-	// android.graphics.Point <- int x, y;
-	// org.opencv.core.Point  <- double x, y;
-	// same size
-	private Rect   rect_region;
 	private Point  position;
 	private Bitmap bmp_region;
 	private Bitmap bmp_mask;
 	private Bitmap bmp_modified;
-	
-	
-//	private static final int PINK = 0xffc84b70;
-	
-	private PointF region_center_l;
-	private PointF region_center_r;
 	
 	// I haven't dug but it seems like the id is ascending with the same prefix.
 	// So I can use first and last for indexing the IDs.
@@ -81,7 +71,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 	// (11, 36) (55, 12) (98, 20) (143, 46) (98, 36) (55, 27)
 	// http://docs.opencv.org/3.0-beta/doc/tutorials/introduction/android_binary_package/dev_with_OCV_on_Android.html
 
-/*	
+/*
 	class ImageArrayAdapter extends ArrayAdapter<Integer> {
 	    private LayoutInflater inflater;
 	    private Integer[] values;
@@ -137,31 +127,33 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 			switch(region)
 			{
 			case LIPS:
-			{
-				int color = Compatibility.getColor(MakeupActivity.this, res_selected);
-				color = Color.argb(Color.alpha(color)>>2, Color.red(color), Color.green(color), Color.blue(color));
-				Log.i(TAG, "use color: " + colorToString(color));
-				bmp_modified = detector.blendIris(bmp_step, color, amount);
-			}
+				int lip_color = Compatibility.getColor(MakeupActivity.this, res_selected);
+				lip_color = Color.argb(Color.alpha(lip_color)>>2, Color.red(lip_color), Color.green(lip_color), Color.blue(lip_color));
+				Log.i(TAG, "use color: " + colorToString(lip_color));
+				bmp_modified = detector.blendLip(bmp_step, lip_color, amount);
 				break;
 			case BLUSHER_R:
-			{
 				int id = res_selected - R.drawable.blusher01;
-				int color = BLUSHER_COLORS[id];
+				int blusher_color = BLUSHER_COLORS[id];
 				id = MathUtils.wrap(id, R.drawable.blusher_mask_00, R.drawable.blusher_mask_04);
 				
-				color = (color & 0x00ffffff) | (((int)(amount * 128/* 255 is too high */)) << 24);
+				blusher_color = (blusher_color & 0x00ffffff) | (((int)(amount * 128/* 255 is too high */)) << 24);
 				Bitmap bmp_blusher = BitmapFactory.decodeResource(getResources(), id, BitmapUtils.OPTION_RGBA_8888);
-				bmp_modified = detector.blendBlusher(bmp_step, bmp_blusher, color, amount);
-			}
+				bmp_modified = detector.blendBlusher(bmp_step, bmp_blusher, blusher_color, amount);
 				break;
 			case IRIS_R:
+				Bitmap bmp_iris_color = BitmapFactory.decodeResource(getResources(), res_selected, BitmapUtils.OPTION_RGBA_8888);
+				bmp_modified = detector.blendIris(bmp_step, bmp_iris_color, amount);
+/*
 				int iris_index = res_selected - R.drawable.thumb_iris_00;
 				Bitmap bmp_iris_color = BitmapFactory.decodeResource(getResources(), R.drawable.iris_00 + iris_index, BitmapUtils.OPTION_RGBA_8888);
 				Bitmap bmp_iris_mask = BitmapFactory.decodeResource(getResources(), R.drawable.iris_mask_00 + iris_index, BitmapUtils.OPTION_RGBA_8888);
 				bmp_iris_color = Effect.tone(bmp_iris_color, Color.BLUE);
 				SettingsActivity.saveImage(MakeupActivity.this, null, bmp_iris_color);
 				bmp_modified = detector.blendIris(bmp_step, bmp_iris_color, amount);
+				bmp_modified = detector.blendIris(bmp_step, bmp_iris_color, bmp_iris_mask, Color.BLUE, amount);
+				bmp_modified = detector.blendIris(bmp_step, bmp_iris, amount);
+*/
 				break;
 			case EYE_LASH_R:
 				int eye_lash_id = res_selected - R.drawable.thumb_eye_lash_00 + R.drawable.eye_lash_00;
@@ -356,15 +348,11 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 			region = Roi.BLUSHER_R;
 			res_start = R.drawable.blusher01;
 			res_stop  = R.drawable.blusher20;
-			region_center_l = detector.centerOfRegion(Roi.BLUSHER_L);
-			region_center_r = detector.centerOfRegion(Roi.BLUSHER_R);
 			break;
 		case R.id.eye_lash:
 			region = Roi.EYE_LASH_R;
 			res_start = R.drawable.thumb_eye_lash_00;
 			res_stop  = R.drawable.thumb_eye_lash_09;
-			region_center_l = detector.centerOfRegion(Roi.EYE_LASH_L);
-			region_center_r = detector.centerOfRegion(Roi.EYE_LASH_R);
 			break;
 		case R.id.eye_shadow:
 			region = Roi.EYE_SHADOW_R;
@@ -375,8 +363,6 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 			region = Roi.EYE_BROW_R;
 			res_start = R.drawable.eye_brow_00;
 			res_stop  = R.drawable.eye_brow_15;
-			region_center_l = detector.centerOfRegion(Roi.EYE_BROW_L);
-			region_center_r = detector.centerOfRegion(Roi.EYE_BROW_R);
 			break;
 		case R.id.iris:
 			region = Roi.IRIS_R;
@@ -466,7 +452,10 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 					public void onClick(View v)
 					{
 						res_selected = (int)v.getTag();
-						randomProgress(sb_weight, (region == Roi.EYE_BROW_R)?Range.HIGH:Range.MEDIUM);
+						if(region == Roi.EYE_BROW_R || region == Roi.IRIS_R)
+							randomProgress(sb_weight, Range.HIGH);  // for better effect
+						else
+							randomProgress(sb_weight, Range.MEDIUM);
 						
 						Toast.makeText(MakeupActivity.this, "index: " + (res_selected - res_start), Toast.LENGTH_SHORT).show();
 						long startTime = System.currentTimeMillis();

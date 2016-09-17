@@ -5,9 +5,11 @@
 #ifndef STASM_LANDTAB_MUCT77_H
 #define STASM_LANDTAB_MUCT77_H
 
+#include "stasm/landmarks.h"
+
 // Note that the AT_Hat bit is ignored if pyr lev > HAT_START_LEV
 
-static const LANDMARK_INFO LANDMARK_INFO_TAB[77] = // stasm77 points
+static const stasm::LANDMARK_INFO LANDMARK_INFO_TAB[77] = // stasm77 points
 {
 //   par pre next weight bits
     { 12,  1, 30,  1., AT_Beard|AT_Glasses      }, // 00 L_LTemple
