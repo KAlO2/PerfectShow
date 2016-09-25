@@ -16,7 +16,6 @@ import org.opencv.photo.Photo;
 import com.cloudream.ishow.BuildConfig;
 import com.cloudream.ishow.R;
 import com.cloudream.ishow.util.MathUtils;
-
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Resources.NotFoundException;
@@ -37,7 +36,7 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.util.Log;
 
-// <PROJECT>/bin/classes$ javah -d ../../jni -classpath .;G:/OpenCV-android-sdk/sdk/java/cls;%ANDROID_SDK%/platforms/android-14/android.jar com.cloudream.ishow.algorithm.FaceDetector
+// <PerfectShow>$ javah -d jni -classpath %ANDROID_SDK%/platforms/android-14/android.jar;G:/OpenCV-android-sdk/sdk/java/cls;./bin/classes com.cloudream.makeup.FaceDetector
 // http://www.cnblogs.com/Martinium/archive/2011/11/26/JNI_Hello_World.html
 /**
  * Accidently found that Android itself has a FaceDetector class #android.media.FaceDetector
@@ -111,10 +110,10 @@ public class FaceDetector
 	private PointF points[];  // feature points
 //	private Mat mat_model_stretched;
 	
-	private float angle = 0.0f;  // skew angle, calculated once on JNI side
+//	private float angle = 0.0f;  // skew angle, calculated once on JNI side
 	private int blur_radius;  // soft edge alpha blending
-	private PointF center;  // face center
-	private PointF up;      // face up direction
+	private final PointF center = new PointF();  // face center
+	private final PointF up = new PointF();      // face up direction, note that Y axis is top down.
 	
 	private Context context;
 	public FaceDetector(Context context)
@@ -158,7 +157,6 @@ public class FaceDetector
 		regions = new RoiInfo[length];
 		for(int i = 0; i < length; ++i)
 			regions[i] = new RoiInfo();
-
 	}
 	
 	public PointF[] getFeaturePoints()
@@ -356,19 +354,18 @@ public class FaceDetector
 			
 		assert(first + 3 < last);
 		Path path = new Path();
-		
 		PointF point = new PointF();
-		final float third = 1.0f/3, two_third = 2.0f/3;
-		int _0 = last;
-		int _1 = first;
-		int _2 = _1 + 1;
-		int _3 = _2 + 1;
+		
+		final int N = last - first + 1;
 		path.moveTo(points[first].x, points[first].y);
 		for(int i = first; i <= last; ++i)
 		{
-//			Effect.catmullRomSpline(point, third, points[_0], points[_1], points[_2], points[_3]);
+			int _0 = i - 1, _1 = i, _2 = i + 1, _3 = i + 2;
+			if(_0 < 0 ) _0 += N;
+			if(_2 > last) { _2 -= N; if(_3 > last) _3 -= N; }
+//			Effect.catmullRomSpline(point, 1.0f/3, points[_0], points[_1], points[_2], points[_3]);
 //			path.lineTo(point.x, point.y);
-//			Effect.catmullRomSpline(point, two_third, points[_0], points[_1], points[_2], points[_3]);
+//			Effect.catmullRomSpline(point, 2.0f/3, points[_0], points[_1], points[_2], points[_3]);
 //			path.lineTo(point.x, point.y);
 			
 			Effect.catmullRomSpline(point, 0.25f, points[_0], points[_1], points[_2], points[_3]);
@@ -377,12 +374,6 @@ public class FaceDetector
 			path.lineTo(point.x, point.y);
 			Effect.catmullRomSpline(point, 0.75f, points[_0], points[_1], points[_2], points[_3]);
 			path.lineTo(point.x, point.y);
-			
-			// modulate
-			++_0; if(_0 > last ) _0 = first;
-			++_1; if(_1 > last ) _1 = first;
-			++_2; if(_2 > last ) _2 = first;
-			++_3; if(_3 > last ) _3 = first;
 		}
 		
 		path.lineTo(points[first].x, points[first].y);
@@ -572,7 +563,7 @@ if(false){  // these two branches are functionally equivalent
 		if(rect == null)
 			rect = new RectF();
 		
-		// TODO havn't take screw face into consideration
+		// TODO havn't take skew face into consideration
 		rect.left = points[0].x;
 		rect.right = points[54].x;
 		rect.top = points[40].y;
@@ -777,7 +768,7 @@ if(false){  // these two branches are functionally equivalent
 	{
 		points = nativeDetectFaceSingle(image_path, data_dir);
 		if(points.length > 0)
-			angle = nativeCorrectAngle(points);
+			getSymmetryAxis(points, center, up);
 		return points.length > 0;
 	}
 	
@@ -785,7 +776,7 @@ if(false){  // these two branches are functionally equivalent
 	{
 		points = nativeDetectFaceSingle2(image, data_dir);
 		if(points.length > 0)
-			angle = nativeCorrectAngle(points);
+			getSymmetryAxis(points, center, up);
 		
 		return points.length > 0;
 	}
@@ -1136,7 +1127,7 @@ if(false){  // these two branches are functionally equivalent
 	
 	private static native void nativeCreateBitmap(Bitmap mask, int color);
 	
-	private static native float nativeCorrectAngle(final PointF[] points);
+	private static native void getSymmetryAxis(final PointF[] points, PointF center, PointF up);
 	
 	// use bitmap instead of filename to reduce I/O, result = image + iris * amount x 2
 	private static native void nativeBlendIris(Bitmap image, final Bitmap iris, final PointF points[], float amount);
@@ -1146,7 +1137,7 @@ if(false){  // these two branches are functionally equivalent
 	private static native void nativeBlendEyeLash(Bitmap image, final Bitmap eye_lash, final PointF points[], int color, float amount);
 	
 //	private static native void nativeBlendEyeShadow(Bitmap image, final Bitmap eye_shadow[], final PointF points[], int color, float amout[]);
-	// Android's Size class was bring in API level 21, too late, use int instead
+	// Android's Size class was brought in API level 21, too late, here use int instead.
 //	private static native Bitmap nativeStretch(Bitmap image, int src_width, int src_height, int dst_width, int dst_height, PointF[] src_points, PointF[] dst_points);
 	
 	private static native void nativeSquare(final Bitmap bitmap, final PointF points[], long time_ms);

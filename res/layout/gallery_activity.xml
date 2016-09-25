@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/sky_blue"
+    android:orientation="vertical"
+    tools:context="com.cloudream.ishow.activity.GalleryActivity" >
+
+    <include
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        layout="@layout/title_bar" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" >
+
+        <GridView
+            android:id="@+id/gallery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:layout_marginBottom="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="10dp"
+            android:horizontalSpacing="15dp"
+            android:numColumns="4"
+            android:padding="0dp"
+            android:verticalSpacing="15dp"
+            tools:listitem="@layout/gallery_item" >
+        </GridView>
+  
+        <ImageView
+            android:id="@+id/picture_unavailable"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:contentDescription="@string/picture_unavailable"
+            android:src="@drawable/picture_unavailable" />
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="5dp" >
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                style="@style/TextView"
+                android:id="@+id/picture_selection_info"
+                android:layout_alignParentLeft="true" />
+
+            <Button
+                style="@style/Button"
+                android:id="@+id/start_collaging"
+                android:layout_alignParentRight="true"
+                android:background="@drawable/round_rect"
+                android:text="@string/start_collaging" />
+            
+            <Button
+                style="@style/Button"
+                android:id="@+id/film_strip"
+                android:layout_toLeftOf="@id/start_collaging"
+                android:text="@string/film_strip" 
+                />
+        </RelativeLayout>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:background="@color/sky_blue"
+            android:scrollbars="none"
+            android:visibility="visible" >
+
+            <LinearLayout
+                android:id="@+id/thumbnails"
+                android:layout_width="wrap_content"
+                android:layout_height="128px"
+                android:layout_gravity="center_vertical"
+                android:orientation="horizontal" >
+<!--
+                <ImageView
+                    android:id="@+id/thumbnail"
+                    android:layout_width="100px"
+                    android:layout_height="100px"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginRight="8dp"
+                    android:visibility="invisible" />
+-->
+            </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
+
+</LinearLayout>

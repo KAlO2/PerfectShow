@@ -106,7 +106,16 @@ void line(Mat& image, const Point2f& pt0, const Point2f& pt1, const Scalar& colo
 		top.x = reciprocal_k * (top.y - pt0.y) + pt0.x;
 		bottom.x = reciprocal_k * (bottom.y - pt0.y) + pt0.x;
 	}
-	cv::line(image, p0, p1, Scalar(0, 255, 0), 1, LINE_AA);
+	cv::line(image, p0, p1, color, thickness, lineType, shift);
+}
+
+void drawCross(cv::Mat& image, const cv::Point2f& position, int radius, const Scalar& color,
+		int thickness/* = 1*/, int lineType/* = cv::LINE_8*/, int shift/* = 0*/)
+{
+	cv::Point2f p00(position.x - radius, position.y - radius), p01(position.x - radius, position.y + radius);
+	cv::Point2f p10(position.x + radius, position.y - radius), p11(position.x + radius, position.y + radius);
+	cv::line(image, p00, p11, color, thickness, lineType, shift);
+	cv::line(image, p01, p10, color, thickness, lineType, shift);
 }
 
 } /* namespace venus */

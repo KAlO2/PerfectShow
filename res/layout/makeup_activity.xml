@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+ 
+	<ImageView
+        android:id="@+id/image"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.0" />
+<!-- 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.0" 
+        >
+	    <ImageView
+	        android:id="@+id/image"
+	        android:layout_width="match_parent"
+	        android:layout_height="match_parent"
+	        />
+		<ImageView
+	        android:id="@+id/feature_points"
+	        android:layout_width="match_parent"
+	        android:layout_height="match_parent"
+	        android:visibility="gone"
+	        />
+	</FrameLayout>
+-->
+	<SeekBar
+        android:id="@+id/size"
+    	android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:visibility="invisible"
+        android:max="100"
+        android:progress="0"
+        />
+	<LinearLayout
+	    android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center_vertical"
+	    >
+		<TextView
+            android:id="@+id/reset"
+            style="@style/TextView"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="@string/reset" />
+	    <SeekBar
+	        android:id="@+id/weight"
+	    	android:layout_width="0dp"
+	        android:layout_height="wrap_content"
+	        android:layout_gravity="center"
+	        android:layout_marginLeft="10dp"
+	        android:layout_marginRight="10dp"
+	        android:max="100"
+	        android:layout_weight="1.0"
+	        />
+
+		<CheckBox
+            android:id="@+id/mark"
+            style="@style/CheckBox"
+            android:text="标记"
+            android:visibility="gone"
+            />
+	</LinearLayout>
+	
+    <HorizontalScrollView
+        android:id="@+id/secondary"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_gravity="center_vertical"
+        android:background="#AAAAAA"
+        android:scrollbars="none"
+        android:visibility="visible" >
+
+        <LinearLayout
+            android:id="@+id/styles"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:orientation="horizontal" >
+<!--
+            <ImageView
+                android:id="@+id/blusher"
+                style="@style/ImageWithTextBelowIt"
+                android:src="@drawable/blusher"
+                />
+-->
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <HorizontalScrollView
+        android:id="@+id/primary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:background="#CCCCCC"
+        android:scrollbars="none" >
+
+        <LinearLayout
+            android:id="@+id/regions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:orientation="horizontal" >
+
+            <Button
+                android:id="@+id/eye_lash"
+                style="@style/ImageWithTextBelowIt"
+                android:drawableTop="@drawable/eye_lash"
+                android:text="@string/eye_lash" />
+            
+            <Button
+                style="@style/ImageWithTextBelowIt"
+                android:id="@+id/eye_shadow"
+                android:drawableTop="@drawable/eye_shadow"
+                android:text="@string/eye_shadow" />
+
+            <Button
+                android:id="@+id/iris"
+                style="@style/ImageWithTextBelowIt"
+                android:drawableTop="@drawable/iris"
+                android:text="@string/iris" />
+
+            <Button
+                style="@style/ImageWithTextBelowIt"
+                android:id="@+id/eye_brow"
+                android:drawableTop="@drawable/eye_brow"
+                android:text="@string/eye_brow" />
+            
+            <Button
+                android:id="@+id/blusher"
+                style="@style/ImageWithTextBelowIt"
+                android:drawableTop="@drawable/blusher"
+                android:text="@string/blusher" />
+
+            <Button
+                android:id="@+id/lip_color"
+                style="@style/ImageWithTextBelowIt"
+                android:drawableTop="@drawable/lip_color"
+                android:text="@string/lip_color" />
+
+
+        </LinearLayout>
+    </HorizontalScrollView>
+
+</LinearLayout>

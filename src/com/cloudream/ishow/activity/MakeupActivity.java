@@ -6,10 +6,11 @@ import com.cloudream.ishow.algorithm.Effect;
 import com.cloudream.ishow.algorithm.FaceDetector;
 import com.cloudream.ishow.algorithm.FaceDetector.Roi;
 import com.cloudream.ishow.algorithm.FaceDetector.RoiInfo;
-import com.cloudream.ishow.bean.MakeupInfo;
 import com.cloudream.ishow.util.BitmapUtils;
 import com.cloudream.ishow.util.Compatibility;
 import com.cloudream.ishow.util.MathUtils;
+
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -31,7 +32,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MakeupActivity extends BaseActivity implements View.OnClickListener
+public class MakeupActivity extends Activity implements View.OnClickListener
 {
 	private static final String TAG = MakeupActivity.class.getSimpleName();
 	
@@ -54,9 +55,9 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 	private Bitmap bmp_raw;
 	private Bitmap bmp_step;     // used to undo(Ctrl +　Z) modification
 	
-	private Point  position;
-	private Bitmap bmp_region;
-	private Bitmap bmp_mask;
+//	private Point  position;
+//	private Bitmap bmp_region;
+//	private Bitmap bmp_mask;
 	private Bitmap bmp_modified;
 	
 	// I haven't dug but it seems like the id is ascending with the same prefix.
@@ -65,7 +66,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 	// [start, end], with end inclusive.
 	private int res_start, res_stop, res_selected;  // res_selected store color for lips
 	private RoiInfo info;
-	private MakeupInfo makeup;
+//	private MakeupInfo makeup;
 	
 	private String name;
 	// (11, 36) (55, 12) (98, 20) (143, 46) (98, 36) (55, 27)
@@ -230,7 +231,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_makeup);
+		setContentView(R.layout.makeup_activity);
 		
 //		name = String.format("%s/example/example%d.jpg", App.WORKING_DIRECTORY, (int) (Math.random() * 8) + 1);
 		name = getIntent().getStringExtra(GalleryActivity.EXTRA_PICTURE_PATH);
@@ -451,7 +452,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 					@Override
 					public void onClick(View v)
 					{
-						res_selected = (int)v.getTag();
+						res_selected = (Integer)v.getTag();
 						if(region == Roi.EYE_BROW_R || region == Roi.IRIS_R)
 							randomProgress(sb_weight, Range.HIGH);  // for better effect
 						else

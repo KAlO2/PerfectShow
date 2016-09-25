@@ -59,5 +59,8 @@ cv::Mat merge(const cv::Mat& rgb, const cv::Mat& alpha);
 void line(cv::Mat& image, const cv::Point2f& pt0, const cv::Point2f& pt1, const cv::Scalar& color,
 		int thickness = 1, int lineType = cv::LINE_8, int shift = 0);
 
+void drawCross(cv::Mat& image, const cv::Point2f& position, int radius, const cv::Scalar& color,
+		int thickness = 1, int lineType = cv::LINE_8, int shift = 0);
+
 } /* namespace venus */
 #endif /* VENUS_OPENCV_UTILITY_H_ */
