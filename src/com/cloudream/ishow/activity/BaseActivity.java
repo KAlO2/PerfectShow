@@ -25,8 +25,6 @@ public class BaseActivity extends Activity
 	{
 		super.onCreate(savedInstanceState);
 		
-		int theme = SettingsActivity.getActivityTheme(this);
-		this.setTheme(theme); // setTheme must be called before setContentView
 	}
 
 	/**
