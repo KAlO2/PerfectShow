@@ -6,43 +6,38 @@ using namespace cv;
 
 namespace venus {
 
-// for int version use cv::boundingRect(points);
-Rect2f boundingRect(const std::vector<Point2f>& points)
+std::vector<cv::Point2i> cast(const std::vector<cv::Point2f>& points)
 {
-	assert(points.size() >= 3);
-#if 1
-	const Point2f& p0 = points[0];
-	float left = p0.x, right = p0.x, top = p0.y, bottom = p0.y;
+	std::vector<Point2i> result;
+	result.reserve(points.size());
 	for(const Point2f& point: points)
-	{
-		if(point.x < left)
-			left = point.x;
-		else if(point.x > right)
-			right = point.x;
+		result.push_back(Point(cvRound(point.x), cvRound(point.y)));
 
-		if(point.y < top)
-			top = point.y;
-		else if(point.y > bottom)
-			bottom = point.y;
-	}
- 
-#else
-	assert(points.size() == 81);  // from 0 to 80
-	float left = std::min(points[0].x, points[1].x);
-	float right = std::max(points[11].x, points[12].x);
-	float top = points[16].y + 1;
-	float bottom = points[6].y + 1;
+	return result;
+}
 
-#  ifndef NDEBUG
-	for(const Point2f& point: points)
-	{
-		assert(left <= point.x && point.x < right);
-		assert(top <= point.y && point.y < bottom);
-	}
-#  endif  // NDEBUG
-#endif
+cv::Rect2i box2Rect(const cv::Vec4f& box)
+{
+	cv::Rect2i rect;
+	rect.x = static_cast<int>(box[0]);
+	rect.y = static_cast<int>(box[1]);
 
-	return Rect2f(left, top, right - left, bottom - top);
+	// half open half close inteval, need to add 1 extra pixel.
+	rect.width = static_cast<int>(std::ceil(box[2])) + 1 - rect.x;
+	rect.height =static_cast<int>(std::ceil(box[3])) + 1 - rect.y;
+	return rect;
+}
+
+cv::Size2f calculateSize(const cv::Vec4f& box, const cv::Vec4f& line)
+{
+	assert(box[0] < box[2] && box[1] < box[3]);  // left < right, top < bottom
+	cv::Size2f size;
+	size.width = box[2] - box[0];
+	size.height = box[3] - box[1];
+	
+	float scale = std::sqrt(line[0]*line[0] + line[1]*line[1]) / std::abs(line[1]);
+	size *= scale;
+	return size;
 }
 
 float distance(const cv::Point2f& pt0, const cv::Point2f& pt1)
@@ -53,15 +48,14 @@ float distance(const cv::Point2f& pt0, const cv::Point2f& pt1)
 	return std::sqrt(dx*dx + dy*dy);
 }
 
-void inset(cv::Rect& rect, int width)
+// @see https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+float distance(const cv::Point2f& point, const cv::Point2f& A, const cv::Point2f& B)
 {
-	assert(width >= 0 || rect.width > -width);
+	assert(A.x != B.x || A.y != B.y);  // A and B coincide.
 
-	int width2 = width<<1;
-	rect.x -= width;
-	rect.y -= width;
-	rect.width += width2;
-	rect.height += width2;
+	float dy = B.y - A.y;
+	float dx = B.x - A.x;
+	return std::abs(dy*point.x - dx*point.y + B.x*A.y - B.y*A.x) / (dx*dx + dy*dy);
 }
 
 cv::Mat merge(const cv::Mat& rgb, const cv::Mat& alpha)
@@ -91,7 +85,7 @@ void line(Mat& image, const Point2f& pt0, const Point2f& pt1, const Scalar& colo
 {
 	assert(pt0.x != pt1.x || pt0.y != pt1.y);  // two points coincide!
 	Point2f delta = pt1 - pt0;
-	Point2f p0(0, 0), p1(static_cast<float>(image.cols - 1), static_cast<float>(image.rows - 1));
+	Point2f p0(0, 0), p1(image.cols - 1, image.rows - 1);
 	if(std::abs(delta.x) > std::abs(delta.y))
 	{
 		float k = delta.y / delta.x;
@@ -109,13 +103,115 @@ void line(Mat& image, const Point2f& pt0, const Point2f& pt1, const Scalar& colo
 	cv::line(image, p0, p1, color, thickness, lineType, shift);
 }
 
+void curve(cv::Mat& image, const cv::Point2f& p0, const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3,
+		const cv::Scalar& color, int thickness/* = 1 */, int lineType/* = cv::LINE_8 */, int shift/* = 0 */)
+{
+	// TODO use std:map for binary split interval
+
+	cv::Point2f pm = catmullRomSpline(0.5f, p0, p1, p2, p3);
+	float d = distance(pm, p1, p2);
+	if(d < 1.0f)
+	{
+		cv::line(image, p1, pm, color, thickness, lineType, shift);
+		cv::line(image, pm, p2, color, thickness, lineType, shift);
+	}
+	else
+	{
+		cv::Point2f pl = catmullRomSpline(0.25f, p0, p1, p2, p3);
+		cv::Point2f pr = catmullRomSpline(0.25f, p0, p1, p2, p3);
+		
+		// notice p1 pl !!!
+		cv::line(image, p1, pl, color, thickness, lineType, shift);
+		cv::line(image, pl, pm, color, thickness, lineType, shift);
+		cv::line(image, pm, pr, color, thickness, lineType, shift);
+		cv::line(image, pr, p2, color, thickness, lineType, shift);
+	}
+}
+
 void drawCross(cv::Mat& image, const cv::Point2f& position, int radius, const Scalar& color,
-		int thickness/* = 1*/, int lineType/* = cv::LINE_8*/, int shift/* = 0*/)
+		int thickness/* = 1 */, int lineType/* = cv::LINE_8 */, int shift/* = 0 */)
 {
 	cv::Point2f p00(position.x - radius, position.y - radius), p01(position.x - radius, position.y + radius);
 	cv::Point2f p10(position.x + radius, position.y - radius), p11(position.x + radius, position.y + radius);
 	cv::line(image, p00, p11, color, thickness, lineType, shift);
 	cv::line(image, p01, p10, color, thickness, lineType, shift);
 }
+
+/*
+	Cubic interpolation http://www.paulinternet.nl/?page=bicubic
+	https://en.wikipedia.org/wiki/Cubic_Hermite_spline#Interpolation_on_the_unit_interval_without_exact_derivatives
+
+	                                    [0   2  0  0]   [p0]
+	f(n + t) = 0.5 * [1, t, t^2, t^3] * [-1  0  1  0] * [p1]
+	                                    [2  -5  4 -1]   [p2]
+										[-1  3 -3  1]   [p3]
+*/
+cv::Point2f catmullRomSpline(float t, const cv::Point2f& p0, const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3)
+{
+//	assert(0 <= t && t <= 1);
+	float tt = t*t, ttt = tt*t;
+	float b0 = -ttt + 2*tt - t;
+	float b1 = 3*ttt - 5*tt + 2;
+	float b2 = -3*ttt + 4*tt + t;
+	float b3 = ttt - tt;
+	
+	return 0.5f * (b0*p0 + b1*p1 + b2*p2 + b3*p3);
+}
+
+cv::Point2f bezier1(float t, const cv::Point2f& p0, const cv::Point2f& p1)
+{
+	return (1-t)*p0 + t*p1;
+}
+
+cv::Point2f bezier2(float t, const cv::Point2f& p0, const cv::Point2f& p1, const cv::Point2f& p2)
+{
+	float lmt = 1 -t;
+//	return lmt * bezier1(t, p0, p1) + t * bezier1(t, p1, p2);
+	return lmt*lmt*p0 + 2*lmt*p1 + t*t*p2;
+}
+
+cv::Point2f bezier3(float t, const cv::Point2f& p0, const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3)
+{
+	float lmt = 1 -t, lmt_lmt = lmt * lmt, t_t = t * t;
+	return lmt_lmt * lmt * p0 + 3 * (lmt_lmt * t * p1 + lmt * t_t * p2) + t_t * t * p3;
+}
+
+cv::Mat susan(const cv::Mat& image, int radius, int tolerance)
+{
+	assert(image.type() == CV_8UC1);  // only handles gray image
+	const int cols = image.cols, rows = image.rows;
+	Mat result(rows, cols, CV_8UC1);
+
+	const int rr = radius * radius;
+	for(int r = 0; r < rows; ++r)
+	for(int c = 0; c < cols; ++c)
+	{
+		int sum = 0, hit = 0;
+		uint8_t center = image.at<uint8_t>(r, c);
+		for(int dy = -radius; dy < radius; ++dy)
+		{
+			int y = r + dy;
+			for(int dx = -radius; dx < radius; ++dx)
+			{
+				int x = c + dx;
+				if(0 <= x && x < cols && 0 <= y && y < rows)
+				if(dx*dx + dy*dy <= rr)  // comment this line if you want to detect squared region.
+				{
+					++sum;
+					if(std::abs(image.at<uint8_t>(y, x) - center) <= tolerance)
+						++hit;
+				}
+			}
+		}
+
+		float g = static_cast<float>(sum - hit)/sum;
+//		if(g < 0.4f || g > 0.5f)
+//			g = 0.0f;
+		result.at<uint8_t>(r, c) = cvRound(g*255);
+	}
+	return result;
+}
+
+
 
 } /* namespace venus */

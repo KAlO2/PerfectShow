@@ -16,6 +16,7 @@ import org.opencv.photo.Photo;
 import com.cloudream.ishow.BuildConfig;
 import com.cloudream.ishow.R;
 import com.cloudream.ishow.util.MathUtils;
+
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Resources.NotFoundException;
@@ -24,6 +25,7 @@ import android.graphics.BitmapShader;
 import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
@@ -36,7 +38,7 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.util.Log;
 
-// <PerfectShow>$ javah -d jni -classpath %ANDROID_SDK%/platforms/android-14/android.jar;G:/OpenCV-android-sdk/sdk/java/cls;./bin/classes com.cloudream.makeup.FaceDetector
+// <PerfectShow>$ javah -d jni -classpath %ANDROID_SDK%/platforms/android-14/android.jar;G:/OpenCV-android-sdk/sdk/java/cls;./bin/classes com.cloudream.ishow.algorithm.FaceDetector
 // http://www.cnblogs.com/Martinium/archive/2011/11/26/JNI_Hello_World.html
 /**
  * Accidently found that Android itself has a FaceDetector class #android.media.FaceDetector
@@ -68,10 +70,11 @@ public class FaceDetector
 		EYE_SHADOW_R,
 		IRIS_L,
 		IRIS_R,
-		BLUSHER_L,
-		BLUSHER_R,
+		BLUSH_L,
+		BLUSH_R,
 		NOSE,
-		LIPS;  // upper lip and lower lip
+		LIP_T,  // upper lip
+		LIP_B,  // lower lip
 	}
 	
 	public static class RoiInfo
@@ -87,7 +90,7 @@ public class FaceDetector
 			mask = new Mat();
 		}
 		
-		// This method is used is used by JNI. (Don't delete it)
+		// This method is used by JNI. (Don't delete it)
 		@SuppressWarnings("unused")
 		RoiInfo(PointF origion, PointF pivot, Mat mask)
 		{
@@ -250,7 +253,7 @@ public class FaceDetector
 	 * @param points feature points found by {@link #detectFaceSingle}.
 	 * @return marked image, mostly used for debugging.
 	 */
-	public static Bitmap mark(Bitmap image, PointF points[])
+	public Bitmap mark(Bitmap image)
 	{
 		if(points == null)
 			return image;
@@ -342,6 +345,40 @@ public class FaceDetector
 		// nose
 		Path path_nose = getNosePath(points);
 		canvas.drawPath(path_nose, paint);
+		
+		// draw perpendicular bisector
+		float startX = 0, startY = 0, stopX = image.getWidth() - 1, stopY = image.getHeight() - 1;
+		if(Math.abs(up.x) < Math.abs(up.y))
+		{
+			float k = up.y / up.x;
+			startY = k * (startX - center.x) + center.y;
+			stopY = k * (stopX - center.x) + center.y;
+		}
+		else
+		{
+			float reciprocal_k = up.x / up.y;
+			startX = reciprocal_k * (startY -  center.y) + center.x;
+			stopX = reciprocal_k * (stopY - center.y) + center.x;
+		}
+//		paint.setColor(Color.GREEN);
+		paint.setPathEffect(new DashPathEffect(new float[] {10, 20}, 0));
+		canvas.drawLine(startX, startY, stopX, stopY, paint);
+		
+		// from inner eye corner to lip point where it is close to center top point
+		canvas.drawLine(points[34].x, points[34].y, points[65].x, points[65].y, paint);
+		canvas.drawLine(points[44].x, points[44].y, points[67].x, points[67].y, paint);
+		
+		// from outer eye corner to lip corner
+		canvas.drawLine(points[38].x, points[38].y, points[63].x, points[63].y, paint);
+		canvas.drawLine(points[48].x, points[48].y, points[69].x, points[69].y, paint);
+		
+		// from wing of nose to lip corner
+		float x1 = points[63].x * 2 - points[62].x;
+		float y1 = points[63].y * 2 - points[62].y;
+		canvas.drawLine(points[62].x, points[62].y, x1, y1, paint);
+		x1 = points[69].x * 2 - points[58].x;
+		y1 = points[69].y * 2 - points[58].y;
+		canvas.drawLine(points[58].x, points[58].y, x1, y1, paint);
 		
 		return mutableBitmap;
 	}
@@ -645,7 +682,7 @@ if(false){  // these two branches are functionally equivalent
 			
 				switch(region)
 				{
-				case LIPS:
+				case LIP_B:
 				{
 					// Due to the speed factor, mouth haven't been taken skew into consideration.
 					float left = points[63].x, right = points[69].x;
@@ -698,11 +735,11 @@ if(false){  // these two branches are functionally equivalent
 				center.x = (points[37].x + points[39].x)/2;
 				center.y = (points[37].y + points[39].y)/2;
 				break;
-			case BLUSHER_L:
+			case BLUSH_L:
 				center.x = (points[10].x + points[58].x)/2;
 				center.y = (points[10].y + points[58].y)/2;
 				break;
-			case BLUSHER_R:
+			case BLUSH_R:
 				center.x = (points[2].x + points[62].x)/2;
 				center.y = (points[2].y + points[62].y)/2;
 				break;
@@ -710,7 +747,7 @@ if(false){  // these two branches are functionally equivalent
 				center.x = points[53].x;
 				center.y = points[53].y;
 				break;
-			case LIPS:
+			case LIP_B:
 				center.x = points[74].x;
 				center.y = points[74].y;
 				break;

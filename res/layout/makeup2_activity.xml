@@ -77,12 +77,12 @@
             android:src="@drawable/region2_eye_shadow_r" />
 
         <ImageView
-            android:id="@+id/region_cheek"
+            android:id="@+id/region_blush"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.20"
             android:scaleType="fitCenter"
-            android:src="@drawable/region2_cheek_r" />
+            android:src="@drawable/region2_blush_r" />
 
         <ImageView
             android:id="@+id/region_nose"

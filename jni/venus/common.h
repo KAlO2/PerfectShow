@@ -9,6 +9,13 @@
 
 #define NELEM(array) (sizeof(array)/sizeof(array[0]))
 
+// OpenCV use BGRA instead of common RGBA memory layout.
+#ifdef ANDROID
+#  define USE_OPENCV_BGRA_LAYOUT 0
+#else
+#  define USE_OPENCV_BGRA_LAYOUT 1
+#endif
+
 /**
  * @brief Clamps a value to a specified range [min, max]
  *

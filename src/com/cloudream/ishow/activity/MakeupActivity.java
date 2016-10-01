@@ -1,5 +1,7 @@
 package com.cloudream.ishow.activity;
 
+import java.io.File;
+
 import com.cloudream.ishow.BuildConfig;
 import com.cloudream.ishow.R;
 import com.cloudream.ishow.algorithm.Effect;
@@ -11,6 +13,7 @@ import com.cloudream.ishow.util.Compatibility;
 import com.cloudream.ishow.util.MathUtils;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -127,16 +130,16 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 			
 			switch(region)
 			{
-			case LIPS:
+			case LIP_B:
 				int lip_color = Compatibility.getColor(MakeupActivity.this, res_selected);
 				lip_color = Color.argb(Color.alpha(lip_color)>>2, Color.red(lip_color), Color.green(lip_color), Color.blue(lip_color));
 				Log.i(TAG, "use color: " + colorToString(lip_color));
 				bmp_modified = detector.blendLip(bmp_step, lip_color, amount);
 				break;
-			case BLUSHER_R:
+			case BLUSH_R:
 				int id = res_selected - R.drawable.blusher01;
 				int blusher_color = BLUSHER_COLORS[id];
-				id = MathUtils.wrap(id, R.drawable.blusher_mask_00, R.drawable.blusher_mask_04);
+				id = MathUtils.wrap(id, R.drawable.blush_mask_00, R.drawable.blush_mask_04);
 				
 				blusher_color = (blusher_color & 0x00ffffff) | (((int)(amount * 128/* 255 is too high */)) << 24);
 				Bitmap bmp_blusher = BitmapFactory.decodeResource(getResources(), id, BitmapUtils.OPTION_RGBA_8888);
@@ -233,29 +236,49 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.makeup_activity);
 		
+		detector = new FaceDetector(this);
 //		name = String.format("%s/example/example%d.jpg", App.WORKING_DIRECTORY, (int) (Math.random() * 8) + 1);
-		name = getIntent().getStringExtra(GalleryActivity.EXTRA_PICTURE_PATH);
-		
-		Log.i(TAG, "example name: " + name);
-		bmp_raw = BitmapFactory.decodeFile(name, BitmapUtils.OPTION_RGBA_8888);
-		if(bmp_raw == null)
+		Intent intent = getIntent();
+		String name = intent.getStringExtra(GalleryActivity.EXTRA_PICTURE_PATH);
+		if(name != null)
 		{
-			Toast.makeText(this, R.string.corrupted_image, Toast.LENGTH_LONG).show();
+			Log.i(TAG, "example name: " + name);
+			bmp_raw = BitmapUtils.decodeFile(name, BitmapUtils.OPTION_RGBA_8888);
+			detector.detect(bmp_raw);
+			
+			boolean temporary = intent.getBooleanExtra(GalleryActivity.EXTRA_TEMPORARY, false);
+			if(temporary)
+				new File(name).delete();
+		}
+		else
+		{
+//			Object object = intent.getParcelableExtra(GalleryActivity.EXTRA_PICTURE_BITMAP);
+//			bmp_raw = (object instanceof Bitmap)? (Bitmap)object : null;
+//			bmp_raw = intent.getParcelableExtra(GalleryActivity.EXTRA_PICTURE_BITMAP);
+			byte bytes[] = intent.getByteArrayExtra(GalleryActivity.EXTRA_PICTURE_BITMAP);
+			bmp_raw = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+			
+			if(bmp_raw == null)
+			{
+				Toast.makeText(this, R.string.corrupted_image, Toast.LENGTH_LONG).show();
+				finish();
+				return;
+			}
+			
+			detector.detect(bmp_raw);
+		}
+		
+		final boolean has_face = detector.getFeaturePoints().length > 0;
+		if(!has_face)
+		{
+			Toast.makeText(this, R.string.no_face_detected, Toast.LENGTH_LONG).show();
 			finish();
 			return;
 		}
 		
 		bmp_modified = bmp_raw.copy(Bitmap.Config.ARGB_8888, true);
-
 		iv_image = (ImageView) findViewById(R.id.image);
 		
-		detector = new FaceDetector(this);
-		final boolean has_face = detector.detect(name);
-		if(!has_face)
-		{
-			Toast.makeText(this, R.string.no_face_detected, Toast.LENGTH_LONG).show();
-			this.finish();
-		}
 		final PointF[] points = detector.getFeaturePoints();
 		Log.i(TAG, points.length + " feature points found");
 		if(points.length == 0)
@@ -296,7 +319,7 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 				@Override
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
 				{
-					Bitmap bmp_feature = FaceDetector.mark(bmp_raw, points);
+					Bitmap bmp_feature = detector.mark(bmp_raw);
 					iv_image.setImageBitmap(isChecked? bmp_feature : bmp_modified);
 				}}
 			);
@@ -346,7 +369,7 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 			iv_image.setImageBitmap(bmp_modified);
 			return;
 		case R.id.blusher:
-			region = Roi.BLUSHER_R;
+			region = Roi.BLUSH_R;
 			res_start = R.drawable.blusher01;
 			res_stop  = R.drawable.blusher20;
 			break;
@@ -371,7 +394,7 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 			res_stop  = R.drawable.thumb_iris_08;
 			break;
 		case R.id.lip_color:
-			region = Roi.LIPS;
+			region = Roi.LIP_B;
 			res_start = R.color.lips_color_00;
 			res_stop  = R.color.lips_color_11;
 			break;
@@ -400,7 +423,7 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 //		bmp_mask = bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
 //		Canvas canvas = new Canvas(bmp_mask);
 //		canvas.drawColor(Color.WHITE);
-		if(region == Roi.LIPS)  // lips use pure color instead of images
+		if(region == Roi.LIP_B)  // lips use pure color instead of images
 		{
 			final LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(120, 100);
 			final int margin = 5;  // px
@@ -412,7 +435,7 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 				public void onClick(View v)
 				{
 					res_selected = (Integer)v.getTag();
-					info = detector.calculateRegionInfo(Roi.LIPS);
+					info = detector.calculateRegionInfo(Roi.LIP_B);
 					randomProgress(sb_weight, Range.MEDIUM);
 				}
 			};

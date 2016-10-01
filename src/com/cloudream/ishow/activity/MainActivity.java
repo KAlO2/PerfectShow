@@ -42,11 +42,15 @@ public class MainActivity extends Activity implements View.OnClickListener
 {
 	private static final String TAG = MainActivity.class.getSimpleName();
 	
-	private static final int REQUEST_COLLAGE_IMAGE_ACTIVITY = 1;
-	private static final int REQUEST_CROP_IMAGE_ACTIVITY = 2;
-	private static final int REQUEST_COLOR_BALANCE_ACTIVITY = 3;
-	private static final int REQUEST_MAKEUP_ACTIVITY = 4;
-	private static final int REQUEST_EFFECT_ACTIVITY = 5;
+	private enum RequestFrom
+	{
+		COLLAGE_IMAGE_ACTIVITY,
+		CROP_IMAGE_ACTIVITY,
+		COLOR_BALANCE_ACTIVITY,
+		BEAUTIFY_ACTIVITY,
+		MAKEUP_ACTIVITY,
+		EFFECT_ACTIVITY,
+	}
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -69,7 +73,7 @@ public class MainActivity extends Activity implements View.OnClickListener
 		switch(view.getId())
 		{
 		case R.id.makeup:
-			startActivityForResult(gotoGallery(1), REQUEST_MAKEUP_ACTIVITY);
+			startActivityForResult(gotoGallery(1), RequestFrom.MAKEUP_ACTIVITY.ordinal());
 			break;
 		}
 	}
@@ -86,9 +90,13 @@ public class MainActivity extends Activity implements View.OnClickListener
 		Intent intent = new Intent();
 		intent.putExtras(data);
 		
-		switch(requestCode)
+		final RequestFrom values[] = RequestFrom.values();
+		if(requestCode >= values.length)
+			return;
+		RequestFrom request = values[requestCode];
+		switch(request)
 		{
-		case REQUEST_MAKEUP_ACTIVITY:
+		case MAKEUP_ACTIVITY:
 			intent.setClass(this, MakeupActivity.class);
 			startActivity(intent);
 			break;

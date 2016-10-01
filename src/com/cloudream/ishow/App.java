@@ -12,7 +12,7 @@ import android.util.Log;
 public class App extends android.app.Application
 {
 	private static final String TAG = App.class.getSimpleName();
-	public static final String PACKAGE_NAME = "com.cloudream.makeup";
+	public static final String PACKAGE_NAME = "com.cloudream.ishow";
 
 	private ArrayList<Activity> runningActivities;
 

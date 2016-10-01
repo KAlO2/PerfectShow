@@ -1,7 +1,7 @@
 #include "venus/region_operation.h"
 #include "venus/color_space.h"
 #include "venus/common.h"
-#include "venus/Extractor.h"
+#include "venus/Feature.h"
 #include "venus/opencv_utility.h"
 
 #include "platform/jni_bridge.h"
@@ -70,15 +70,15 @@ cv::Mat& drawTriangle(cv::Mat& image, const std::vector<Point2f>& points, const 
 
 std::vector<Vec3i> getTriangleIndex(const std::vector<Point2f>& points, const std::vector<Vec6f>& triangles)
 {
-	const size_t point_count = points.size();
-	std::unordered_map<Point2f, size_t> table;
-	table.reserve(point_count);
-	for(size_t i = 0; i < point_count; ++i)
+	const size_t length = points.size();
+	std::unordered_map<Point2f, size_t> table;  // not suitable
+	table.reserve(length);
+	for(size_t i = 0; i < length; ++i)
 	{
 		const Point2f& point = points[i];
 		table[point] = i;
 	}
-	assert(table.size() == point_count);
+	assert(table.size() == length);
 
 	std::vector<Vec3i> result;
 	const size_t triangle_count = triangles.size();
@@ -100,7 +100,8 @@ std::vector<Vec3i> getTriangleIndex(const std::vector<Point2f>& points, const st
 
 std::vector<cv::Vec6f>& filter(std::vector<Vec6f>& triangles, const Rect& rect)
 {
-	for(std::vector<Vec6f>::iterator it = triangles.begin(); it != triangles.end(); )
+	std::vector<Vec6f>::iterator it = triangles.begin();
+	while(it != triangles.end())
 	{
 		const Vec6f& t = *it;
 		Point2i pt0(cvRound(t[0]), cvRound(t[1]));
@@ -202,63 +203,6 @@ static Point2f circumcircle(const Point2f& A, const Point2f& B, const Point2f& C
 }
 
 /*
-	Cubic interpolation http://www.paulinternet.nl/?page=bicubic
-	https://en.wikipedia.org/wiki/Cubic_Hermite_spline#Interpolation_on_the_unit_interval_without_exact_derivatives
-
-	                                    [0   2  0  0]   [p0]
-	f(n + t) = 0.5 * [1, t, t^2, t^3] * [-1  0  1  0] * [p1]
-	                                    [2  -5  4 -1]   [p2]
-										[-1  3 -3  1]   [p3]
-*/
-cv::Point2f catmullRomSpline(float t, const cv::Point2f& p0, const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3)
-{
-//	assert(0 <= t && t <= 1);
-	float tt = t*t, ttt = tt*t;
-	float b0 = -ttt + 2*tt - t;
-	float b1 = 3*ttt - 5*tt + 2;
-	float b2 = -3*ttt + 4*tt + t;
-	float b3 = ttt - tt;
-	
-	return 0.5f * (b0*p0 + b1*p1 + b2*p2 + b3*p3);
-}
-
-cv::Mat susan(const cv::Mat& image, int radius, int tolerance)
-{
-	assert(image.type() == CV_8UC1);  // only handles gray image
-	const int cols = image.cols, rows = image.rows;
-	Mat result(rows, cols, CV_8UC1);
-
-	const int rr = radius * radius;
-	for(int r = 0; r < rows; ++r)
-	for(int c = 0; c < cols; ++c)
-	{
-		int sum = 0, hit = 0;
-		uint8_t center = image.at<uint8_t>(r, c);
-		for(int dy = -radius; dy < radius; ++dy)
-		{
-			int y = r + dy;
-			for(int dx = -radius; dx < radius; ++dx)
-			{
-				int x = c + dx;
-				if(0 <= x && x < cols && 0 <= y && y < rows)
-				if(dx*dx + dy*dy <= rr)  // comment this line if you want to detect squared region.
-				{
-					++sum;
-					if(std::abs(image.at<uint8_t>(y, x) - center) <= tolerance)
-						++hit;
-				}
-			}
-		}
-
-		float g = static_cast<float>(sum - hit)/sum;
-//		if(g < 0.4f || g > 0.5f)
-//			g = 0.0f;
-		result.at<uint8_t>(r, c) = cvRound(g*255);
-	}
-	return result;
-}
-
-/*
 	here are some useful links about hypot, I tried to use std::hypot(x, y), later changed to std::sqrt(a*a + b*b);
 	http://stackoverflow.com/questions/3764978/why-hypot-function-is-so-slow
 	also STL Bugs Fixed In Visual Studio 2012
@@ -342,11 +286,11 @@ static void correctIris(const Mat& image, std::vector<Point2f>& points)
 		LOGW("multiple circles detected, need to be only one");
 
 /*
-	        36                  46
-	      37  35              45  47
-right	38  42  34 -------- 44  43  48   left
-		  39  41              51  49
-		    40                  50
+				36                    46
+			 37    35              45    47
+	right  38   42   34 -------- 44   43   48   left
+			 39    41              51    49
+				40                    50
 */
 	auto radical_scale = [](const Point2f& center, Point2f& point, float radius)
 	{
@@ -540,12 +484,13 @@ std::vector<Point2f> getFaceFeaturePoints(const Mat& image, const std::string& i
 // https://arxiv.org/ftp/arxiv/papers/1506/1506.04843.pdf
 void calcuateIrisInfo(const cv::Mat& image, const std::vector<cv::Point2f>& points, float skew_angle, cv::Point3f& iris_r, cv::Point3f& iris_l)
 {
+	// TODO
 	calcuateEyeRegionInfo_r(points);
 }
 
 void calcuateIrisInfo(const cv::Mat& image, const std::vector<cv::Point2f>& points, cv::Point3f& iris_r, cv::Point3f& iris_l)
 {
-	Vec4f line = Extractor::getSymmetryAxis(points);
+	Vec4f line = Feature::getSymmetryAxis(points);
 	float skew_angle = std::atan2(line[1], line[0]);  // with vertical line being -pi/2 radian.
 
 	calcuateIrisInfo(image, points, skew_angle, iris_r, iris_l);
@@ -558,7 +503,7 @@ Mat& mark(Mat& image, const std::vector<Point2f>& points)
 	int radius = 1;
 
 	Rect rect = cv::boundingRect(points);
-//	venus::inset(rect, 1);
+//	Region::inset(rect, 1);
 	Subdiv2D subdiv(rect);
 
 	for(size_t i = 0; i < points.size(); ++i)
@@ -618,37 +563,37 @@ cv::Mat& markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& points)
 	}
 #endif
 #if 1
-	//
+	const Scalar LINE_COLOR(255, 0, 0);
 	Point2f pm1(points[22]), p0(points[21]), p1(points[20]), p2(points[25]);
 	Point2f eye_brow_top_r = catmullRomSpline(0.50f, pm1, p0, p1, p2);
-//	cv::circle(image, Point(cvRound(eye_brow_top_r.x), cvRound(eye_brow_top_r.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
+//	cv::circle(image, Point(cvRound(eye_brow_top_r.x), cvRound(eye_brow_top_r.y)), 1, LINE_COLOR, 1, LINE_AA);
 
 	pm1 = points[29]; p0 = points[28]; p1 = points[27]; p2 = points[26];
 	Point2f eye_brow_top_l = catmullRomSpline(0.50f, pm1, p0, p1, p2);
-//	cv::circle(image, Point(cvRound(eye_brow_top_l.x), cvRound(eye_brow_top_l.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
+//	cv::circle(image, Point(cvRound(eye_brow_top_l.x), cvRound(eye_brow_top_l.y)), 1, LINE_COLOR, 1, LINE_AA);
 
 	Point2f eye_brow_top_m = (eye_brow_top_r + eye_brow_top_l)/2;
-	venus::line(image, eye_brow_top_r, eye_brow_top_l, CV_RGB(0, 255, 0), 1, LINE_AA);
+	venus::line(image, eye_brow_top_r, eye_brow_top_l, LINE_COLOR, 1, LINE_AA);
 
 	// wing of the nose
 	const Point2f& nose_wing_r = points[55];
 	const Point2f& nose_wing_l = points[57];
-	venus::line(image, nose_wing_r, nose_wing_l, CV_RGB(0, 255, 0), 1, LINE_AA);
+	venus::line(image, nose_wing_r, nose_wing_l, LINE_COLOR, 1, LINE_AA);
 
 	// top forehead index 16
 	const Point2f& top_forehead = points[16];  // not to accurate
 //	const Point2f top_forehead = (eye_brow_top_l + eye_brow_top_m) - (nose_wing_r + nose_wing_l)/2;
 	float k = (eye_brow_top_l.y - eye_brow_top_r.y)/(eye_brow_top_l.x - eye_brow_top_r.x);
-	Point2f right(0.0f, 0.0f), left(static_cast<float>(image.cols), static_cast<float>(image.rows));
+	Point2f right(0.0f, 0.0f), left(image.cols, image.rows);
 	right.y = k * (right.x - top_forehead.x) + top_forehead.y;
 	left.y = k * (left.x - top_forehead.x) + top_forehead.y;
-	venus::line(image, right, left, CV_RGB(0, 255, 0), 1, LINE_AA);
+	venus::line(image, right, left, LINE_COLOR, 1, LINE_AA);
 
 	// chin
 	const Point2f& chin = points[6];
 	right.y = k * (right.x - chin.x) + chin.y;
 	left.y = k * (left.x - chin.x) + chin.y;
-	venus::line(image, right, left, CV_RGB(0, 255, 0), 1, LINE_AA);
+	venus::line(image, right, left, LINE_COLOR, 1, LINE_AA);
 
 	// eyes
 	const Point2f& eye_right_l = points[34];
@@ -702,14 +647,14 @@ cv::Mat& markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& points)
 #endif
 
 	/*
-	     /21----20\         /27----28\ 
-	   22  23  24  25     26  31  30  29
+	         /21----20\         /27----28\ 
+	       22  23  24  25     26  31  30  29
     
-	        36                  46
-	      37  35              45  47
-right	38  42  34 -------- 44  43  48   left
-		  39  41              51  49
-		    40                  50
+				36                    46
+			 37    35              45    47
+	right  38   42   34 -------- 44   43   48   left
+			 39    41              51    49
+				40                    50
 	*/
 	const Point2f& pupil_r = points[42];
 	const Point2f& pupil_l = points[43];
@@ -739,6 +684,24 @@ right	38  42  34 -------- 44  43  48   left
 //		cv::putText(image, "81", Point2i(extra.x + offset, extra.y), font_name, font_scale, CV_RGB(0, 255, 0), 1, LINE_AA);
 //	}
 #endif
+
+	Vec4f line = Feature::getSymmetryAxis(points);
+	Point2f center(line[2], line[3]), up(line[0], line[1]);
+	venus::line(image, center, center + 10 * up, LINE_COLOR);
+	
+	// from inner eye corner to lip point where it is close to center top point
+	cv::line(image, points[34], points[65], LINE_COLOR);
+	cv::line(image, points[44], points[67], LINE_COLOR);
+
+	// from outer eye corner to lip corner
+	cv::line(image, points[38], points[63], LINE_COLOR);
+	cv::line(image, points[48], points[69], LINE_COLOR);
+		
+	// from wing of nose to lip corner
+	Point2f end = points[63] * 2.0f - points[62];
+	cv::line(image, points[62], end, LINE_COLOR);
+	end = points[69] * 2.0f - points[58];
+	cv::line(image, points[58], end, LINE_COLOR);
 
 	return image;
 }
@@ -1165,7 +1128,7 @@ cv::Mat cloneFace(const std::string& user_image_path, const std::string& model_i
 	
 	user_face.convertTo(user_face, CV_32FC3, 1/255.0);
 	model_face.convertTo(model_face, CV_32FC3, 1/255.0);
-	stretchImage(model_face, user_face, model_points, user_points, Extractor::triangle_indices);
+	stretchImage(model_face, user_face, model_points, user_points, Feature::triangle_indices);
 	user_face.convertTo(user_face, CV_8UC3, 255.0);
 	TIME_STOP("cloneFace > convert image from CV_8UC3 to CV_32FC3, stretchImage");
 	
@@ -1310,7 +1273,7 @@ void blend(cv::Mat& dst, const cv::Mat& src, const cv::Point2i& position, float 
 
 void blend(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, const cv::Point2i& position, float amount/* = 1.0f*/)
 {
-	assert(src.channels() == 4 && dst.channels() == 4 && src.depth() == dst.depth());
+	assert(src.channels() == dst.channels() && src.depth() == dst.depth());
 	assert(mask.type() == CV_8UC1);
 
 	Rect2i rect1(position.x, position.y, src.cols, src.rows);
@@ -1426,7 +1389,7 @@ void blendIris(cv::Mat& image, const cv::Mat& iris, const std::vector<cv::Point2
 
 cv::Mat resize(const cv::Mat& image, const Point2f& pivot,
 	float left_scale, float right_scale, float top_scale, float bottom_scale,
-	int interpolation/* = INTER_LINEAR*/)
+	int interpolation/* = INTER_LINEAR */)
 {
 	int pivot_x = cvRound(pivot.x), pivot_y = cvRound(pivot.y);
 	LOGI("pivot: %d %d, image(%dx%d)", pivot_x, pivot_y, image.cols, image.rows);
@@ -1434,8 +1397,8 @@ cv::Mat resize(const cv::Mat& image, const Point2f& pivot,
 	assert(0 <= pivot_y && pivot_y < image.rows);
 
 	cv::Mat top, bottom;  // seperate the whole image vertically
-	image(Rect2i(0, 0, image.cols, pivot_y)).copyTo(top);LOGI("resize 1.0");
-	image(Rect2i(0, pivot_y, image.cols, image.rows - pivot_y)).copyTo(bottom);LOGI("resize 0111111");
+	image(Rect2i(0, 0, image.cols, pivot_y)).copyTo(top);
+	image(Rect2i(0, pivot_y, image.cols, image.rows - pivot_y)).copyTo(bottom);
 
 	const cv::Size EMPTY(0, 0);
 	cv::resize(top, top, EMPTY, 1.0f, top_scale, interpolation);

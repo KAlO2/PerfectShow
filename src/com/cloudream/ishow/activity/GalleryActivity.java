@@ -47,13 +47,15 @@ public class GalleryActivity extends Activity
 	
 	// An advice from @{link https://developer.android.com/guide/components/intents-filters.html}
 	// If you define your own actions, be sure to include your app's package name as a prefix.
-	private static final String EXTRA_PREFIX = App.PACKAGE_NAME;
-	/* package */ static final String ACTION_PICK_SINGLE = EXTRA_PREFIX + "action.PICK_SINGLE";
-	/* package */ static final String ACTION_PICK_MULTIPLE = EXTRA_PREFIX + "action.PICK_MULTIPLE";
+	private static final String EXTRA_PREFIX = GalleryActivity.class.getName() + ".";
+	/* package */ static final String ACTION_PICK_SINGLE = EXTRA_PREFIX + "PICK_SINGLE";
+	/* package */ static final String ACTION_PICK_MULTIPLE = EXTRA_PREFIX + "PICK_MULTIPLE";
 	
-	/* package */ static final String EXTRA_PICTURE_PATH = EXTRA_PREFIX + "extra.PICTURE_PATH";
-	/* package */ static final String EXTRA_CLASS = EXTRA_PREFIX + "extra.CLASS";
-	/* package */ static final String EXTRA_PICTURE_MAX = EXTRA_PREFIX + "extra.PICTURE_MAX";
+	/* package */ static final String EXTRA_PICTURE_PATH = EXTRA_PREFIX + "PICTURE_PATH";
+	/* package */ static final String EXTRA_PICTURE_BITMAP = EXTRA_PREFIX + "PICTURE_BITMAP";
+	/* package */ static final String EXTRA_TEMPORARY = EXTRA_PREFIX + "TEMPORARY";
+	/* package */ static final String EXTRA_CLASS = EXTRA_PREFIX + "CLASS";
+	/* package */ static final String EXTRA_PICTURE_MAX = EXTRA_PREFIX + "PICTURE_MAX";
 	
 	private static final String TYPE_IMAGE = "image/*";
 	

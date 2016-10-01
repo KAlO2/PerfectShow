@@ -1,4 +1,4 @@
-#include "venus/Extractor.h"
+#include "venus/Feature.h"
 #include "venus/opencv_utility.h"
 #include "venus/region_operation.h"
 
@@ -9,9 +9,12 @@ using namespace cv;
 
 namespace venus {
 
+// number of feature points detected
+const int Feature::COUNT = 81;
+
 // https://en.wikipedia.org/wiki/Delaunay_triangulation
 // Delaunay triangle indices generated from mark() function
-const std::vector<Vec3i> Extractor::triangle_indices
+const std::vector<Vec3i> Feature::triangle_indices
 {
 	Vec3i(26, 16, 27),
 	Vec3i(16, 26, 25),
@@ -173,13 +176,15 @@ const std::vector<Vec3i> Extractor::triangle_indices
 	Vec3i(76, 75, 69),
 };
 
-Extractor::Extractor(const cv::Mat& image, const std::vector<cv::Point2f>& points):
+Feature::Feature(const cv::Mat& image, const std::vector<cv::Point2f>& points):
 	image(image),
 	points(points)
 {
+	assert(points.size() == COUNT);
+	line = getSymmetryAxis(points);
 }
 
-cv::Vec4f Extractor::getSymmetryAxis(const std::vector<cv::Point2f>& points)
+cv::Vec4f Feature::getSymmetryAxis(const std::vector<cv::Point2f>& points)
 {
 #if 0
 	// right eye index 42, left eye index 48.
@@ -275,9 +280,9 @@ cv::Vec4f Extractor::getSymmetryAxis(const std::vector<cv::Point2f>& points)
 	Department of Information Management
 	National Taiwan University of Science and Technology
 */
-cv::Mat Extractor::maskHair() const
+cv::Mat Feature::maskHair() const
 {
-	Mat mask;
+	Mat mask(image.size(), CV_8UC1);
 //	Point2f center = (points[0] + points[12])/2;  // (ASM0 + ASM12)/2
 	Vec4f line = getSymmetryAxis();
 	Point2f center(line[2], line[3]);
@@ -288,13 +293,228 @@ cv::Mat Extractor::maskHair() const
 	{
 		float x = static_cast<float>(i<<1)/N - 1.0f;
 		float k = 1 + 0.2f * (x*x);
-		hair[i] = k *(points[i] - center) + center;
+		hair[i] = k *(center - points[i]) + center;
 	}
 	
 	return mask;
 }
 
-void Extractor::assignRegion()
+cv::Mat1b Feature::maskPolygon(const cv::Rect2i& rect, const std::vector<cv::Point2f>& points, const int indices[], int length)
+{
+	assert(indices != nullptr && length >= 3);
+
+	std::vector<Point> contour(length);
+	for(int j = 0; j < length; ++j)
+	{
+		const int& i = indices[j];
+		float x = points[i].x - rect.x;  // make it relative
+		float y = points[i].y - rect.y;
+		contour.push_back(Point(cvRound(x), cvRound(y)));
+	}
+
+	const Point* polygons[1] = { contour.data() };
+	const int num_points[] = { length };
+	Mat1b mask(rect.size(), 0);  // Mat mask(rect.size(), CV_8UC1, Scalar(0));
+	cv::fillPoly(mask, polygons, num_points, 1, Scalar(255));
+	return mask;
+}
+
+cv::Mat1b Feature::maskPolygon(const cv::Rect2i& rect, const std::vector<cv::Point2f>& points, int start, int length)
+{
+	assert(0 <= start && start < static_cast<int>(points.size()));
+	assert(3 <= length&& start + length < static_cast<int>(points.size()));
+
+	std::vector<Point> contour(length);
+
+	const Point2i origion = rect.tl();
+	for(int i = 0; i < length; ++i)
+		contour[i] = static_cast<Point2i>(points[start + i]) - origion;
+
+	const Point* polygons[1] = { contour.data() };
+	const int num_points[] = { length };
+	Mat1b mask(rect.size(), 0);
+	cv::fillPoly(mask, polygons, num_points, 1, Scalar(255));
+	return mask;
+}
+
+Region Feature::calcuateBrowRegion(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right)
+{
+/*
+	Below are eye brow feature point indices:
+
+			  .--21--20\        /27--28--.
+		  _.-`          |      |          `-._
+	right 22--23--24--25`      `26--31--30--29  left
+*/
+#if 0  // not so good
+	const int start = right ? 20:26, length = 6;
+	std::vector<Point2f> polygon(length);
+
+	for(int i = 0; i < length; ++i)
+		polygon[i] = points[start + i];
+	
+#else
+	const Point2f& _0(right ? points[20]:points[27]);
+	const Point2f& _1(right ? points[21]:points[28]);
+	const Point2f& _2(right ? points[22]:points[29]);
+	const Point2f& _3(right ? points[23]:points[30]);
+	const Point2f& _4(right ? points[24]:points[31]);
+	const Point2f& _5(right ? points[25]:points[26]);
+	const Point2f& _p(right ? points[ 0]:points[12]);
+
+	std::vector<Point2f> polygon;
+	polygon.push_back(_0);
+	polygon.push_back(catmullRomSpline(0.25f, _5, _0, _1, _2));
+	polygon.push_back(catmullRomSpline(0.50f, _5, _0, _1, _2));
+	polygon.push_back(catmullRomSpline(0.75f, _5, _0, _1, _2));
+	polygon.push_back(_1);
+
+	polygon.push_back(catmullRomSpline(0.25f, _0, _1, _2, _p));
+	polygon.push_back(catmullRomSpline(0.50f, _0, _1, _2, _p));
+	polygon.push_back(catmullRomSpline(0.75f, _0, _1, _2, _p));
+	polygon.push_back(_2);
+	polygon.push_back(_3);
+
+//	polygon.push_back(catmullRomSpline(0.50f, _2, _3, _4, _5));
+	polygon.push_back(_4);
+	polygon.push_back(_5);
+
+	Point2f diff = _5 - _1;
+	float r = std::sqrt(diff.x * diff.x + diff.y * diff.y);
+	diff /= r;
+	r = distance(_4, _5) * 0.81f;  // 0.81 is OK
+	polygon.push_back(_0 + r * diff);
+
+	int length = static_cast<int>(polygon.size());
+#endif
+
+//	Rect2i rect = cv::boundingRect(polygon);
+	Vec4f box = venus::boundingBox(polygon);
+	Rect2i rect = box2Rect(box);
+
+	Mat1b mask(rect.size(), 0);
+
+	Point2i origion = rect.tl();
+	std::vector<Point2i> polygon2 = venus::cast(polygon);
+	for(int i = 0; i < length; ++i)
+		polygon2[i] -= origion;
+
+	cv::fillConvexPoly(mask, polygon2, Scalar(255));
+
+	// TODO need to come up with a more suitable pivot
+	Point2f pivot = right?
+		(points[20] + points[21] + points[23] + points[24]) / 4.0f:
+		(points[27] + points[28] + points[30] + points[31]) / 4.0f;
+
+	Size2f size = calculateSize(box, line);
+	return Region(pivot, size, mask);
+}
+
+Region Feature::calcuateEyeRegion(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right)
+{
+/*
+	Below are eye feature point indices:
+
+
+				36                    46
+			 37    35              45    47
+	right  38   42   34 -------- 44   43   48   left
+			 39    41              51    49
+				40                    50
+
+*/
+	// right sequential index: { 34, 35, 36, 37, 38, 39, 40, 41 };
+	//  left sequential index: { 44, 45, 46, 47, 48, 49, 50, 51 };
+	constexpr int length = 42 - 34;  // or 52 - 44
+	int start = right?34:44;
+
+	// Point2f implicitly cast to Point2i, which calls saturate_cast(), which calls cvRound()
+	std::vector<Point> polygon(length);
+	for(int i = 0; i < length; ++i)
+		polygon[i] = points[start + i];
+
+	Rect rect = cv::boundingRect(polygon);
+	Mat1b mask = maskPolygon(rect, points, start, length);
+
+	Point2f pivot = (points[start+3] + points[start+5])/2;
+
+	Vec4f box = right?
+		Vec4f(points[38].x, points[36].y, points[34].x, points[40].y):
+	    Vec4f(points[44].x, points[46].y, points[48].x, points[50].y);
+	Size2f size = calculateSize(box, line);
+
+	return Region(pivot, size, mask);
+}
+
+Region Feature::maskLips(const std::vector<cv::Point2f>& points, const cv::Vec4f& line)
+{
+/*
+	Below are lips feature point indices:
+	
+                  /64\    /66\    /68\
+                 /    \65/    \67/    \   
+                /                      \
+              63-----72----71----70-----69
+                \-----73---74----75-----/
+                 \80\              /76/
+                     \79---78---77/
+
+*/
+//	float left = points[63].x, right = points[69].x;
+//	float top = std::min(points[65].y, points[67].y), bottom = points[78].y;
+	Vec4f box = boundingBox(points, 63, 80 - 63 + 1);
+	Rect2i rect = box2Rect(box);
+
+	Point2f pivot = points[71];  // or (points[71] + points[74])/2;
+	Size2f size = calculateSize(box, line);
+/*
+	const int lip_indices[] =
+	{
+		63, 64, 65, 66, 67, 68, 69, 70, 71, 72,  // upper lip
+		63, 73, 74, 75, 69, 76, 77, 78, 79, 80,  // lower lip
+	};
+*/
+	std::vector<Point2i> contour(32);
+	
+	// upper lip
+	for(int i = 63; i <= 72; ++i)
+		contour.push_back(points[i]);
+
+	// lower lip
+	contour.push_back(points[63]);
+	contour.push_back(points[73]);
+	contour.push_back(catmullRomSpline(1.0f/3, points[63], points[73], points[74], points[75]));
+	contour.push_back(catmullRomSpline(2.0f/3, points[63], points[73], points[74], points[75]));
+	contour.push_back(points[74]);
+
+	contour.push_back(catmullRomSpline(1.0f/3, points[73], points[74], points[75], points[69]));
+	contour.push_back(catmullRomSpline(2.0f/3, points[73], points[74], points[75], points[69]));
+	contour.push_back(points[75]);
+	contour.push_back(points[69]);
+	contour.push_back(points[76]);
+
+	for(int i = 76; i <= 79; ++i)
+	{
+		int i0 = i == 76 ? 69 : i-1;
+		int i1 = i;
+		int i2 = i + 1;
+		int i3 = i == 79 ? 63 : i+2;
+		contour.push_back(catmullRomSpline(1.0f/3, points[i0], points[i1], points[i2], points[i3]));
+		contour.push_back(catmullRomSpline(2.0f/3, points[i0], points[i1], points[i2], points[i3]));
+		contour.push_back(points[i2]);
+	}
+
+	int upper_length = 72 - 63 + 1;  // fixed length
+	int lower_length = static_cast<int>(contour.size()) - upper_length;  // the rest
+	const Point* polygons[2] = { contour.data(), contour.data() + upper_length };
+	const int num_points[] = { upper_length, lower_length };
+	Mat1b mask(rect.size(), 0);  // Bitmap.Config.A8 transparent
+	cv::fillPoly(mask, polygons, num_points, 2, Scalar(255));
+
+	return Region(pivot, size, mask);
+}
+
+void Feature::assignRegion()
 {
 	m_facePolygon.reserve(20);
 	for(int i = 0; i < 20; ++i)
@@ -355,7 +575,7 @@ void Extractor::assignRegion()
 	m_leftBlusherPolygon.push_back(Point(cvRound((points[58].x + points[51].x)/2), cvRound((points[58].y + points[51].y)/2)));
 }
 
-std::vector<Point> Extractor::getPolygon(int region)
+std::vector<Point> Feature::getPolygon(int region)
 {
 	switch(region)
 	{
@@ -366,10 +586,10 @@ std::vector<Point> Extractor::getPolygon(int region)
 	case EYE_LASH_R:   return m_rightEyePolygon; // TODO
 	case EYE_SHADOW_L: return m_leftEyePolygon;	 // TODO
 	case EYE_SHADOW_R: return m_rightEyePolygon; // TODO
-	case BLUSHER_L:	   return m_leftBlusherPolygon;
-	case BLUSHER_R:	   return m_rightBlusherPolygon;
+	case BLUSH_L:	   return m_leftBlusherPolygon;
+	case BLUSH_R:	   return m_rightBlusherPolygon;
 	case NOSE:		   return m_nosePolygon;
-	case LIPS:		   return m_mouthPolygon;
+	case LIP_B:	       return m_mouthPolygon;
 	default: assert(false); return std::vector<Point>();
 	}
 }

@@ -22,10 +22,11 @@ enum Roi
 	EYE_SHADOW_R,
 	IRIS_L,
 	IRIS_R,
-	BLUSHER_L,
-	BLUSHER_R,
+	BLUSH_L,
+	BLUSH_R,
 	NOSE,
-	LIPS,  // upper lip and lower lip
+	LIP_T,  // upper lip
+	LIP_B,  // lower lip
 
 	REGION_COUNT
 };
@@ -54,15 +55,12 @@ std::vector<cv::Vec3i> getTriangleIndex(const std::vector<cv::Point2f>& points, 
 std::vector<cv::Vec6f>& filter(std::vector<cv::Vec6f>& triangles, const cv::Rect& rect);
 void drawDelaunay(cv::Mat& image, const std::vector<cv::Vec6f>& triangles, const cv::Scalar& color);
 
-cv::Point2f catmullRomSpline(float t, const cv::Point2f& p0, const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3);
-cv::Mat susan(const cv::Mat& image, int radius, int tolerance);
-
 std::vector<cv::Point2f> getFaceFeaturePoints(const std::string& face, const std::string& datadir);
 std::vector<cv::Point2f> getFaceFeaturePoints(const std::string& face, const std::string& datadir, cv::Point& size);
 std::vector<cv::Point2f> getFaceFeaturePoints(const cv::Mat& image, const std::string& image_name, const std::string& datadir);
 
 /**
- * stasm doesn't detect eyes precisely, but we get rough region. So use it for fine result.
+ * stasm doesn't detect eyes precisely. since we already get rough region, we tune it for fine result.
  *
  * @param[in] image the image with face in it.
  * @param[in] points feature points detected from image.

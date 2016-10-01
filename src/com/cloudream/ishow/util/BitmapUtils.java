@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.graphics.BitmapFactory.Options;
 import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.Canvas;
@@ -131,7 +132,6 @@ public final class BitmapUtils
 	 */
 	public static DecodeBitmapResult decodeSampledBitmap(Context context, Uri uri, int reqWidth, int reqHeight)
 	{
-
 		try
 		{
 			ContentResolver resolver = context.getContentResolver();
@@ -873,7 +873,61 @@ public final class BitmapUtils
 		drawable.draw(canvas);
 		return bitmap;
 	}
+	
+	public static Bitmap decodeFile(String pathName, Options opts)
+	{
+		Bitmap bitmap = BitmapFactory.decodeFile(pathName, opts);
+		int orientation = ExifInterface.ORIENTATION_UNDEFINED;
+		
+		try
+		{
+			ExifInterface exif = new ExifInterface(pathName);
+			orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED); 
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+		
+		Matrix matrix = new Matrix();
+		switch (orientation)
+		{
+		case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
+			matrix.setScale(-1, 1);
+			break;
+		case ExifInterface.ORIENTATION_ROTATE_180:
+			matrix.setRotate(180);
+			break;
+		case ExifInterface.ORIENTATION_FLIP_VERTICAL:
+			matrix.setRotate(180);
+			matrix.postScale(-1, 1);
+			break;
+		case ExifInterface.ORIENTATION_TRANSPOSE:
+			matrix.setRotate(90);
+			matrix.postScale(-1, 1);
+			break;
+		case ExifInterface.ORIENTATION_ROTATE_90:
+			matrix.setRotate(90);
+			break;
+		case ExifInterface.ORIENTATION_TRANSVERSE:
+			matrix.setRotate(-90);
+			matrix.postScale(-1, 1);
+			break;
+		case ExifInterface.ORIENTATION_ROTATE_270:
+			matrix.setRotate(-90);
+			break;
+		case ExifInterface.ORIENTATION_NORMAL:
+//			return bitmap;  // fall through
+		default:
+			return bitmap;
+		}
+		
 
+        Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        bitmap.recycle();
+        return rotated;
+	}
+	
 	/**
 	 * The result of
 	 * {@link #rotateBitmapByExif(android.graphics.Bitmap, android.media.ExifInterface)}.

@@ -1,6 +1,6 @@
 #include "com_cloudream_ishow_algorithm_FaceDetector.h"
 
-#include "venus/Extractor.h"
+#include "venus/Feature.h"
 #include "venus/region_operation.h"
 #include "venus/opencv_utility.h"
 #include "venus/color_space.h"
@@ -39,8 +39,8 @@ static bool dump(std::string filename, const cv::Mat& image)
 {
 	static std::string DIR = "/sdcard/Pictures/PerfectShow/";
 	cv::Mat debug_image;
-	cvtColor(image, debug_image, CV_RGBA2BGRA);  // turn Android' RGBA to OpenCV's BGRA format
-	return imwrite(DIR + filename, debug_image);
+	cv::cvtColor(image, debug_image, CV_RGBA2BGRA);  // turn Android' RGBA to OpenCV's BGRA format
+	return cv::imwrite(DIR + filename, debug_image);
 }
 
 static std::vector<Point2f> getFaceFeaturePoints(JNIEnv *env, jobject thiz)
@@ -93,7 +93,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeDetect77(JNIE
 #endif
 
 jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeDetectFaceSingle2(JNIEnv* env,
-		jclass clazz, jstring _image, jstring _data_dir)
+		jclass clazz, jobject _image, jstring _data_dir)
 {
 	const std::string data_dir = getNativeString(env, _data_dir);
 
@@ -215,7 +215,7 @@ jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeDetec
 	assignRegionInfo(face, FACE);
 
 	RoiInfo lips = calcuateLipsRegionInfo(points);
-	assignRegionInfo(lips, LIPS);
+	assignRegionInfo(lips, LIP_B);
 
 	return RoiInfoArray_regions;
 /*
@@ -263,7 +263,7 @@ jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeStretchIma
 	const std::vector<Point2f> src_points = getFaceFeaturePoints(src_gray, image_tag, data_dir);
 
 	// model image stretched onto the image that used to made up.
-	stretchImage(image, dst, src_points, dst_points, Extractor::triangle_indices);
+	stretchImage(image, dst, src_points, dst_points, Feature::triangle_indices);
 
 	jfieldID field_mat_model_stretched = env->GetFieldID(class_FaceDetector, "mat_model_stretched", "org/opencv/core/Mat");
 	jobject _model_stretched = env->GetObjectField(thiz, field_mat_model_stretched);
@@ -375,7 +375,7 @@ jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCalculateR
 	RoiInfo roi;
 	switch(region)
 	{
-	case LIPS:
+	case LIP_B:
 		roi = calcuateLipsRegionInfo(points, blur_radius);
 		break;
 	default:
@@ -419,18 +419,18 @@ jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCenterOfRe
 		point.x = (points[37].x + points[39].x)/2;
 		point.y = (points[37].y + points[39].y)/2;
 		break;
-	case BLUSHER_L:
+	case BLUSH_L:
 		point.x = (points[10].x + points[58].x)/2;
 		point.y = (points[10].y + points[58].y)/2;
 		break;
-	case BLUSHER_R:
+	case BLUSH_R:
 		point.x = (points[2].x + points[62].x)/2;
 		point.y = (points[2].y + points[62].y)/2;
 		break;
 	case NOSE:
 		point = points[53];
 		break;
-	case LIPS:
+	case LIP_B:
 		point = points[74];
 		break;
 	default:
@@ -468,7 +468,7 @@ jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeStretchIma
 
 	const std::vector<Point2f> src_points = getNativePointArray(env, _src_points);
 	const std::vector<Point2f> dst_points = getNativePointArray(env, _dst_points);
-	stretchImageWithAlpha(src_image, dst_image, src_points, dst_points, Extractor::triangle_indices);
+	stretchImageWithAlpha(src_image, dst_image, src_points, dst_points, Feature::triangle_indices);
 
 //	dump("stretched_image.png", dst_image);
 	return getJavaMat(env, dst_image);
@@ -483,7 +483,7 @@ jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeStretchIma
 
 	const std::vector<Point2f> src_points = getNativePointArray(env, _src_points);
 	const std::vector<Point2f> dst_points = getNativePointArray(env, _dst_points);
-	stretchImageWithAlpha(src_image, dst_image, src_points, dst_points, Extractor::triangle_indices);
+	stretchImageWithAlpha(src_image, dst_image, src_points, dst_points, Feature::triangle_indices);
 
 //	dump("stretched_image.png", dst_image);
 	return getJavaMat(env, dst_image);
@@ -538,7 +538,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_getSymmetryAxis(JNI
 		jclass clazz, jobjectArray _points, jobject _center, jobject _up)
 {
 	const std::vector<Point2f> points = getNativePointArray(env, _points);
-	Vec4f line = Extractor::getSymmetryAxis(points);
+	Vec4f line = Feature::getSymmetryAxis(points);
 
 	Vec2f center(line[2], line[3]), up(line[0], line[1]);
 	setJavaPoint(env, _center, center);
@@ -688,7 +688,8 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendIris2(JN
 		uint8_t a = iris_pixels[i] & 0xFF000000;
 		iris_pixels[i] = r | (g << 8) | (b << 16) | a;
 	}
-	dump("iris.png", iris);*/
+	dump("iris.png", iris);
+*/
 	// iris right index 42， left index 43
 	const int iris_indices_r[] = {35, 37, 39, 41};
 	const int iris_indices_l[] = {45, 47, 49, 51};
@@ -843,10 +844,8 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendEyeBrow(
 	// 0.50, 0.42 these two value fit for all the eye brow images, @see doc/eye_brow.xcf
 	// if you add more eye brow images, please follow the same values, otherwise
 	// add a new field for each image.
-	pivot_r.x -= eye_brow_r.cols * 0.50f;
-	pivot_r.y -= eye_brow_r.rows * 0.42f;
-	pivot_l.x -= eye_brow_l.cols * 0.50f;
-	pivot_l.y -= eye_brow_l.rows * 0.42f;
+	pivot_r.x -= eye_brow_r.cols * 0.50f; pivot_r.y -= eye_brow_r.rows * 0.42f;
+	pivot_l.x -= eye_brow_l.cols * 0.50f; pivot_l.y -= eye_brow_l.rows * 0.42f;
 
 	AndroidBitmapInfo image_info;
 	uint32_t* image_pixels  = lockJavaBitmap(env, _image, image_info);

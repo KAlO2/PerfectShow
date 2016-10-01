@@ -44,7 +44,7 @@ JNIEXPORT jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_native
 /*
  * Class:     com_cloudream_ishow_algorithm_FaceDetector
  * Method:    nativeDetect
- * Signature: (Ljava/lang/String;Ljava/lang/String;)[Lcom/cloudream/makeup/FaceDetector/RoiInfo;
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)[Lcom/cloudream/ishow/algorithm/FaceDetector/RoiInfo;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeDetect
   (JNIEnv *, jobject, jstring, jstring);
@@ -60,7 +60,7 @@ JNIEXPORT jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_native
 /*
  * Class:     com_cloudream_ishow_algorithm_FaceDetector
  * Method:    nativeCalculateRegionInfo
- * Signature: (I)Lcom/cloudream/makeup/FaceDetector/RoiInfo;
+ * Signature: (I)Lcom/cloudream/ishow/algorithm/FaceDetector/RoiInfo;
  */
 JNIEXPORT jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCalculateRegionInfo
   (JNIEnv *, jobject, jint);

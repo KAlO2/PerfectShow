@@ -62,7 +62,7 @@ public class MakeupActivity2 extends Activity implements View.OnClickListener, V
 	
 	enum MakeupRegion
 	{
-		CHEEK,
+		BLUSH,
 		EYE_BROW,
 		EYE_LASH,
 		EYE_SHADOW,
@@ -139,7 +139,7 @@ public class MakeupActivity2 extends Activity implements View.OnClickListener, V
 		iv_image.setOnTouchListener(this);
 //		iv_model.setOnTouchListener(this);
 		
-        findViewById(R.id.region_cheek).setOnClickListener(this);
+        findViewById(R.id.region_blush).setOnClickListener(this);
         findViewById(R.id.region_eye_brow).setOnClickListener(this);
         findViewById(R.id.region_eye_lash).setOnClickListener(this);
         findViewById(R.id.region_eye_shadow).setOnClickListener(this);
@@ -198,7 +198,7 @@ if(true){
 		
 		switch(id)
 		{
-        case R.id.region_cheek:      drawable = R.drawable.makeup2_cheek;      break;
+        case R.id.region_blush:      drawable = R.drawable.makeup2_cheek;      break;
         case R.id.region_eye_brow:   drawable = R.drawable.makeup2_eye_brow;   break;
         case R.id.region_eye_lash:   drawable = R.drawable.makeup2_eye_lash;   break;
         case R.id.region_eye_shadow: drawable = R.drawable.makeup2_eye_shadow; break;
@@ -221,10 +221,10 @@ if(true){
 		canvas.drawColor(Color.TRANSPARENT);
 		switch(id)
 		{
-        case R.id.region_cheek:
-        	drawBitmap(R.drawable.region2_cheek_r, 192.0f, 467.0f);
-        	drawBitmap(R.drawable.region2_cheek_l, 447.5f, 475.0f);
-        	drawable = R.drawable.makeup_cheek;
+        case R.id.region_blush:
+        	drawBitmap(R.drawable.region2_blush_r, 192.0f, 467.0f);
+        	drawBitmap(R.drawable.region2_blush_l, 447.5f, 475.0f);
+        	drawable = R.drawable.makeup_blush;
         	break;
         case R.id.region_eye_brow:
         	drawBitmap(R.drawable.region2_eye_brow_r, 218.5f, 314.0f);
