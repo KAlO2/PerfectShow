@@ -1,5 +1,5 @@
-#ifndef VENUS_COLOR_SPACE_H_
-#define VENUS_COLOR_SPACE_H_
+#ifndef VENUS_COLORSPACE_H_
+#define VENUS_COLORSPACE_H_
 
 #include <opencv2/core.hpp>
 
@@ -33,4 +33,4 @@ cv::Vec4f color2alpha(const cv::Vec4f& color, const cv::Vec3f& from);
 
 
 } /* namespace venus */
-#endif  /* VENUS_COLOR_SPACE_H_ */
+#endif  /* VENUS_COLORSPACE_H_ */

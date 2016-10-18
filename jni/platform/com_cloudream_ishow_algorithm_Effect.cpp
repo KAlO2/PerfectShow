@@ -1,4 +1,5 @@
 #include "com_cloudream_ishow_algorithm_Effect.h"
+#include "venus/opencv_utility.h"
 #include "venus/region_operation.h"
 #include "venus/scalar.h"
 
