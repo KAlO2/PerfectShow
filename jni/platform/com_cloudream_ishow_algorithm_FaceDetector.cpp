@@ -1,27 +1,28 @@
 #include "com_cloudream_ishow_algorithm_FaceDetector.h"
 
-#include "venus/Feature.h"
-#include "venus/region_operation.h"
-#include "venus/opencv_utility.h"
-#include "venus/colorspace.h"
-#include "venus/common.h"
-
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/photo.hpp>
 #include <opencv2/imgproc.hpp>
 
 #include <omp.h>
 
-#include "stasm/stasm_lib.h"
-
 #define LOG_TAG "FaceDetector"
 #include "platform/jni_bridge.h"
+
+#include "stasm/stasm_lib.h"
+
+#include "venus/colorspace.h"
+#include "venus/Effect.h"
+#include "venus/Feature.h"
+#include "venus/Makeup.h"
+#include "venus/opencv_utility.h"
+#include "venus/region_operation.h"
+
 
 using namespace cv;
 using namespace venus;
 
-
-jobject getJavaRoiInfo(JNIEnv *env, const RoiInfo& roi)
+jobject getJavaRoiInfo(JNIEnv* env, const RoiInfo& roi)
 {
 	jobject _origion = getJavaPoint(env, roi.origion);
 	jobject _pivot   = getJavaPoint(env, roi.pivot);
@@ -43,7 +44,7 @@ static bool dump(std::string filename, const cv::Mat& image)
 	return cv::imwrite(DIR + filename, debug_image);
 }
 
-static std::vector<Point2f> getFaceFeaturePoints(JNIEnv *env, jobject thiz)
+static std::vector<Point2f> getFaceFeaturePoints(JNIEnv* env, jobject thiz)
 {
 	jclass class_FaceDetector = env->GetObjectClass(thiz);
 	jfieldID field_points = env->GetFieldID(class_FaceDetector, "points", "[Landroid/graphics/PointF;");
@@ -232,7 +233,7 @@ jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeDetec
 */
 }
 
-jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeStretchImage(JNIEnv *env,
+jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeStretchImage(JNIEnv* env,
 		jobject thiz, jobject _src, jstring _data_dir)
 {
 	LOGI("enter %s", __FUNCTION__);
@@ -273,7 +274,7 @@ jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeStretchIma
 	return _model_stretched;
 }
 
-jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeSeamlessClone(JNIEnv *env,
+jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeSeamlessClone(JNIEnv* env,
 		jclass clazz, jobject src, jobject dst, jobject mask, jobject center, jint flags)
 {
 	LOGI("enter %s", __FUNCTION__);
@@ -357,13 +358,13 @@ jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeSeamlessCl
 	return blend;
 }
 
-jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeSeamlessClone2
-		(JNIEnv *env, jclass clazz, jstring src, jstring dst, jobject center, jint flags)
+jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeSeamlessClone2(JNIEnv* env,
+		jclass clazz, jstring src, jstring dst, jobject center, jint flags)
 {
 	return nullptr;
 }
 
-jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCalculateRegionInfo(JNIEnv *env,
+jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCalculateRegionInfo(JNIEnv* env,
 		jobject thiz, jint region)
 {
 	const std::vector<cv::Point2f> points = getFaceFeaturePoints(env, thiz);
@@ -385,7 +386,7 @@ jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCalculateR
 	return getJavaRoiInfo(env, roi);
 }
 
-jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCenterOfRegion(JNIEnv *env,
+jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCenterOfRegion(JNIEnv* env,
 		jobject thiz, jint region)
 {
 	LOGI("enter %s", __FUNCTION__);
@@ -441,7 +442,7 @@ jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCenterOfRe
 	return getJavaPoint(env, point);
 }
 
-jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCloneFace(JNIEnv *env,
+jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCloneFace(JNIEnv* env,
 		jclass clazz, jstring _user_image_path, jstring _model_image_path, jstring _data_dir)
 {
 	LOGI("enter %s", __FUNCTION__);
@@ -459,7 +460,7 @@ jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCloneFace(
 	return result;
 }
 
-jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeStretchImage(JNIEnv *env,
+jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeStretchImage(JNIEnv* env,
 		jclass clazz, jobject _src_image, jobject _dst_image, jobjectArray _src_points, jobjectArray _dst_points)
 {
 	// src_image and dst_image are CV_8UC4 type, RGBA
@@ -474,7 +475,7 @@ jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeStretchIma
 	return getJavaMat(env, dst_image);
 }
 
-jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeStretchImage2(JNIEnv *env,
+jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeStretchImage2(JNIEnv* env,
 		jclass clazz, jobject _src_image, jint _dst_width, jint _dst_height, jobjectArray _src_points, jobjectArray _dst_points)
 {
 	// src_image and dst_image are CV_8UC4 type, RGBA
@@ -489,7 +490,7 @@ jobject JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeStretchIma
 	return getJavaMat(env, dst_image);
 }
 
-void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeOverlay(JNIEnv *env,
+void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeOverlay(JNIEnv* env,
 		jclass clazz, jobject _src_image, jobject _dst_image, jint _origin_x, jint _origin_y, jint _alpha)
 {
 	cv::Mat& src_image = *getNativeMat(env, _src_image);
@@ -501,7 +502,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeOverlay(JNIEn
 //	dump("overlay_image.png", dst_image);
 }
 
-void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCreateBitmap(JNIEnv *env,
+void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCreateBitmap(JNIEnv* env,
 		jclass clazz, jobject _image, jint _color)
 {
 	AndroidBitmapInfo info;
@@ -534,7 +535,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeCreateBitmap(
 	}
 }
 
-void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_getSymmetryAxis(JNIEnv *env,
+void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_getSymmetryAxis(JNIEnv* env,
 		jclass clazz, jobjectArray _points, jobject _center, jobject _up)
 {
 	const std::vector<Point2f> points = getNativePointArray(env, _points);
@@ -580,7 +581,7 @@ void screen(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, const cv::Poi
 	}
 }
 
-void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendIris(JNIEnv *env,
+void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendIris(JNIEnv* env,
 		jclass clazz, jobject _image, jobject _iris, jobjectArray _points, jfloat amount)
 {
 	const std::vector<Point2f> points = getNativePointArray(env, _points);
@@ -651,7 +652,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendIris(JNI
 	unlockJavaBitmap(env, _image);
 }
 
-void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendIris2(JNIEnv *env,
+void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendIris2(JNIEnv* env,
 		jclass clazz, jobject _image, jobject _iris, jobject _iris_mask, jobjectArray _points, jint _color, jfloat amount)
 {
 	const std::vector<Point2f> points = getNativePointArray(env, _points);
@@ -725,42 +726,36 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendIris2(JN
 	RoiInfo eye_info_r = calcuateEyeRegionInfo_r(points);
 	RoiInfo eye_info_l = calcuateEyeRegionInfo_l(points);
 
-	blend(image, iris_r, eye_info_r.mask, iris_position_r, amount);
-	blend(image, iris_l, eye_info_l.mask, iris_position_l, amount);
-
-//	#pragma omp parallel for
-//	for(int i = 0; i < length; ++i)
-//	{
-//
-//	}
+	Makeup::blend(image, iris_r, eye_info_r.mask, iris_position_r, amount);
+	Makeup::blend(image, iris_l, eye_info_l.mask, iris_position_l, amount);
 
 	unlockJavaBitmap(env, _iris_mask);
 	unlockJavaBitmap(env, _iris);
 	unlockJavaBitmap(env, _image);
 }
 
-void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendBlusher(JNIEnv *env,
-		jclass clazz, jobject _image, jobject _blusher, jobjectArray _points, jint color, jfloat amount)
+void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendBlusher(JNIEnv* env,
+		jclass clazz, jobject _image, jobject _blush, jobjectArray _points, jint color, jfloat amount)
 {
 	const std::vector<Point2f> points = getNativePointArray(env, _points);
 
-	AndroidBitmapInfo blusher_info;
-	uint32_t* blusher_pixels = lockJavaBitmap(env, _blusher, blusher_info);
-	assert(blusher_pixels != nullptr);
-	Mat blusher(blusher_info.height, blusher_info.width, CV_8UC4, blusher_pixels);
+	AndroidBitmapInfo blush_info;
+	uint32_t* blush_pixels = lockJavaBitmap(env, _blush, blush_info);
+	assert(blush_pixels != nullptr);
+	Mat blush(blush_info.height, blush_info.width, CV_8UC4, blush_pixels);
 
 	// Java doesn't have unsigned integer types, here we need reinterpret_cast.
 //	const uint32_t color = *reinterpret_cast<const uint32_t*>(&_color);
 //	const float amount = (color >> 24) / 255.0f;
 //	const uint8_t  alpha = static_cast<uint8_t>(color >> 24);  // #ARGB
 
-	const int length = blusher_info.height * blusher_info.width;
+	const int length = blush_info.height * blush_info.width;
 	#pragma omp parallel for
 	for(int i = 0; i < length; ++i)
 	{
 #ifndef NDEBUG
 		static bool trigged = false;
-		uint8_t* p = reinterpret_cast<uint8_t*>(blusher_pixels + i);
+		uint8_t* p = reinterpret_cast<uint8_t*>(blush_pixels + i);
 		if(!trigged && (p[0] != p[1] || p[1] != p[2] || p[3] != 0xff))
 		{
 			LOGW("#RGBA 0x%02X%02X%02X%02X, not a gray image!", p[0], p[1], p[2], p[3]);
@@ -772,42 +767,42 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendBlusher(
 		// JPG gray image (single channel), pixel value 0xaa turns 0xffaaaaaa.
 		// RGBA with little endian, 0xAABBGGRR: 0xffaaaaaa -> 0xaaffffff
 		// combined with primary color rrggbb, we get 0xaarrggbb
-		blusher_pixels[i] = ((color >> 16) & 0xff) | (color &0x00ff00) | ((color & 0xff) << 16) | ((blusher_pixels[i] & 0xff) << 24);
+		blush_pixels[i] = ((color >> 16) & 0xff) | (color &0x00ff00) | ((color & 0xff) << 16) | ((blush_pixels[i] & 0xff) << 24);
 	}
 
-//	dump("blusher.png", blusher);
+//	dump("blush.png", blush);
 
-	// TODO havn't take screw face into consideration
-	const float& blusher_r_l = points[ 0].x, &blusher_l_l = points[52].x;
-	const float& blusher_r_r = points[54].x, &blusher_l_r = points[12].x;
-	const float& blusher_r_t = points[40].y, &blusher_l_t = points[50].y;
-	const float& blusher_r_b = points[71].y, &blusher_l_b = points[71].y;
+	// TODO haven't take screw face into consideration
+	const float& blush_r_l = points[ 0].x, &blush_l_l = points[52].x;
+	const float& blush_r_r = points[54].x, &blush_l_r = points[12].x;
+	const float& blush_r_t = points[40].y, &blush_l_t = points[50].y;
+	const float& blush_r_b = points[71].y, &blush_l_b = points[71].y;
 
-	Mat blusher_r, blusher_l;
-	float blusher_x_scale = (blusher_r_r - blusher_r_l)/blusher.cols;
-	float blusher_y_scale = (blusher_r_b - blusher_r_t)/blusher.rows;
-	cv::resize(blusher, blusher_r, Size(0, 0), blusher_x_scale, blusher_y_scale, INTER_CUBIC);
+	Mat blush_r, blush_l;
+	float blush_x_scale = (blush_r_r - blush_r_l)/blush.cols;
+	float blush_y_scale = (blush_r_b - blush_r_t)/blush.rows;
+	cv::resize(blush, blush_r, Size(0, 0), blush_x_scale, blush_y_scale, INTER_CUBIC);
 
 	Mat tmp;
-	blusher_x_scale = (blusher_l_r - blusher_l_l)/blusher.cols;
-	blusher_y_scale = (blusher_l_b - blusher_l_t)/blusher.rows;
-	cv::resize(blusher, tmp, Size(0, 0), blusher_x_scale, blusher_y_scale, INTER_CUBIC);
-	cv::flip(tmp, blusher_l, 1/* horizontally */);
+	blush_x_scale = (blush_l_r - blush_l_l)/blush.cols;
+	blush_y_scale = (blush_l_b - blush_l_t)/blush.rows;
+	cv::resize(blush, tmp, Size(0, 0), blush_x_scale, blush_y_scale, INTER_CUBIC);
+	cv::flip(tmp, blush_l, 1/* horizontally */);
 
 	AndroidBitmapInfo image_info;
 	uint32_t* image_pixels  = lockJavaBitmap(env, _image, image_info);
 	assert(image_pixels != nullptr);
 	Mat image(image_info.height, image_info.width, CV_8UC4, image_pixels);
 
-	blend(image, blusher_r, Point2f(blusher_r_l, blusher_r_t), amount);
-	blend(image, blusher_l, Point2f(blusher_l_l, blusher_l_t), amount);
+	Makeup::blend(image, blush_r, Point2f(blush_r_l, blush_r_t), amount);
+	Makeup::blend(image, blush_l, Point2f(blush_l_l, blush_l_t), amount);
 
 //	dump("result.png", image);
-	unlockJavaBitmap(env, _blusher);
+	unlockJavaBitmap(env, _blush);
 	unlockJavaBitmap(env, _image);
 }
 
-void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendEyeBrow(JNIEnv *env,
+void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendEyeBrow(JNIEnv* env,
 		jclass clazz, jobject _image, jobject _eye_brow, jobjectArray _points, jobjectArray _eye_brow_points, jfloat amount)
 {
 	const std::vector<Point2f> points = getNativePointArray(env, _points);
@@ -852,8 +847,8 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendEyeBrow(
 	assert(image_pixels != nullptr);
 	Mat image(image_info.height, image_info.width, CV_8UC4, image_pixels);
 
-	blend(image, eye_brow_r, pivot_r, amount);
-	blend(image, eye_brow_l, pivot_l, amount);
+	Makeup::blend(image, eye_brow_r, pivot_r, amount);
+	Makeup::blend(image, eye_brow_l, pivot_l, amount);
 
 	unlockJavaBitmap(env, _image);
 }
@@ -878,7 +873,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendEyeBrow(
 	venus::resize(eye_lash, eye_lash_r, (eye_lash_pivot_r.x - eye_lash_r_l)/);
 */
 
-void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendEyeLash(JNIEnv *env,
+void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendEyeLash(JNIEnv* env,
 		jclass clazz, jobject _image, jobject _eye_lash, jobjectArray _points, jint color, jfloat amount)
 {
 	const std::vector<Point2f> points = getNativePointArray(env, _points);
@@ -952,15 +947,15 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendEyeLash(
 
 	// rotate if skew too much
 
-	blend(image, eye_lash_r, position_r, amount);
-	blend(image, eye_lash_l, position_l, amount);
+	Makeup::blend(image, eye_lash_r, position_r, amount);
+	Makeup::blend(image, eye_lash_l, position_l, amount);
 
 //	dump("result.png", image);
 	unlockJavaBitmap(env, _eye_lash);
 	unlockJavaBitmap(env, _image);
 }
 
-void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeSquare(JNIEnv *env,
+void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeSquare(JNIEnv* env,
 		jclass clazz, jobject _bitmap, jobjectArray _points, jlong time_ms)
 {
 	// can cache feature points, no need to fetch them every time.

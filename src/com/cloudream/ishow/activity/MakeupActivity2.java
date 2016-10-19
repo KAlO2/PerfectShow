@@ -148,7 +148,8 @@ public class MakeupActivity2 extends Activity implements View.OnClickListener, V
         
 		long startTime = System.currentTimeMillis();
 		detector = new FaceDetector(this);
-		if(!detector.detect(name))
+		PointF points[] = detector.detect(name);
+		if(points.length <= 0)
 		{
 			Toast.makeText(this, "Face detection failed, please try another photo.", Toast.LENGTH_SHORT).show();
 			this.finish();

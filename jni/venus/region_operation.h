@@ -1,4 +1,4 @@
-#ifndef REGION_OPERATION_H_
+﻿#ifndef REGION_OPERATION_H_
 #define REGION_OPERATION_H_
 
 #include <opencv2/core.hpp>
@@ -48,13 +48,6 @@ public:
 };
 
 
-cv::Mat& drawTriangle(cv::Mat& image, const std::vector<cv::Point2f>& points, const std::vector<cv::Vec3i>& triangles);
-std::vector<cv::Vec3i> getTriangleIndex(const std::vector<cv::Point2f>& points, const std::vector<cv::Vec6f>& triangles);
-
-// used after subdiv.getTriangleList(triangles); filter those triangles that lies on border.
-std::vector<cv::Vec6f>& filter(std::vector<cv::Vec6f>& triangles, const cv::Rect& rect);
-void drawDelaunay(cv::Mat& image, const std::vector<cv::Vec6f>& triangles, const cv::Scalar& color);
-
 std::vector<cv::Point2f> getFaceFeaturePoints(const std::string& face, const std::string& datadir);
 std::vector<cv::Point2f> getFaceFeaturePoints(const std::string& face, const std::string& datadir, cv::Point& size);
 std::vector<cv::Point2f> getFaceFeaturePoints(const cv::Mat& image, const std::string& image_name, const std::string& datadir);
@@ -71,8 +64,6 @@ std::vector<cv::Point2f> getFaceFeaturePoints(const cv::Mat& image, const std::s
 void calcuateIrisInfo(const cv::Mat& image, const std::vector<cv::Point2f>& points, float skew_angle, cv::Point3f& iris_r, cv::Point3f& iris_l);
 void calcuateIrisInfo(const cv::Mat& image, const std::vector<cv::Point2f>& points, cv::Point3f& iris_r, cv::Point3f& iris_l);
 
-cv::Mat& mark(cv::Mat& image, const std::vector<cv::Point2f>& points);
-cv::Mat& markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& points);
 
 /**
  * generate single channel CV_8UC1 mask
@@ -98,14 +89,7 @@ cv::Mat cloneFace(const std::string& user_image_path, const std::string& model_i
 cv::Mat& blendColor(cv::Mat& src, const cv::Mat& mask, uint32_t color, float alpha);
 cv::Mat overlay(const cv::Mat& src, cv::Mat& dst, const cv::Point& orgin, int alpha);
 
-/**
- * src's center is coincide with mask's center, they can have different size.
- *
- * @param position src's top-left position
- * @param mask, value 0 means transparent, namely blending area, 255 means opaque.
- */
-void blend(cv::Mat& dst, const cv::Mat& src, const cv::Point2i& position, float amount = 1.0f);
-void blend(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, const cv::Point2i& position, float amount = 1.0f);
+
 
 
 void blendIris(cv::Mat& image, const cv::Mat& iris, const std::vector<cv::Point2f>& points, float amount);
@@ -131,7 +115,7 @@ inline cv::Mat resize(const cv::Mat& image, const cv::Point2f& pivot, const cv::
 
 /**
  * Given four points, calculate the intersection point of the two lines (left-right and top-bottom).
- * @see https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
+ * @see https://en.wikipedia.org/wiki/Line–line_intersection
  */
 cv::Vec4f calcuateDistance(cv::Point2f& pivot, const cv::Point2f& left, const cv::Point2f& right, const cv::Point2f& top, const cv::Point2f& bottom);
 

@@ -5,7 +5,7 @@
 
 #include <opencv2/core.hpp>
 
-#include "venus/common.h"
+#include "venus/compiler.h"
 
 // implements std::hash for cv::Point2f
 namespace std
@@ -28,6 +28,16 @@ struct hash<cv::Point2f>
 };
 
 } /* namespace std */
+
+namespace cv
+{
+// make it backward compatible
+
+//typedef Rect_<float> Rect2f;
+//typedef Rect_<int>   Rect2i;
+
+
+} /* namespace cv */
 
 /**
  * OpenCV helper functions
@@ -71,6 +81,7 @@ inline cv::Vec<T, 4> boundingBox(const std::vector<cv::Point_<T>>& points)
 
 
 std::vector<cv::Point2i> cast(const std::vector<cv::Point2f>& points);
+cv::Scalar cast(uint32_t color);
 
 cv::Rect2i box2Rect(const cv::Vec4f& box);
 

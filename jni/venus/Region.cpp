@@ -6,7 +6,7 @@ using namespace cv;
 
 namespace venus {
 
-Region::Region(cv::Point2f& pivot, cv::Size2f& size, cv::Mat1b& mask):
+Region::Region(cv::Point2f& pivot, cv::Size2f& size, cv::Mat& mask):
 	pivot(pivot),
 	size(size),
 	mask(mask)
@@ -28,23 +28,24 @@ cv::Rect Region::getRect() const
 	return getRect(pivot, size);
 }
 
-cv::Rect& Region::inset(cv::Rect& rect, int offset)
+Region Region::merge(const Region& region1, const Region& region2)
 {
-	assert(rect.width >= 0 && rect.height >= 0);
-//	assert(width >= 0 || (rect.width > -width && rect.height > -width));
+	const Mat& mask1 = region1.mask, &mask2 = region2.mask;
+	Rect2f rect1(region1.pivot - Point2f(mask1.cols, mask1.rows)/2, mask1.size());
+	Rect2f rect2(region2.pivot - Point2f(mask2.cols, mask2.rows)/2, mask2.size());
+	Rect2f rect = rect1 | rect2;
+	Rect2i rect_ = rect;
 
-	int offset2 = offset<<1;
-	rect.x -= offset;
-	rect.y -= offset;
-	rect.width += offset2;
-	rect.height += offset2;
+	rect1.x -= rect.x; rect1.y -= rect.y;
+	rect2.x -= rect.x; rect2.y -= rect.y;
+	Rect2i rect1_ = rect1, rect2_ = rect2;
 
-	if(rect.width < 0)
-		rect.width = 0;
-	if(rect.height < 0)
-		rect.height = 0;
-
-	return rect;
+	Point2f pivot = (region1.pivot + region2.pivot)/2;
+	Size2f  size = rect.size();
+	Mat     mask(rect.size(), CV_8UC1, Scalar(0));
+	mask1.copyTo(mask(rect1_));
+	mask2.copyTo(mask(rect2_));  // overlapping area will be overridden
+	return Region(pivot, size, mask);
 }
 
 cv::Mat Region::inset(const cv::Mat& mat, int offset)
@@ -124,7 +125,7 @@ cv::Rect2i Region::boundingRect(const cv::Mat& mask)
 #endif
 }
 
-cv::Mat1b Region::shrink(const cv::Mat1b& mask, int offset)
+cv::Mat Region::shrink(const cv::Mat& mask, int offset)
 {
 	if(offset == 0)
 		return mask;  // .clone();
@@ -145,7 +146,7 @@ cv::Mat1b Region::shrink(const cv::Mat1b& mask, int offset)
 	return result;
 }
 
-cv::Mat1b Region::grow(const cv::Mat1b& mask, int offset)
+cv::Mat Region::grow(const cv::Mat& mask, int offset)
 {
 	return shrink(mask, -offset);
 }

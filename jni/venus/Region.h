@@ -8,16 +8,18 @@ namespace venus {
 class Region
 {
 public:
-	cv::Point2f pivot; //< pin point, relative to source image.
-	cv::Size2f  size;  //< ROI's raw size, namely neither scaled nor rotated image size.
-	cv::Mat1b   mask;
+	cv::Point2f pivot;  //< pin point, relative to source image.
+	cv::Size2f  size;   //< ROI's raw size, namely neither scaled nor rotated image size.
+	cv::Mat     mask;   //< mask of ROI(Region Of Interest).
 
 public:
 	Region() = default;
-	Region(cv::Point2f& pivot, cv::Size2f& size, cv::Mat1b& mask);
+	Region(cv::Point2f& pivot, cv::Size2f& size, cv::Mat& mask);
 
 	static cv::Rect getRect(const cv::Point2f& pivot, const cv::Size2f& size);
 	cv::Rect getRect() const;
+
+	static Region merge(const Region& region1, const Region& region2);
 
 	/**
 	 * inset border for rectangle
@@ -25,8 +27,22 @@ public:
 	 * @param offset positve get smaller rectangle, negative get larger rectangle.
 	 * @return rect
 	 */
-	static cv::Rect& inset(cv::Rect& rect, int offset);
-	static cv::Mat   inset(const cv::Mat& mat, int offset);
+	template<typename T>
+	static void inset(cv::Rect_<T>& rect, T offset)
+	{
+		assert(rect.width >= 0 && rect.height >= 0);
+//		assert(width >= 0 || (rect.width > -width && rect.height > -width));
+
+		rect.x      -= offset;
+		rect.y      -= offset;
+		rect.width  += offset * 2;
+		rect.height += offset * 2;
+
+		if(rect.width  < 0)  rect.width = 0;
+		if(rect.height < 0)  rect.height = 0;
+	}
+
+	static cv::Mat inset(const cv::Mat& mat, int offset);
 
 	void inset(float offset);
 
@@ -37,8 +53,8 @@ public:
 	 * gegl_region_shrink(GeglRegion *region, int dx, int dy);
 	 *
 	 */
-	static cv::Mat1b shrink(const cv::Mat1b& mask, int offset);
-	static cv::Mat1b grow(const cv::Mat1b& mask, int offset);
+	static cv::Mat shrink(const cv::Mat& mask, int offset);
+	static cv::Mat grow(const cv::Mat& mask, int offset);
 	
 	static void overlay(cv::Mat& mat, const Region& mask, const cv::Point2f& position, const cv::Mat& patch);
 	void overlay(cv::Mat& mat, const cv::Mat& patch) const;

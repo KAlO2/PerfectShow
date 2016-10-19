@@ -148,22 +148,6 @@ inline T rad2deg(const T& radians)
 	return radians*(180/static_cast<T>(M_PI));
 }
 
-#if __cplusplus >= 201103L
-/*
- * @see C++11 feature about user literial, http://en.cppreference.com/w/cpp/language/user_literal
- * note that float or double type are not allowed on literal operators
- */
-constexpr long double operator "" _deg(long double degree)
-{
-	return degree * static_cast<long double>(M_PI)/180;
-}
-
-constexpr long double operator "" _deg(unsigned long long int degree)
-{
-	return degree * static_cast<long double>(M_PI)/180;
-}
-#endif
-
 /**
  * @brief Whether the two line segments on one axis overlaps
  *
@@ -191,7 +175,7 @@ inline bool overlap(const T& l1min, const T& l1max,
  * @return The clamped value
  */
 template <typename T>
-inline const T clamp(const T& value, const T& min, const T& max)
+inline T clamp(const T& value, const T& min, const T& max)
 {
 	assert(min <= max && "invalid clamp range");
 #if 0
@@ -203,21 +187,29 @@ inline const T clamp(const T& value, const T& min, const T& max)
 #endif
 }
 
+template <typename T>
+inline T clamp(const T& value)
+{
+	static_assert(std::is_floating_point<T>::value, "limited to floating-point type only");
+	return clamp<T>(value, T(0), T(1));
+}
+
 /**
  * @brief Linearly interpolates between two values. Works for any classes that
  * define addition, subtraction, and multiplication (by a float) operators.
  *
  * http://en.wikipedia.org/wiki/Lerp_(computing)
  *
- * @param src The starting value
- * @param dst The ending value
- * @param amount The amount to lerp (from 0.0 to 1.0)
+ * @param from   The starting value
+ * @param to     The ending value
+ * @param amount The amount to interpolate, range [0, 1]
+ *
  * @return The interpolated value
  */
 template <typename T>
-inline T lerp(const T& src, const T& dst, const float& amount)
+inline T lerp(const T& from, const T& to, const float& amount)
 {
-	return src + static_cast<T>((dst - src) * amount);
+	return from + static_cast<T>((to - from) * amount);
 }
 
 /**
@@ -227,16 +219,17 @@ inline T lerp(const T& src, const T& dst, const float& amount)
  *
  * http://www.fundza.com/rman_shaders/smoothstep/index.html
  *
- * @param src The starting value
- * @param dst The ending value
- * @param amount The amount to interpolate (from 0.0 to 1.0)
+ * @param from   The starting value
+ * @param to     The ending value
+ * @param amount The amount to interpolate, range [0, 1]
+ *
  * @return The interpolated value
  */
 template <typename T>
-inline T smoothStep(const T& src, const T& dst, const float& amount)
+inline T smoothStep(const T& from, const T& to, const float& amount)
 {
 	float num = clamp<float>(amount, 0, 1);
-	return lerp<T>(src, dst, num*num*(3-2*num));
+	return lerp<T>(from, to, num*num*(3-2*num));
 }
 
 /**

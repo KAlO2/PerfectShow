@@ -6,7 +6,8 @@
 
 #include <opencv2/core.hpp>
 
-#include "venus/common.h"
+#include "venus/compiler.h"
+#include "venus/scalar.h"
 
 /* 
 	some useful links:
@@ -37,8 +38,10 @@ inline uint8_t color_round<uint8_t>(const uint8_t& x)
 template <typename T, int N = 4>
 cv::Vec<T, N> mix(const cv::Vec<T, N>& dst, const cv::Vec<T, N>& src, float amount)
 {
-	static_assert(false, "unimplemented yet");
-	return dst;
+	cv::Vec<T, N> result;
+	for(int i = 0; i < N; ++i)
+		result[i] = lerp<T>(dst[i], src[i], amount);
+	return result;
 }
 
 template<> cv::Vec3f mix<float,   3>(const cv::Vec3f& dst, const cv::Vec3f& src, float amount);

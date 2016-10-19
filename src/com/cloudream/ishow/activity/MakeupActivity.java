@@ -8,18 +8,18 @@ import com.cloudream.ishow.algorithm.Effect;
 import com.cloudream.ishow.algorithm.FaceDetector;
 import com.cloudream.ishow.algorithm.FaceDetector.Roi;
 import com.cloudream.ishow.algorithm.FaceDetector.RoiInfo;
+import com.cloudream.ishow.algorithm.Makeup;
+import com.cloudream.ishow.bean.MakeupParams;
 import com.cloudream.ishow.util.BitmapUtils;
 import com.cloudream.ishow.util.Compatibility;
 import com.cloudream.ishow.util.MathUtils;
+import com.cloudream.ishow.view.ImageViewTouch;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.graphics.PointF;
-import android.graphics.Rect;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,14 +32,13 @@ import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
-public class MakeupActivity extends Activity implements View.OnClickListener
+public class MakeupActivity extends BaseActivity implements View.OnClickListener
 {
 	private static final String TAG = MakeupActivity.class.getSimpleName();
 	
-	private ImageView iv_image;
+	private ImageViewTouch iv_image;
 //	private TextView  tv_reset;
 
 	private SeekBar   sb_weight;
@@ -55,13 +54,13 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 	
 	private FaceDetector detector;
 	
-	private Bitmap bmp_raw;
-	private Bitmap bmp_step;     // used to undo(Ctrl +　Z) modification
+	private Makeup makeup;
+
 	
 //	private Point  position;
 //	private Bitmap bmp_region;
 //	private Bitmap bmp_mask;
-	private Bitmap bmp_modified;
+//	private Bitmap bmp_modified;
 	
 	// I haven't dug but it seems like the id is ascending with the same prefix.
 	// So I can use first and last for indexing the IDs.
@@ -69,9 +68,9 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 	// [start, end], with end inclusive.
 	private int res_start, res_stop, res_selected;  // res_selected store color for lips
 	private RoiInfo info;
-//	private MakeupInfo makeup;
+	private MakeupParams makeup_params;
 	
-	private String name;
+//	private String name;
 	// (11, 36) (55, 12) (98, 20) (143, 46) (98, 36) (55, 27)
 	// http://docs.opencv.org/3.0-beta/doc/tutorials/introduction/android_binary_package/dev_with_OCV_on_Android.html
 
@@ -110,7 +109,7 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 				(byte)(Color.blue (color)&0xff));
 	}
 
-	private static final int BLUSHER_COLORS[] = 
+	private static final int BLUSH_COLORS[] = 
 	{
 		0xffffddc8, 0xffffc0d5, 0xffffbca7, 0xffff9e8c, 0xffffc4db,
 		0xffffacac, 0xfffd9dc1, 0xffffaeae, 0xffffc4db, 0xffffc7b5,
@@ -134,21 +133,31 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 				int lip_color = Compatibility.getColor(MakeupActivity.this, res_selected);
 				lip_color = Color.argb(Color.alpha(lip_color)>>2, Color.red(lip_color), Color.green(lip_color), Color.blue(lip_color));
 				Log.i(TAG, "use color: " + colorToString(lip_color));
-				bmp_modified = detector.blendLip(bmp_step, lip_color, amount);
+//				bmp_modified = detector.blendLip(bmp_step, lip_color, amount);
+				makeup.applyLipColor(lip_color, amount);
 				break;
 			case BLUSH_R:
+			{
 				int id = res_selected - R.drawable.blusher01;
-				int blusher_color = BLUSHER_COLORS[id];
+				int color = BLUSH_COLORS[id];
+/*
 				id = MathUtils.wrap(id, R.drawable.blush_mask_00, R.drawable.blush_mask_04);
 				
-				blusher_color = (blusher_color & 0x00ffffff) | (((int)(amount * 128/* 255 is too high */)) << 24);
+				blusher_color = (blusher_color & 0x00ffffff) | (((int)(amount * 128)) << 24);
 				Bitmap bmp_blusher = BitmapFactory.decodeResource(getResources(), id, BitmapUtils.OPTION_RGBA_8888);
 				bmp_modified = detector.blendBlusher(bmp_step, bmp_blusher, blusher_color, amount);
+*/
+				id = MathUtils.wrap(id, R.drawable.blush_mask_00, R.drawable.blush_mask_04);
+				final Makeup.BlushShape shapes[] = Makeup.BlushShape.values();
+				Makeup.BlushShape shape = shapes[id % shapes.length];
+				makeup.applyBlush(shape, color, amount);
+			}
 				break;
 			case IRIS_R:
+/*
 				Bitmap bmp_iris_color = BitmapFactory.decodeResource(getResources(), res_selected, BitmapUtils.OPTION_RGBA_8888);
 				bmp_modified = detector.blendIris(bmp_step, bmp_iris_color, amount);
-/*
+
 				int iris_index = res_selected - R.drawable.thumb_iris_00;
 				Bitmap bmp_iris_color = BitmapFactory.decodeResource(getResources(), R.drawable.iris_00 + iris_index, BitmapUtils.OPTION_RGBA_8888);
 				Bitmap bmp_iris_mask = BitmapFactory.decodeResource(getResources(), R.drawable.iris_mask_00 + iris_index, BitmapUtils.OPTION_RGBA_8888);
@@ -157,7 +166,7 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 				bmp_modified = detector.blendIris(bmp_step, bmp_iris_color, amount);
 				bmp_modified = detector.blendIris(bmp_step, bmp_iris_color, bmp_iris_mask, Color.BLUE, amount);
 				bmp_modified = detector.blendIris(bmp_step, bmp_iris, amount);
-*/
+
 				break;
 			case EYE_LASH_R:
 				int eye_lash_id = res_selected - R.drawable.thumb_eye_lash_00 + R.drawable.eye_lash_00;
@@ -182,9 +191,10 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 //				SettingsActivity.saveImage(MakeupActivity.this, null, bmp_eye_shadow);
 				bmp_modified = detector.blendEyeLash(bmp_step, bmp_eye_shadow, Color.BLACK, amount);
 				break;
+*/
 			}
 			
-			iv_image.setImageBitmap(bmp_modified);
+			iv_image.setImageBitmap(makeup.getIntermediateImage());
 		}
 
 		@Override
@@ -237,14 +247,16 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 		setContentView(R.layout.makeup_activity);
 		
 		detector = new FaceDetector(this);
+		final Bitmap image;
+		final PointF points[];
 //		name = String.format("%s/example/example%d.jpg", App.WORKING_DIRECTORY, (int) (Math.random() * 8) + 1);
 		Intent intent = getIntent();
 		String name = intent.getStringExtra(GalleryActivity.EXTRA_PICTURE_PATH);
 		if(name != null)
 		{
 			Log.i(TAG, "example name: " + name);
-			bmp_raw = BitmapUtils.decodeFile(name, BitmapUtils.OPTION_RGBA_8888);
-			detector.detect(bmp_raw);
+			image = BitmapUtils.decodeFile(name, BitmapUtils.OPTION_RGBA_8888);
+			points = detector.detect(image);
 			
 			boolean temporary = intent.getBooleanExtra(GalleryActivity.EXTRA_TEMPORARY, false);
 			if(temporary)
@@ -256,36 +268,30 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 //			bmp_raw = (object instanceof Bitmap)? (Bitmap)object : null;
 //			bmp_raw = intent.getParcelableExtra(GalleryActivity.EXTRA_PICTURE_BITMAP);
 			byte bytes[] = intent.getByteArrayExtra(GalleryActivity.EXTRA_PICTURE_BITMAP);
-			bmp_raw = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+			image = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 			
-			if(bmp_raw == null)
+			if(image == null)
 			{
 				Toast.makeText(this, R.string.corrupted_image, Toast.LENGTH_LONG).show();
 				finish();
 				return;
 			}
 			
-			detector.detect(bmp_raw);
+			points = detector.detect(image);
 		}
 		
-		final boolean has_face = detector.getFeaturePoints().length > 0;
-		if(!has_face)
+		if(points.length <= 0)
 		{
 			Toast.makeText(this, R.string.no_face_detected, Toast.LENGTH_LONG).show();
 			finish();
 			return;
 		}
+
+		iv_image = (ImageViewTouch) findViewById(R.id.image);
+//		iv_image.setGestureListener(iv_image.new GestureListener());
+		iv_image.setScrollEnabled(true);
 		
-		bmp_modified = bmp_raw.copy(Bitmap.Config.ARGB_8888, true);
-		iv_image = (ImageView) findViewById(R.id.image);
-		
-		final PointF[] points = detector.getFeaturePoints();
-		Log.i(TAG, points.length + " feature points found");
-		if(points.length == 0)
-		{
-			Toast.makeText(this, "Face detection failed, please try another photo.", Toast.LENGTH_SHORT).show();
-			this.finish();
-		}
+		makeup = new Makeup(image, points);
 		
 		sb_weight = (SeekBar) findViewById(R.id.weight);
 		sb_weight.setOnSeekBarChangeListener(lsn_weight);
@@ -293,8 +299,7 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 		
 		sb_size = (SeekBar) findViewById(R.id.size);
 		
-		
-		iv_image.setImageBitmap(bmp_raw);
+		iv_image.setImageBitmap(image);
 //		tv_reset = (TextView) findViewById(R.id.reset);
 		findViewById(R.id.reset).setOnClickListener(this);
 		
@@ -310,7 +315,7 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 		findViewById(R.id.iris).setOnClickListener(this);
 		findViewById(R.id.lip_color).setOnClickListener(this);
 		
-		if(BuildConfig.DEBUG)
+		if(BuildConfig.DEBUG)  // only enable this CheckBox in debug mode
 		{
 			CheckBox cb_mark = (CheckBox) findViewById(R.id.mark);
 			cb_mark.setVisibility(View.VISIBLE);
@@ -319,8 +324,8 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 				@Override
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
 				{
-					Bitmap bmp_feature = detector.mark(bmp_raw);
-					iv_image.setImageBitmap(isChecked? bmp_feature : bmp_modified);
+					Bitmap bmp_mark = makeup.mark();
+					iv_image.setImageBitmap(isChecked? bmp_mark : makeup.getIntermediateImage());
 				}}
 			);
 		}
@@ -331,7 +336,10 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 			public boolean onTouch(View v, MotionEvent event)
 			{
 				final int action = event.getAction();
-				iv_image.setImageBitmap(action != MotionEvent.ACTION_UP ? bmp_raw:bmp_modified);
+				if(action != MotionEvent.ACTION_UP)
+					iv_image.setImageBitmap(makeup.getRawImage());
+				else
+					iv_image.setImageBitmap(makeup.getIntermediateImage());
 				return true;
 			}
 		});
@@ -365,8 +373,7 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 //		case R.id.primary:
 //			break;
 		case R.id.reset:
-			bmp_modified = bmp_step.copy(Bitmap.Config.ARGB_8888, true/* mutable */);
-			iv_image.setImageBitmap(bmp_modified);
+			iv_image.setImageBitmap(makeup.getFinalImage());
 			return;
 		case R.id.blusher:
 			region = Roi.BLUSH_R;
@@ -403,7 +410,7 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 		}
 		
 //		copy bitmap bmp_modified to bmp_step but make it immutable, namely unchangeable.
-		bmp_step = bmp_modified.copy(Bitmap.Config.ARGB_8888, false);
+//		bmp_step = bmp_modified.copy(Bitmap.Config.ARGB_8888, false);
 /*		
 		if(last_region == view)
 		{
@@ -492,7 +499,7 @@ public class MakeupActivity extends Activity implements View.OnClickListener
 	*/					
 //						String src = String.format("/sdcard/PerfectShow/eye_lash/eye_lash_%02d.png", index);
 //						bmp_modified = detector.SeamlessClone(src, name, region_center_r, org.opencv.photo.Photo.NORMAL_CLONE);
-						iv_image.setImageBitmap(bmp_modified);
+						iv_image.setImageBitmap(makeup.getFinalImage());
 						long endTime = System.currentTimeMillis();
 						String elapsed_time = "elapsed time: " + (endTime - startTime) + "ms";
 						Log.d(TAG, elapsed_time);

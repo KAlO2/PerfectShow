@@ -1,6 +1,6 @@
-#include "venus/region_operation.h"
+ï»¿#include "venus/region_operation.h"
 #include "venus/colorspace.h"
-#include "venus/common.h"
+#include "venus/Makeup.h"
 #include "venus/Feature.h"
 #include "venus/opencv_utility.h"
 
@@ -18,117 +18,11 @@
 
 using namespace cv;
 
-static const int FEATURE_POINT_COUNT = 81;
 static const Scalar BACKGROUD_COLOR = CV_RGB(255, 255, 255);
 static const Scalar FOREGROUD_COLOR = CV_RGB(0, 0, 0);
 
-
 namespace venus {
 
-static inline std::string to_string(int i)
-{
-#ifdef ANDROID  // due to Android lack of function std::to_string()
-	std::ostringstream os;
-	os << i;
-	const std::string text = os.str();
-#else
-	const std::string text = std::to_string(i);
-#endif
-	return text;
-}
-
-cv::Mat& drawTriangle(cv::Mat& image, const std::vector<Point2f>& points, const std::vector<Vec3i>& triangles)
-{
-	const int width = image.cols, height = image.rows;
-	cv::Scalar color(CV_RGB(255, 0, 255));
-
-	const HersheyFonts font_name = cv::HersheyFonts::FONT_HERSHEY_SIMPLEX;
-	const float font_scale = (std::min(width, height) <= 720) ? std::min(width, height)/720.0f : 1.0f;
-	for(size_t i = 0, size = triangles.size(); i < size; ++i)
-	{
-		const Vec3i& tri = triangles[i];
-		Point A(cvRound(points[tri[0]].x * width), cvRound(points[tri[0]].y * height));
-		Point B(cvRound(points[tri[1]].x * width), cvRound(points[tri[1]].y * height));
-		Point C(cvRound(points[tri[2]].x * width), cvRound(points[tri[2]].y * height));
-		cv::line(image, A, B, color, 1, LINE_AA);
-		cv::line(image, B, C, color, 1, LINE_AA);
-		cv::line(image, C, A, color, 1, LINE_AA);
-
-		int baseline = 0;
-		const std::string text = to_string(i);
-		Size text_size = getTextSize(text, font_name, font_scale, 1, &baseline);
-
-		// align text center to triangle center
-		Point center = (A + B + C) / 3;
-		center.x -= text_size.width/2;
-		center.x += text_size.height/2;
-
-		cv::putText(image, text, center, font_name, font_scale, FOREGROUD_COLOR, 1, LINE_AA);
-	}
-	return image;
-}
-
-std::vector<Vec3i> getTriangleIndex(const std::vector<Point2f>& points, const std::vector<Vec6f>& triangles)
-{
-	const size_t length = points.size();
-	std::unordered_map<Point2f, size_t> table;  // not suitable
-	table.reserve(length);
-	for(size_t i = 0; i < length; ++i)
-	{
-		const Point2f& point = points[i];
-		table[point] = i;
-	}
-	assert(table.size() == length);
-
-	std::vector<Vec3i> result;
-	const size_t triangle_count = triangles.size();
-	result.reserve(triangle_count);
-
-	for(const Vec6f& t: triangles)
-	{
-		Point2f A(t[0], t[1]), B(t[2], t[3]), C(t[4], t[5]);
-		assert(table.find(A) != table.end());
-		assert(table.find(B) != table.end());
-		assert(table.find(C) != table.end());
-		Vec3i index(table[A], table[B], table[C]);
-		assert(index[0] != index[1] && index[1] != index[2]);
-		result.push_back(index);
-	}
-
-	return result;
-}
-
-std::vector<cv::Vec6f>& filter(std::vector<Vec6f>& triangles, const Rect& rect)
-{
-	std::vector<Vec6f>::iterator it = triangles.begin();
-	while(it != triangles.end())
-	{
-		const Vec6f& t = *it;
-		Point2i pt0(cvRound(t[0]), cvRound(t[1]));
-		Point2i pt1(cvRound(t[2]), cvRound(t[3]));
-		Point2i pt2(cvRound(t[4]), cvRound(t[5]));
-
-		if(rect.contains(pt0) && rect.contains(pt1) && rect.contains(pt2))
-			++it;
-		else
-			it = triangles.erase(it);
-	}
-	return triangles;
-}
-
-void drawDelaunay(cv::Mat& image, const std::vector<cv::Vec6f>& triangles, const cv::Scalar& color)
-{
-	for(const cv::Vec6f& t: triangles)
-	{
-		cv::Point2i pt0(cvRound(t[0]), cvRound(t[1]));
-		cv::Point2i pt1(cvRound(t[2]), cvRound(t[3]));
-		cv::Point2i pt2(cvRound(t[4]), cvRound(t[5]));
-
-		cv::line(image, pt0, pt1, color, 1, LINE_AA);
-		cv::line(image, pt1, pt2, color, 1, LINE_AA);
-		cv::line(image, pt2, pt0, color, 1, LINE_AA);
-	}
-}
 
 /*
 	Let (h,k) be the coordinates of the center of the circle, and r its
@@ -322,7 +216,7 @@ static void correctIris(const Mat& image, std::vector<Point2f>& points)
 
 std::vector<Point2f> getFaceFeaturePoints(const std::string& face, const std::string& datadir, Point& size)
 {
-	cv::Mat1b image = cv::imread(face, CV_LOAD_IMAGE_GRAYSCALE);
+	cv::Mat image = cv::imread(face, CV_LOAD_IMAGE_GRAYSCALE);
 	if(!image.data)
     {
         printf("Cannot load %s\n", face.c_str());
@@ -336,7 +230,7 @@ std::vector<Point2f> getFaceFeaturePoints(const std::string& face, const std::st
 
 std::vector<Point2f> getFaceFeaturePoints(const std::string& face, const std::string& datadir)
 {
-	cv::Mat1b image = cv::imread(face, CV_LOAD_IMAGE_GRAYSCALE);
+	cv::Mat image = cv::imread(face, CV_LOAD_IMAGE_GRAYSCALE);
 	if(!image.data)
     {
         printf("Cannot load %s\n", face.c_str());
@@ -496,215 +390,6 @@ void calcuateIrisInfo(const cv::Mat& image, const std::vector<cv::Point2f>& poin
 	calcuateIrisInfo(image, points, skew_angle, iris_r, iris_l);
 }
 
-Mat& mark(Mat& image, const std::vector<Point2f>& points)
-{
-	const HersheyFonts font_name = cv::HersheyFonts::FONT_HERSHEY_SIMPLEX;
-	const float font_scale = 0.42f;
-	int radius = 1;
-
-	Rect rect = cv::boundingRect(points);
-//	Region::inset(rect, 1);
-	Subdiv2D subdiv(rect);
-
-	for(size_t i = 0; i < points.size(); ++i)
-	{
-		const Point2f& point = points[i];
-		Point2i pt(cvRound(point.x), cvRound(point.y));
-		cv::circle(image, pt, radius, CV_RGB(0, 255, 0), 1, LINE_AA);
-
-		cv::putText(image, to_string(i), Point2i(pt.x + radius, pt.y), font_name, font_scale, FOREGROUD_COLOR, 1, LINE_AA);
-//		image.at<Vec3b>(cvRound(point.y), cvRound(point.x)) = Vec3b(0, 255, 0);
-
-		subdiv.insert(point);
-	}
-
-	std::vector<cv::Vec6f> triangles;
-	subdiv.getTriangleList(triangles);
-
-	filter(triangles, rect);
-	drawDelaunay(image, triangles, CV_RGB(0, 255, 0));
-
-#if 0  // used to cache the data in out program.
-	std::vector<Vec3i> index = getTriangleIndex(points, triangles);
-
-	printf("const std::vector<Vec3i> indices\n{\n");
-	for(const Vec3i& triple: index)
-		printf("\tVec3i(%2d, %2d, %2d),\n", triple[0], triple[1], triple[2]);
-	printf("};\n");
-#endif
-	return image;
-}
-
-cv::Mat& markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& points)
-{
-	const HersheyFonts font_name = cv::HersheyFonts::FONT_HERSHEY_SIMPLEX;
-	const float font_scale = 0.42f;
-	int offset = 2;
-
-	const size_t point_count = points.size();
-	for(size_t i = 0; i < point_count; ++i)
-	{
-		const Point2f& point = points[i];
-		Point2i pt(cvRound(point.x), cvRound(point.y));
-		cv::putText(image, to_string(i), Point2i(pt.x + offset, pt.y), font_name, font_scale, CV_RGB(0, 255, 0), 1, LINE_AA);
-		cv::circle(image, pt, 1,  CV_RGB(0, 255, 0), 1, LINE_AA);
-	}
-
-#if 0  // draw triangles
-	for(const Vec3i& tri: triangle_indices)
-	{
-		for(int k = 0; k < 3; ++k)
-			assert(0 <= tri[k] && tri[k] < static_cast<int>(point_count));
-
-		// non-realm triangles' edge will draw twice, but it doesn't matter.
-		cv::line(image, points[tri[0]], points[tri[1]], FOREGROUD_COLOR, 1, LINE_AA);
-		cv::line(image, points[tri[1]], points[tri[2]], FOREGROUD_COLOR, 1, LINE_AA);
-		cv::line(image, points[tri[2]], points[tri[0]], FOREGROUD_COLOR, 1, LINE_AA);
-	}
-#endif
-#if 1
-	const Scalar LINE_COLOR(255, 0, 0);
-	Point2f pm1(points[22]), p0(points[21]), p1(points[20]), p2(points[25]);
-	Point2f eye_brow_top_r = catmullRomSpline(0.50f, pm1, p0, p1, p2);
-//	cv::circle(image, Point(cvRound(eye_brow_top_r.x), cvRound(eye_brow_top_r.y)), 1, LINE_COLOR, 1, LINE_AA);
-
-	pm1 = points[29]; p0 = points[28]; p1 = points[27]; p2 = points[26];
-	Point2f eye_brow_top_l = catmullRomSpline(0.50f, pm1, p0, p1, p2);
-//	cv::circle(image, Point(cvRound(eye_brow_top_l.x), cvRound(eye_brow_top_l.y)), 1, LINE_COLOR, 1, LINE_AA);
-
-	Point2f eye_brow_top_m = (eye_brow_top_r + eye_brow_top_l)/2;
-	venus::line(image, eye_brow_top_r, eye_brow_top_l, LINE_COLOR, 1, LINE_AA);
-
-	// wing of the nose
-	const Point2f& nose_wing_r = points[55];
-	const Point2f& nose_wing_l = points[57];
-	venus::line(image, nose_wing_r, nose_wing_l, LINE_COLOR, 1, LINE_AA);
-
-	// top forehead index 16
-	const Point2f& top_forehead = points[16];  // not to accurate
-//	const Point2f top_forehead = (eye_brow_top_l + eye_brow_top_m) - (nose_wing_r + nose_wing_l)/2;
-	float k = (eye_brow_top_l.y - eye_brow_top_r.y)/(eye_brow_top_l.x - eye_brow_top_r.x);
-	Point2f right(0.0f, 0.0f), left(image.cols, image.rows);
-	right.y = k * (right.x - top_forehead.x) + top_forehead.y;
-	left.y = k * (left.x - top_forehead.x) + top_forehead.y;
-	venus::line(image, right, left, LINE_COLOR, 1, LINE_AA);
-
-	// chin
-	const Point2f& chin = points[6];
-	right.y = k * (right.x - chin.x) + chin.y;
-	left.y = k * (left.x - chin.x) + chin.y;
-	venus::line(image, right, left, LINE_COLOR, 1, LINE_AA);
-
-	// eyes
-	const Point2f& eye_right_l = points[34];
-	const Point2f& eye_left_r = points[44];
-	k = (eye_left_r.y - eye_right_l.y)/(eye_left_r.x - eye_right_l.x);
-//	Point2f  top(0, 0), bottom(image.cols, image.rows);
-//	top.x = k * (top.y - eye_right_l.y) + eye_right_l.x;
-//	bottom.x = k * (bottom.y - eye_right_l.y) + eye_right_l.x;
-//	venus::line(image, top, bottom, CV_RGB(0, 255, 0), 1, LINE_AA);
-
-//	top.x = k * (top.y - eye_left_r.y) + eye_left_r.x;
-//	bottom.x = k * (bottom.y - eye_left_r.y) + eye_left_r.x;
-//	venus::line(image, top, bottom, CV_RGB(0, 255, 0), 1, LINE_AA);
-
-#if 1 // equilibrium
-/*
-//	float eye_width = std::hyport(eye_left_r.x - eye_right_l.x, eye_left_r.y - eye_right_l.y);
-	float eye_width = std::sqrt((eye_left_r.x - eye_right_l.x)*(eye_left_r.x - eye_right_l.x) + (eye_left_r.y - eye_right_l.y)*(eye_left_r.y - eye_right_l.y));
-	// given slope value k, namely tan(t), solve the value cos(t)
-	// cos(t) = 1/sec(t) = 1/sqrt(1 + tan^2(t));
-	float eye_horizontal_offset = eye_width / std::sqrt(1 + k*k);
-	for(int i = -2; i <= 3; ++i)
-	{
-		Point2f top_offset(top.x + i * eye_horizontal_offset , 0);
-		Point2f bottom_offset(bottom.x + i * eye_horizontal_offset, image.rows);
-		venus::line(image, top_offset, bottom_offset, CV_RGB(0, 255, 0), 1, LINE_AA);
-	}
-*/
-#else
-/*
-	+---+---+---+---+---+
-	|   |eye| N |eye|   |
-
-	L5  L4  L3  L2  L1  L0
-*/
-	Point2f comb[6] = { points[10], points[48], points[44], points[34], points[38], points[0] };
-	if(comb[0].x < points[11].x) comb[0] = points[11];  // TODO spline
-	if(comb[0].x < points[12].x) comb[0] = points[12];
-	if(comb[5].x > points[ 1].x) comb[5] = points[ 1];  // TODO spline
-	if(comb[5].x > points[ 2].x) comb[5] = points[ 2];
-
-	for(int i = 0; i < 6; ++i)
-	{
-		// given k and a fixed point (x0, y0)
-		// y = k(x - x0) + y0
-		// let y = 0, x = -y0/k + x0
-		float h = /*k * comb[i].y +*/ comb[i].x;
-		Point2f top(h, 0.0f), bottom(h, static_cast<float>(image.rows));
-		venus::line(image, top, bottom, CV_RGB(0, 255, 0), 1, LINE_AA);
-	}
-#endif
-
-	/*
-	         /21----20\         /27----28\ 
-	       22  23  24  25     26  31  30  29
-    
-				36                    46
-			 37    35              45    47
-	right  38   42   34 -------- 44   43   48   left
-			 39    41              51    49
-				40                    50
-	*/
-	const Point2f& pupil_r = points[42];
-	const Point2f& pupil_l = points[43];
-	float pupil_r_radius = (
-		distance(pupil_r, points[35]) + 
-		distance(pupil_r, points[37]) + 
-		distance(pupil_r, points[39]) +
-		distance(pupil_r, points[41]))/4;
-
-	float pupil_l_radius = (
-		distance(pupil_l, points[45]) + 
-		distance(pupil_l, points[47]) + 
-		distance(pupil_l, points[49]) +
-		distance(pupil_l, points[51]))/4;
-
-	cv::circle(image, pupil_r, static_cast<int>(pupil_r_radius), CV_RGB(0, 255, 0), 1, LINE_AA);
-	cv::circle(image, pupil_l, static_cast<int>(pupil_l_radius), CV_RGB(0, 255, 0), 1, LINE_AA);
-
-//	cv::circle(image, Point(cvRound(eye_brow_top_m.x), cvRound(eye_brow_top_m.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
-
-//	Point2f pm1(points[22]), p0(points[21]), p1(points[20]), p2(points[25]);
-//	std::vector<float> samples{-0.5, 0.25, 0.50, 0.75, 1.50};
-//	for(const float& t: samples)
-//	{
-//		Point2f extra = catmullRomSpline(t, pm1, p0, p1, p2);
-//		cv::circle(image, Point(cvRound(extra.x), cvRound(extra.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
-//		cv::putText(image, "81", Point2i(extra.x + offset, extra.y), font_name, font_scale, CV_RGB(0, 255, 0), 1, LINE_AA);
-//	}
-#endif
-
-	Vec4f line = Feature::getSymmetryAxis(points);
-	Point2f center(line[2], line[3]), up(line[0], line[1]);
-	venus::line(image, center, center + 10 * up, LINE_COLOR);
-	
-	// from inner eye corner to lip point where it is close to center top point
-	cv::line(image, points[34], points[65], LINE_COLOR);
-	cv::line(image, points[44], points[67], LINE_COLOR);
-
-	// from outer eye corner to lip corner
-	cv::line(image, points[38], points[63], LINE_COLOR);
-	cv::line(image, points[48], points[69], LINE_COLOR);
-		
-	// from wing of nose to lip corner
-	Point2f end = points[63] * 2.0f - points[62];
-	cv::line(image, points[62], end, LINE_COLOR);
-	end = points[69] * 2.0f - points[58];
-	cv::line(image, points[58], end, LINE_COLOR);
-
-	return image;
-}
 
 static Mat polygonMask(const Rect& rect, const std::vector<Point2f>& points, const int indices[], int length)
 {
@@ -1140,20 +825,28 @@ cv::Mat cloneFace(const std::string& user_image_path, const std::string& model_i
 Mat& blendColor(Mat& src, const Mat& mask, uint32_t color, float alpha)
 {
 	assert(0.0f <= alpha && alpha <= 1.0f);
-	assert(src.size() == mask.size() && src.type() == mask.type());
+	assert(src.size() == mask.size() && mask.type() == CV_8UC1);
 	
+	Mat mask2;
+	cvtColor(mask, mask2, CV_GRAY2RGB);
+
 	uint32_t red = (color >> 16) & 0xff;
 	uint32_t green = (color >> 8) & 0xff;
 	uint32_t blue = color & 0xff;
-	Mat blend(src.size(), CV_8UC3, CV_RGB(blue, green, red));
-	cv::addWeighted(src, alpha, blend, (1.0f - alpha), 0.0, blend);
-	cv::bitwise_and(blend, mask, blend);
+#if USE_OPENCV_BGRA_LAYOUT
+	Scalar rgb(blue, green, red);
+#else
+	Scalar rgb(red, green, blue);
+#endif
+	Mat blend(src.size(), CV_8UC3, rgb);
+	cv::addWeighted(src, alpha, blend, (1.0 - alpha), 0.0, blend);
+	cv::bitwise_and(blend, mask2, blend);
 
 	// http://docs.opencv.org/master/d0/d86/tutorial_py_image_arithmetics.html
 	// http://docs.opencv.org/3.0-beta/modules/core/doc/operations_on_arrays.html
 	// dst = src&(mask) | dst&(~mask)
 	Mat mask_inv;
-	cv::bitwise_not(mask, mask_inv);
+	cv::bitwise_not(mask2, mask_inv);
 	cv::bitwise_and(src, mask_inv, src);
 	
 	cv::add(src, blend, src);
@@ -1219,120 +912,9 @@ Mat overlay(const Mat& src, Mat& dst, const Point& origin, int alpha)
 	return dst;
 }
 
-void blend(cv::Mat& dst, const cv::Mat& src, const cv::Point2i& position, float amount/* = 1.0f */)
-{
-	assert(src.channels() == 4 && dst.channels() == 4 && src.depth() == dst.depth());
-
-	Rect2i rect1(position.x, position.y, src.cols, src.rows);
-	Rect2i rect2(0, 0, dst.cols, dst.rows);
-	rect1 &= rect2;
-
-	switch(dst.type())
-	{
-	case CV_8UC4:
-		for(int r = rect1.y; r < (rect1.y + rect1.height); ++r)
-		for(int c = rect1.x; c < (rect1.x + rect1.width); ++c)
-		{
-			const cv::Vec4b& src_color = src.at<cv::Vec4b>(r - position.y, c - position.x);
-			cv::Vec4b& dst_color = dst.at<cv::Vec4b>(r, c);
-
-			const int src_alpha = cvRound(src_color[3] * amount), isc_alpha = 255 - src_alpha;
-			for(int i = 0; i < 3; ++i)
-				dst_color[i] = (src_color[i] * src_alpha + dst_color[i] * isc_alpha + 128)/255;
-		}
-		break;
-	case CV_32FC3:
-		for(int r = rect1.y; r < (rect1.y + rect1.height); ++r)
-		for(int c = rect1.x; c < (rect1.x + rect1.width); ++c)
-		{
-			const cv::Vec4f& src_color = src.at<cv::Vec4f>(r - position.y, c - position.x);
-			cv::Vec3f& dst_color = dst.at<cv::Vec3f>(r, c);
-
-			const float src_alpha = src_color[3] * amount, isc_alpha = 1.0f - src_alpha;
-			for(int i = 0; i < 3; ++i)
-				dst_color[i] = (src_color[i] * src_alpha + dst_color[i] * isc_alpha);
-		}
-		break;
-	case CV_32FC4:
-		for(int r = rect1.y; r < (rect1.y + rect1.height); ++r)
-		for(int c = rect1.x; c < (rect1.x + rect1.width); ++c)
-		{
-			const cv::Vec4f& src_color = src.at<cv::Vec4f>(r - position.y, c - position.x);
-			cv::Vec4f& dst_color = dst.at<cv::Vec4f>(r, c);
-
-			const float src_alpha = src_color[3] * amount, isc_alpha = 1.0f - src_alpha;
-			for(int i = 0; i < 3; ++i)
-				dst_color[i] = (src_color[i] * src_alpha + dst_color[i] * isc_alpha);
-		}
-		break;
-	default:
-		assert(false);
-		break;
-	}
-}
-
-void blend(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, const cv::Point2i& position, float amount/* = 1.0f*/)
-{
-	assert(src.channels() == dst.channels() && src.depth() == dst.depth());
-	assert(mask.type() == CV_8UC1);
-
-	Rect2i rect1(position.x, position.y, src.cols, src.rows);
-	Rect2i rect2(0, 0, dst.cols, dst.rows);
-	rect1 &= rect2;
-
-	Rect2i rect_mask(0, 0, mask.cols, mask.rows);
-	int offset_x = (src.cols - mask.cols)/2;
-	int offset_y = (src.rows - mask.rows)/2;
-
-	for(int r = rect1.y; r < (rect1.y + rect1.height); ++r)
-	for(int c = rect1.x; c < (rect1.x + rect1.width); ++c)
-	{
-		int src_r = r - position.y, src_c = c - position.x;
-		Point2i mask_position(src_c - offset_x, src_r - offset_y);
-		if(!rect_mask.contains(mask_position) || mask.at<uchar>(mask_position) != 0)
-			continue;
-
-		const cv::Vec4b& src_color = src.at<cv::Vec4b>(src_r, src_c);
-
-		switch(dst.type())
-		{
-		case CV_8UC4:
-		{
-			cv::Vec4b& dst_color = dst.at<cv::Vec4b>(r, c);
-			const int src_alpha = cvRound(src_color[3] * amount), isc_alpha = 255 - src_alpha;
-
-			for(int i = 0; i < 3; ++i)
-				dst_color[i] = (src_color[i] * src_alpha + dst_color[i] * isc_alpha + 127)/255;
-		}
-			break;
-		case CV_32FC3:
-		{
-			cv::Vec3f& dst_color = dst.at<cv::Vec3f>(r, c);
-			const float src_alpha = src_color[3] * amount, isc_alpha = 1.0f - src_alpha;
-
-			for(int i = 0; i < 3; ++i)
-				dst_color[i] = (src_color[i] * src_alpha + dst_color[i] * isc_alpha);
-		}
-			break;
-		case CV_32FC4:
-		{
-			cv::Vec4f& dst_color = dst.at<cv::Vec4f>(r, c);
-			const float src_alpha = src_color[3] * amount, isc_alpha = 1.0f - src_alpha;
-
-			for(int i = 0; i < 3; ++i)
-				dst_color[i] = (src_color[i] * src_alpha + dst_color[i] * isc_alpha);
-		}
-			break;
-		default:
-			assert(false);
-			break;
-		}
-	}
-}
-
 void blendIris(cv::Mat& image, const cv::Mat& iris, const std::vector<cv::Point2f>& points, float amount)
 {
-	// iris right index 42£¬ left index 43
+	// iris right index 42ï¼Œ left index 43
 	const int iris_indices_r[] = {35, 37, 39, 41};
 	const int iris_indices_l[] = {45, 47, 49, 51};
 	float iris_radius_r = distance(points[42], points[iris_indices_r[0]]);
@@ -1383,8 +965,8 @@ void blendIris(cv::Mat& image, const cv::Mat& iris, const std::vector<cv::Point2
 	RoiInfo eye_info_r = calcuateEyeRegionInfo_r(points);
 	RoiInfo eye_info_l = calcuateEyeRegionInfo_l(points);
 
-	blend(iris_r, image, eye_info_r.mask, iris_position_r, amount);
-	blend(iris_l, image, eye_info_l.mask, iris_position_l, amount);
+	Makeup::blend(iris_r, image, eye_info_r.mask, iris_position_r, amount);
+	Makeup::blend(iris_l, image, eye_info_l.mask, iris_position_l, amount);
 }
 
 cv::Mat resize(const cv::Mat& image, const Point2f& pivot,

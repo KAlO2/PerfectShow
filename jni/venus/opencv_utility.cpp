@@ -16,6 +16,12 @@ std::vector<cv::Point2i> cast(const std::vector<cv::Point2f>& points)
 	return result;
 }
 
+cv::Scalar cast(uint32_t color)
+{
+	uint8_t r = color, g = color >> 8, b = color >> 16, a = color >> 24;
+	return Scalar(r, g, b ,a) / 255;
+}
+
 cv::Rect2i box2Rect(const cv::Vec4f& box)
 {
 	cv::Rect2i rect;

@@ -3,7 +3,7 @@
 #include "venus/region_operation.h"
 #include "venus/scalar.h"
 
-#define LOG_TAG "Effect"
+#define LOG_TAG "Effect-JNI"
 #include "jni_bridge.h"
 
 #include <assert.h>
@@ -139,7 +139,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeGrayToAlpha
 }
 
 void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeColorToAlpha
-	(JNIEnv *env, jclass clazz, jint _color, jobject _src_bitmap, jobject _dst_bitmap)
+	(JNIEnv* env, jclass clazz, jint _color, jobject _src_bitmap, jobject _dst_bitmap)
 {
 	AndroidBitmapInfo src_info, dst_info;
 	uint32_t* src_pixels = lockJavaBitmap(env, _src_bitmap, src_info);
@@ -148,8 +148,8 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeColorToAlpha
 
 	float color[4];  // RGBA format
 	color[0] = ((_color >> 16) & 0xff) / 255.0f;
-	color[1] = ((_color >> 8) & 0xff) / 255.0f;
-	color[2] = ((_color >> 0) & 0xff) / 255.0f;
+	color[1] = ((_color >>  8) & 0xff) / 255.0f;
+	color[2] = ((_color >>  0) & 0xff) / 255.0f;
 	color[3] = ((_color >> 24) & 0xff) / 255.0f;
 
 	assert(false);  // TODO float type uint8_t modification

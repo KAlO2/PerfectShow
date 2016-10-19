@@ -79,6 +79,22 @@ public final class BitmapUtils
 	}
 	
 	/**
+	 * #Color use #AARRGGBB, namely BGRA in memory layout, while native layer use #AABBGGRR, namely
+	 * RGBA memory layout, need a swap(R, B) here.
+	 * 
+	 * @param color 
+	 * @return
+	 */
+	public static int bgra2rgba(int color)
+	{
+		int alpha = color & 0xff000000;  // alplha >>> 24
+		int red   = Color.red(color);
+		int green = color & 0x0000ff00;  // (color >> 8) & 0xFF
+		int blue  = Color.blue(color);
+		return alpha | (blue << 16) | green | red;
+	}
+	
+	/**
 	 * Rotate the given image by reading the EXIF value of the image (URI).<br>
 	 * If no rotation is required the image will not be rotated.<br>
 	 * New bitmap is created and the old one is recycled.
