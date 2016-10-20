@@ -29,7 +29,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyBlush(JNIEnv *
 	assert(0 <= _shape && _shape < static_cast<int>(Makeup::BlushShape::SHAPE_COUNT));
 	Makeup::BlushShape shape = static_cast<Makeup::BlushShape>(_shape);
 
-	uint32_t color = *reinterpret_cast<uint32_t*>(_color);
+	uint32_t color = *reinterpret_cast<uint32_t*>(&_color);
 	Makeup::applyBlush(dst, src, points, shape, color, amount);
 
 	unlockJavaBitmap(env, _src);

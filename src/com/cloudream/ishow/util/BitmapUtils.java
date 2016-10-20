@@ -82,8 +82,8 @@ public final class BitmapUtils
 	 * #Color use #AARRGGBB, namely BGRA in memory layout, while native layer use #AABBGGRR, namely
 	 * RGBA memory layout, need a swap(R, B) here.
 	 * 
-	 * @param color 
-	 * @return
+	 * @param  color in BGRA layout, as expressed in #Color
+	 * @return color in RGBA layout
 	 */
 	public static int bgra2rgba(int color)
 	{
@@ -92,6 +92,21 @@ public final class BitmapUtils
 		int green = color & 0x0000ff00;  // (color >> 8) & 0xFF
 		int blue  = Color.blue(color);
 		return alpha | (blue << 16) | green | red;
+	}
+	
+	/**
+	 * Output human readable string for color.
+	 * 
+	 * @param  Android #AARRGGBB format, 0xBBGGRRAA
+	 * @return string "#RRGGBBAA"
+	 */
+	public static String colorToString(int color)
+	{
+		return String.format("#%02X%02X%02X%02X",
+				(byte)(Color.red  (color)&0xff),
+				(byte)(Color.green(color)&0xff),
+				(byte)(Color.blue (color)&0xff),
+				(byte)(Color.alpha(color)&0xff));
 	}
 	
 	/**

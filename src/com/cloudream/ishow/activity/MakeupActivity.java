@@ -99,15 +99,6 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 
 	}
 */	
-	// Android #ARGB format
-	private static String colorToString(int color)
-	{
-		return String.format("#%02X%02X%02X%02X", 
-				(byte)(Color.alpha(color)&0xff),
-				(byte)(Color.red  (color)&0xff), 
-				(byte)(Color.green(color)&0xff),
-				(byte)(Color.blue (color)&0xff));
-	}
 
 	private static final int BLUSH_COLORS[] = 
 	{
@@ -119,9 +110,6 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 	
 	private final SeekBar.OnSeekBarChangeListener lsn_weight = new SeekBar.OnSeekBarChangeListener()
 	{
-//		final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-//		final ColorMatrix matrix = new ColorMatrix();
-		
 		@Override
 		public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
 		{
@@ -130,11 +118,13 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 			switch(region)
 			{
 			case LIP_B:
-				int lip_color = Compatibility.getColor(MakeupActivity.this, res_selected);
-				lip_color = Color.argb(Color.alpha(lip_color)>>2, Color.red(lip_color), Color.green(lip_color), Color.blue(lip_color));
-				Log.i(TAG, "use color: " + colorToString(lip_color));
-//				bmp_modified = detector.blendLip(bmp_step, lip_color, amount);
-				makeup.applyLipColor(lip_color, amount);
+			{
+				int color = Compatibility.getColor(MakeupActivity.this, res_selected);
+//				color = Color.argb(Color.alpha(color)>>2, Color.red(lip_color), Color.green(lip_color), Color.blue(lip_color));
+				color = (color & 0x00FFFFFF) | (Color.alpha(color) >> 2 << 24);
+				Log.i(TAG, "use color: " + BitmapUtils.colorToString(color));
+				makeup.applyLipColor(color, amount);
+			}
 				break;
 			case BLUSH_R:
 			{
@@ -143,9 +133,9 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 /*
 				id = MathUtils.wrap(id, R.drawable.blush_mask_00, R.drawable.blush_mask_04);
 				
-				blusher_color = (blusher_color & 0x00ffffff) | (((int)(amount * 128)) << 24);
-				Bitmap bmp_blusher = BitmapFactory.decodeResource(getResources(), id, BitmapUtils.OPTION_RGBA_8888);
-				bmp_modified = detector.blendBlusher(bmp_step, bmp_blusher, blusher_color, amount);
+				color = (color & 0x00ffffff) | (((int)(amount * 128)) << 24);
+				Bitmap bmp_blush = BitmapFactory.decodeResource(getResources(), id, BitmapUtils.OPTION_RGBA_8888);
+				bmp_modified = detector.blendBlusher(bmp_step, bmp_blush, color, amount);
 */
 				id = MathUtils.wrap(id, R.drawable.blush_mask_00, R.drawable.blush_mask_04);
 				final Makeup.BlushShape shapes[] = Makeup.BlushShape.values();
@@ -153,8 +143,8 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 				makeup.applyBlush(shape, color, amount);
 			}
 				break;
-			case IRIS_R:
 /*
+			case IRIS_R:
 				Bitmap bmp_iris_color = BitmapFactory.decodeResource(getResources(), res_selected, BitmapUtils.OPTION_RGBA_8888);
 				bmp_modified = detector.blendIris(bmp_step, bmp_iris_color, amount);
 
@@ -488,17 +478,8 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 						else
 							randomProgress(sb_weight, Range.MEDIUM);
 						
-						Toast.makeText(MakeupActivity.this, "index: " + (res_selected - res_start), Toast.LENGTH_SHORT).show();
+//						Toast.makeText(MakeupActivity.this, "index: " + (res_selected - res_start), Toast.LENGTH_SHORT).show();
 						long startTime = System.currentTimeMillis();
-	/*					
-						Bitmap bmp_style = BitmapFactory.decodeResource(getResources(), id, options);
-						if(bmp_style.hasAlpha())
-							Log.e(TAG, "this image has alpha channel");
-						bmp_modified = FaceDetector.seamlessClone(bmp_style.copy(Bitmap.Config.RGB_565, false), bmp_raw.copy(Bitmap.Config.RGB_565, false), null, region_center_l, Photo.MIXED_CLONE);
-						iv_image.setImageBitmap(bmp_modified);
-	*/					
-//						String src = String.format("/sdcard/PerfectShow/eye_lash/eye_lash_%02d.png", index);
-//						bmp_modified = detector.SeamlessClone(src, name, region_center_r, org.opencv.photo.Photo.NORMAL_CLONE);
 						iv_image.setImageBitmap(makeup.getFinalImage());
 						long endTime = System.currentTimeMillis();
 						String elapsed_time = "elapsed time: " + (endTime - startTime) + "ms";
