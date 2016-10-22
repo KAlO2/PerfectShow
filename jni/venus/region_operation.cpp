@@ -969,63 +969,7 @@ void blendIris(cv::Mat& image, const cv::Mat& iris, const std::vector<cv::Point2
 	Makeup::blend(iris_l, image, eye_info_l.mask, iris_position_l, amount);
 }
 
-cv::Mat resize(const cv::Mat& image, const Point2f& pivot,
-	float left_scale, float right_scale, float top_scale, float bottom_scale,
-	int interpolation/* = INTER_LINEAR */)
-{
-	int pivot_x = cvRound(pivot.x), pivot_y = cvRound(pivot.y);
-	LOGI("pivot: %d %d, image(%dx%d)", pivot_x, pivot_y, image.cols, image.rows);
-	assert(0 <= pivot_x && pivot_x < image.cols);
-	assert(0 <= pivot_y && pivot_y < image.rows);
 
-	cv::Mat top, bottom;  // seperate the whole image vertically
-	image(Rect2i(0, 0, image.cols, pivot_y)).copyTo(top);
-	image(Rect2i(0, pivot_y, image.cols, image.rows - pivot_y)).copyTo(bottom);
 
-	const cv::Size EMPTY(0, 0);
-	cv::resize(top, top, EMPTY, 1.0f, top_scale, interpolation);
-	cv::resize(bottom, bottom, EMPTY, 1.0f, bottom_scale, interpolation);
-
-	cv::Mat result;
-	cv::vconcat(top, bottom, result);
-
-	cv::Mat left, right;  // seperate the whole image horizontally
-	result(Rect2i(0, 0, pivot_x, result.rows)).copyTo(left);
-	result(Rect2i(pivot_x, 0, result.cols - pivot_x, result.rows)).copyTo(right);
-
-	cv::resize(left, left, EMPTY, left_scale, 1.0f, interpolation);
-	cv::resize(right, right, EMPTY, right_scale, 1.0f, interpolation);
-
-	cv::hconcat(left, right, result);
-	return result;
-}
-
-Vec4f calcuateDistance(Point2f& pivot, const Point2f& left, const Point2f& right, const Point2f& top, const Point2f& bottom)
-{
-	assert(left.x < right.x && top.y < bottom.y);
-	assert(top.y < left.y && left.y < bottom.y && top.y < right.y && right.y < bottom.y);
-	assert(left.x < top.x && top.x < right.x && left.x < bottom.x && bottom.x < right.x);
-#if 0
-	// non-skew version
-	pivot = Point2f((top.x + bottom.x)/2, (left.y + right.y)/2);
-	return Vec4f(pivot.x - left.x, right.x - pivot.x, pivot.y - top.y, bottom.y - pivot.y);
-#else
-	float denorm = (left.x - right.x)*(top.y - bottom.y) - (left.y - right.y)*(top.x - bottom.x);
-	assert(std::abs(denorm) > std::numeric_limits<float>::epsilon());
-
-	float z = left.x*right.y - left.y*right.x;
-	float w = top.x*bottom.y - top.y*bottom.x;
-	float x = z*(top.x - bottom.x) - w*(left.x - right.x);
-	float y = z*(top.y - bottom.y) - w*(left.y - right.y);
-	pivot.x = x/denorm;
-	pivot.y = y/denorm;
-
-	x = venus::distance(pivot, left);
-	y = venus::distance(pivot, right);
-	z = venus::distance(pivot, top);
-	w = venus::distance(pivot, bottom);
-	return Vec4f(x, y, z, w);
-#endif
-}
 
 } /* namespace venus */

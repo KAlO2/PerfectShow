@@ -12,7 +12,7 @@ using namespace cv;
 namespace venus {
 
 // number of feature points detected
-const int Feature::COUNT = 81;
+const size_t Feature::COUNT = 81;
 
 // https://en.wikipedia.org/wiki/Delaunay_triangulation
 // Delaunay triangle indices generated from mark() function
@@ -609,15 +609,7 @@ cv::Vec4f Feature::getSymmetryAxis(const std::vector<cv::Point2f>& points)
 	return line;
 }
 
-cv::Mat Feature::createMask(const std::vector<cv::Point2f> polygons[], int count, float blur_radius/* = 0 */)
-{
-	Mat mask;
-	// implement it if necessary
-	assert(false);
-	return mask;
-}
-
-cv::Mat Feature::createMask(const std::vector<cv::Point2f>& points, float blur_radius/* = 0 */, cv::Point2i* position/* = nullptr */)
+cv::Mat Feature::createMask(const std::vector<cv::Point2f>& points, float blur_radius/* = 0.0F */, cv::Point2i* position/* = nullptr */)
 {
 //	Rect rect = cv::boundingRect(points);
 	Vec4f box = venus::boundingBox(points);
@@ -639,7 +631,7 @@ cv::Mat Feature::createMask(const std::vector<cv::Point2f>& points, float blur_r
 	const int       point_count[1] = { static_cast<int>(points_.size()) };
 	cv::fillPoly(mask, polygon_data, point_count, 1, Scalar::all(255));
 
-	mask = Effect::gaussianBlur(mask, blur_radius);
+	Effect::gaussianBlur(mask, blur_radius);
 	
 	return mask;
 }
@@ -724,7 +716,7 @@ cv::Mat Feature::maskPolygonSmooth(const cv::Rect2i& rect, const std::vector<cv:
 	measure /= points.size();
 	measure = std::sqrt(measure);
 
-	mask = Effect::gaussianBlur(mask, measure/level);
+	Effect::gaussianBlur(mask, measure/level);
 	return mask;
 }
 
@@ -798,10 +790,13 @@ Region Feature::calculateBrowRegion(const std::vector<cv::Point2f>& points, cons
 
 	cv::fillConvexPoly(mask, polygon2, Scalar(255));
 
-	// TODO need to come up with a more suitable pivot
+#if 0
 	Point2f pivot = right?
 		(points[20] + points[21] + points[23] + points[24]) / 4.0f:
 		(points[27] + points[28] + points[30] + points[31]) / 4.0f;
+#else
+	Point2f pivot((box[0] + box[2])/2, (box[1] + box[3])/2);
+#endif
 
 	Size2f size = calculateSize(box, line);
 	return Region(pivot, size, mask);
@@ -922,113 +917,6 @@ Region Feature::calculateEyeRegion(const std::vector<cv::Point2f>& points, const
 	return Region(pivot, size, mask);
 }
 
-Region Feature::calculateTeethRegion() const
-{
-	const std::vector<Point2f> polygon = calculateTeethPolygon(points);
-	Rect rect = cv::boundingRect(polygon);
-	Mat mask = maskPolygon(rect, polygon);
-#if 1
-	Mat gray;
-	switch(image.channels())
-	{
-	case 1:  gray = image(rect).clone(); break;
-	
-#if USE_OPENCV_BGRA_LAYOUT
-	case 3:  cv::cvtColor(image(rect), gray, cv::COLOR_BGR2GRAY);  break;
-	case 4:  cv::cvtColor(image(rect), gray, cv::COLOR_BGRA2GRAY); break;
-#else
-	case 3:  cv::cvtColor(image(rect), gray, cv::COLOR_RGB2GRAY);  break;
-	case 4:  cv::cvtColor(image(rect), gray, cv::COLOR_RGBA2GRAY); break;
-#endif
-
-	default: assert(false);  // unimplemented yet.
-	}
-	
-	Scalar sum = cv::sum(gray);
-	double threshold = sum[0] / (image.rows * image.cols);
-#endif
-/*
-	Mat roi = image(rect).clone();
-	Scalar sum = cv::sum(roi);
-	Mat rgba[4];
-	assert(image.channels() <= 4);
-	cv::split(image, rgba);
-*/
-	// TODO come up with a robust method
-//	Mat mask;
-	assert(image.depth() == CV_8U);
-	cv::threshold(image, mask, threshold, 255, THRESH_BINARY);
-
-	Vec4f box = venus::boundingBox(polygon);
-	Size2f size = calculateSize(box, line);
-	Point2f pivot((box[0] + box[2])/2, (box[1] + box[3])/2);
-
-	return Region(pivot, size, mask);
-}
-
-cv::Mat Feature::maskSkinRegion(int width, int height, const std::vector<cv::Point2f>& points)
-{
-	const Scalar TRANSPARENT(0), OPAQUE(255);
-	Mat mask(height, width, CV_8UC1, TRANSPARENT);
-
-	const int N = 20;
-	Point polygon[3*N];
-	for(int i = 0; i < N; ++i)
-	{
-		int _0 = (i + (N-1))%N, _1 = i, _2 = (i + 1)%N, _3 = (i + 2)%N;
-		polygon[3*i + 0] = catmullRomSpline(0.25f, points[_0], points[_1], points[_2], points[_3]);
-		polygon[3*i + 1] = catmullRomSpline(0.50f, points[_0], points[_1], points[_2], points[_3]);
-		polygon[3*i + 2] = catmullRomSpline(0.75f, points[_0], points[_1], points[_2], points[_3]);
-	}
-	cv::fillConvexPoly(mask, polygon, 3*N, OPAQUE);
-
-#if 0 // less accurate branch
-	auto fillConvex = [&mask, &points, &polygon, &TRANSPARENT](int start, int stop/* exclude */)
-	{
-		for(int i = start; i < stop; ++i)
-			polygon[i - start] = Point(cvRound(points[i].x), cvRound(points[i].y));
-		cv::fillConvexPoly(mask, polygon, stop - start, TRANSPARENT);
-	};
-
-	fillConvex(20, 26);  // right eye brow
-	fillConvex(26, 32);  // left eye brow
-	fillConvex(34, 42);  // right eye region
-	fillConvex(44, 52);  // left eye region
-#else
-	std::vector<Point2f> poly = Feature::calculateBrowPolygon(points, true);
-	cv::fillConvexPoly(mask, cast(poly).data(), poly.size(), TRANSPARENT);
-	poly = Feature::calculateBrowPolygon(points, false);
-	cv::fillConvexPoly(mask, cast(poly).data(), poly.size(), TRANSPARENT);
-
-	poly = Feature::calculateEyePolygon(points, true);
-	cv::fillConvexPoly(mask, cast(poly).data(), poly.size(), TRANSPARENT);
-	poly = Feature::calculateEyePolygon(points, false);
-	cv::fillConvexPoly(mask, cast(poly).data(), poly.size(), TRANSPARENT);
-#endif
-
-	int radius = cvRound(venus::distance(points[57], points[59]));
-	circle(mask, points[55], radius, Scalar(0), CV_FILLED, LINE_AA);
-	circle(mask, points[57], radius, Scalar(0), CV_FILLED, LINE_AA);
-
-	// mouth region
-	int j = 0;
-	for(int i = 63; i <= 69; ++i, ++j)
-		polygon[j] = Point(cvRound(points[i].x), cvRound(points[i].y));
-	for(int i = 76; i <= 80; ++i, ++j)
-		polygon[j] = Point(cvRound(points[i].x), cvRound(points[i].y));
-	cv::fillConvexPoly(mask, polygon, j, TRANSPARENT);
-
-	Rect rect = cv::boundingRect(points);
-	int size = static_cast<int>(std::max(width, height) * 0.02f);
-	if((size&1) == 0)
-		size += 1;
-	cv::GaussianBlur(mask, mask, Size(size, size), 0, 0, cv::BorderTypes::BORDER_CONSTANT);
-
-	// TODO kick out hair region
-
-	return mask;
-}
-
 Region Feature::calculateLipsRegion(const std::vector<cv::Point2f>& points, const cv::Vec4f& line)
 {
 /*
@@ -1111,4 +999,88 @@ Region Feature::calculateLipsRegion(const std::vector<cv::Point2f>& points, cons
 	return Region(pivot, size, mask);
 }
 
+Region Feature::calculateTeethRegion() const
+{
+	const std::vector<Point2f> polygon = calculateTeethPolygon(points);
+	Rect rect = cv::boundingRect(polygon);
+	Mat mask = maskPolygon(rect, polygon);
+#if 1
+	Mat gray;
+	switch(image.channels())
+	{
+	case 1:  gray = image(rect).clone(); break;
+	
+#if USE_OPENCV_BGRA_LAYOUT
+	case 3:  cv::cvtColor(image(rect), gray, cv::COLOR_BGR2GRAY);  break;
+	case 4:  cv::cvtColor(image(rect), gray, cv::COLOR_BGRA2GRAY); break;
+#else
+	case 3:  cv::cvtColor(image(rect), gray, cv::COLOR_RGB2GRAY);  break;
+	case 4:  cv::cvtColor(image(rect), gray, cv::COLOR_RGBA2GRAY); break;
+#endif
+
+	default: assert(false);  // unimplemented yet.
+	}
+	
+	Scalar sum = cv::sum(gray);
+	double threshold = sum[0] / (image.rows * image.cols);
+#endif
+/*
+	Mat roi = image(rect).clone();
+	Scalar sum = cv::sum(roi);
+	Mat rgba[4];
+	assert(image.channels() <= 4);
+	cv::split(image, rgba);
+*/
+	// TODO come up with a robust method
+//	Mat mask;
+	assert(image.depth() == CV_8U);
+	cv::threshold(image, mask, threshold, 255, THRESH_BINARY);
+
+	Vec4f box = venus::boundingBox(polygon);
+	Size2f size = calculateSize(box, line);
+	Point2f pivot((box[0] + box[2])/2, (box[1] + box[3])/2);
+
+	return Region(pivot, size, mask);
+}
+
+cv::Vec4f Feature::calcuateDistance(cv::Point2f& pivot, const cv::Point2f& left, const cv::Point2f& right, const cv::Point2f& top, const cv::Point2f& bottom)
+{
+	assert(left.x < right.x && top.y < bottom.y);
+	assert(top.y < left.y && left.y < bottom.y && top.y < right.y && right.y < bottom.y);
+	assert(left.x < top.x && top.x < right.x && left.x < bottom.x && bottom.x < right.x);
+#if 0
+	// non-skew version
+	pivot = Point2f((top.x + bottom.x)/2, (left.y + right.y)/2);
+	return Vec4f(pivot.x - left.x, right.x - pivot.x, pivot.y - top.y, bottom.y - pivot.y);
+#else
+	float denorm = (left.x - right.x)*(top.y - bottom.y) - (left.y - right.y)*(top.x - bottom.x);
+	assert(std::abs(denorm) > std::numeric_limits<float>::epsilon());
+
+	float z = left.x*right.y - left.y*right.x;
+	float w = top.x*bottom.y - top.y*bottom.x;
+	float x = z*(top.x - bottom.x) - w*(left.x - right.x);
+	float y = z*(top.y - bottom.y) - w*(left.y - right.y);
+	pivot.x = x/denorm;
+	pivot.y = y/denorm;
+
+	x = venus::distance(pivot, left);
+	y = venus::distance(pivot, right);
+	z = venus::distance(pivot, top);
+	w = venus::distance(pivot, bottom);
+	return Vec4f(x, y, z, w);
+#endif
+}
+
+cv::Vec4f Feature::calcuateEyeRadius(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right)
+{
+	const Point2f& eye_left   = points[right ? 38:44];
+	const Point2f& eye_top    = points[right ? 36:46];
+	const Point2f& eye_right  = points[right ? 34:48];
+	const Point2f& eye_bottom = points[right ? 40:50];
+
+	(void)line;  // TODO need line for tune top and bottom point
+	Point2f pivot;
+	Vec4f distance = calcuateDistance(pivot, eye_left, eye_top, eye_right, eye_bottom);
+	return distance;
+}
 } /* namespace venus */

@@ -39,6 +39,8 @@ cv::Mat Makeup::pack(uint32_t color, const cv::Mat& gray)
 
 std::vector<cv::Point2f> Makeup::createShape(const std::vector<cv::Point2f>& points, BlushShape shape, bool right)
 {
+	assert(points.size() == Feature::COUNT);
+	
 	const Point2f& _02 = points[right ?  2:10];
 	const Point2f& _62 = points[right ? 62:58];
 	const Point2f& _00 = points[right ?  0:12];
@@ -47,6 +49,7 @@ std::vector<cv::Point2f> Makeup::createShape(const std::vector<cv::Point2f>& poi
 	const Point2f& _41 = points[right ? 41:51];
 	const Point2f& _61 = points[right ? 61:59];
 	const Point2f& _03 = points[right ?  3: 9];
+	const Point2f& _63 = points[right ? 63:69];
 
 	switch(shape)
 	{
@@ -92,8 +95,8 @@ std::vector<cv::Point2f> Makeup::createShape(const std::vector<cv::Point2f>& poi
 			Point2f(_33.x, _62.y),
 			(_02 + _03)/2,
 			_02,
-			catmullRomSpline(2.0/3, _00, _01, _02, _03),
-			catmullRomSpline(1.0/3, _00, _01, _02, _03),
+			catmullRomSpline(2.0f/3, _00, _01, _02, _03),
+			catmullRomSpline(1.0f/3, _00, _01, _02, _03),
 			_01,
 			(_00 + _01*2)/3,
 		};
@@ -147,6 +150,7 @@ std::vector<cv::Point2f> Makeup::createShape(const std::vector<cv::Point2f>& poi
 		std::vector<Point2f> seagull(N);
 		seagull[0] = _01;
 		seagull[5] = points[right?54:52];
+
 		const Point2f& carriage = points[knot[0]];
 		for(int i = 1; i < 5; ++i)
 		{
@@ -273,6 +277,9 @@ void Makeup::blend(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, const 
 
 void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, BlushShape shape, uint32_t color, float amount)
 {
+	assert(!src.empty() && points.size() == Feature::COUNT);
+	assert(0 <= amount && amount <= 1);
+
 	// Note that src.copyTo(dst); will invoke dst.create(src.size(), src.type());
 	// which has this clause if( dims <= 2 && rows == _rows && cols == _cols && type() == _type && data ) return;
 	// which means that dst's memory will only be allocated the first time in if dst is empty.
@@ -319,11 +326,8 @@ void Makeup::applyLipColor(const uint32_t* dst, const uint32_t* const src, int w
 
 void Makeup::applyLipColor(cv::Mat& dst, const cv::Mat& src, const Region& region, uint32_t color, float amount)
 {
-	assert(src.channels() == 4);  // only handles RGBA image
-	if(dst.empty())
-		dst = src.clone();
-	else
-		assert(dst.size() == src.size() && dst.type() == src.type());
+	assert(!src.empty() && src.channels() == 4);  // only handles RGBA image
+	src.copyTo(dst);
 	
 	Rect rect(0, 0, src.cols, src.rows);
 	const Rect rect_mask = region.getRect();

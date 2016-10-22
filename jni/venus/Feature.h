@@ -16,7 +16,7 @@ namespace venus {
 class Feature
 {
 public:
-	static const int COUNT;
+	static const size_t COUNT;
 	static const std::vector<cv::Vec3i> triangle_indices;
 
 private:
@@ -32,6 +32,7 @@ private:
 	static Region calculateEyeRegion(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right);
 	static Region calculateLipsRegion(const std::vector<cv::Point2f>& points, const cv::Vec4f& line);
 
+	static cv::Vec4f calcuateEyeRadius(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right);
 public:
 	Feature(const cv::Mat& image, const std::vector<cv::Point2f>& points);
 //	void setFeaturePoints(const std::vector<cv::Point>& points);
@@ -51,10 +52,9 @@ public:
 	 *          (x0, y0) is a point on the line, or to be more exact, center of the detected face.
 	 */
 	static cv::Vec4f getSymmetryAxis(const std::vector<cv::Point2f>& points);
-	cv::Vec4f getSymmetryAxis() const { return getSymmetryAxis(points); }
+	cv::Vec4f getSymmetryAxis() const { return line; }
 
-	static cv::Mat createMask(const std::vector<cv::Point2f> polygons[], int count, float blur_radius = 0);
-	static cv::Mat createMask(const std::vector<cv::Point2f>& points, float blur_radius = 0, cv::Point2i* position = nullptr);
+	static cv::Mat createMask(const std::vector<cv::Point2f>& points, float blur_radius = 0.0F, cv::Point2i* position = nullptr);
 
 	static cv::Mat maskPolygon(const cv::Rect2i& rect, const std::vector<cv::Point2f>& points, const int indices[], int length);
 	static cv::Mat maskPolygon(const cv::Rect2i& rect, const std::vector<cv::Point2f>& points, int start, int length);
@@ -67,12 +67,18 @@ public:
 	static std::vector<cv::Point2f> calculateNosePolygon(const std::vector<cv::Point2f>& points);
 	static std::vector<cv::Point2f> calculateTeethPolygon(const std::vector<cv::Point2f>& points);
 
-	Region calculateBrowRegion_r() const { return calculateBrowRegion(points, line, true);  }
-	Region calculateBrowRegion_l() const { return calculateBrowRegion(points, line, false); }
-	Region calculateEyeRegion_r()  const { return calculateEyeRegion(points, line, true);   }
-	Region calculateEyeRegion_l()  const { return calculateEyeRegion(points, line, false);  }
-	Region calculateLipshRegion()  const { return calculateLipsRegion(points, line); }
-	Region calculateTeethRegion()  const;
+	Region calculateBrowRegion(bool right) const { return calculateBrowRegion(points, line, right);  }
+	Region calculateEyeRegion(bool right)  const { return calculateEyeRegion(points, line, right);   }
+	Region calculateLipshRegion()          const { return calculateLipsRegion(points, line); }
+	Region calculateTeethRegion()          const;
+
+	/**
+	 * Given four points, calculate the intersection point of the two lines (left-right and top-bottom).
+	 * @see https://en.wikipedia.org/wiki/Line¡§Cline_intersection
+	 */
+	static cv::Vec4f calcuateDistance(cv::Point2f& pivot, const cv::Point2f& left, const cv::Point2f& right, const cv::Point2f& top, const cv::Point2f& bottom);
+
+	cv::Vec4f calcuateEyeRadius(bool right) const { return calcuateEyeRadius(points, line, right); }
 
 	static cv::Mat maskSkinRegion(int width, int height, const std::vector<cv::Point2f>& points);
 

@@ -911,16 +911,16 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendEyeLash(
 	const Point2f& left_l(points[44]), &right_l(points[48]), &top_l(points[46]), &bottom_l(points[50]);
 
 	Point2f PIVOT, pivot_r, pivot_l;
-	Vec4f DISTANCE = calcuateDistance(PIVOT, LEFT, RIGHT, TOP, BOTTOM);
-	Vec4f distance_r = calcuateDistance(pivot_r, left_r, right_r, top_r, bottom_r);
-	Vec4f distance_l = calcuateDistance(pivot_l, left_l, right_l, top_l, bottom_l);
+	Vec4f DISTANCE = Feature::calcuateDistance(PIVOT, LEFT, RIGHT, TOP, BOTTOM);
+	Vec4f distance_r = Feature::calcuateDistance(pivot_r, left_r, right_r, top_r, bottom_r);
+	Vec4f distance_l = Feature::calcuateDistance(pivot_l, left_l, right_l, top_l, bottom_l);
 	LOGI("pivot_r = (%f, %f), pivot_l = (%f, %f)", pivot_r.x, pivot_r.y, pivot_l.x, pivot_l.y);
 	Vec4f scale_r, scale_l;
 	for(int i = 0; i < 4; ++i)  // no operator / overloaded for Vec4f.
 		scale_r[i] = distance_r[i] / DISTANCE[i];
 	LOGI("right lash scale left: %f, right: %f, top: %f, bottom: %f", scale_r[0], scale_r[1], scale_r[2], scale_r[3]);
 	// use INTER_LANCZOS4 instead of INTER_LINEAR for best anti-aliasing result
-	Mat eye_lash_r = venus::resize(eye_lash, PIVOT, scale_r, INTER_LANCZOS4);
+	Mat eye_lash_r = Region::resize(eye_lash, PIVOT, scale_r, INTER_LANCZOS4);
 
 	// mirror left and right side for left eye lash
 	std::swap(DISTANCE[0], DISTANCE[1]);
@@ -930,7 +930,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendEyeLash(
 	for(int i = 0; i < 4; ++i)
 		scale_l[i] = distance_l[i] / DISTANCE[i];
 	LOGI("left lash scale left: %f, right: %f, top: %f, bottom: %f", scale_l[0], scale_l[1], scale_l[2], scale_l[3]);
-	Mat eye_lash_l = venus::resize(eye_lash, PIVOT, scale_l, INTER_LANCZOS4);
+	Mat eye_lash_l = Region::resize(eye_lash, PIVOT, scale_l, INTER_LANCZOS4);
 
 	AndroidBitmapInfo image_info;
 	uint32_t* image_pixels  = lockJavaBitmap(env, _image, image_info);

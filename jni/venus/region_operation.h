@@ -94,30 +94,7 @@ cv::Mat overlay(const cv::Mat& src, cv::Mat& dst, const cv::Point& orgin, int al
 
 void blendIris(cv::Mat& image, const cv::Mat& iris, const std::vector<cv::Point2f>& points, float amount);
 
-/**_________________
- * |  LT |    LR    |    top
- * |-----p----------|
- * |  LB |    RB    |    bottom
- * |_____|__________|
- *  left  right
- *
- * Scale the four parts separately, then assembly them together.
- * Makeup image like eye lash can use this function to tune image for proper size.
- */
-cv::Mat resize(const cv::Mat& image, const cv::Point2f& pivot,
-	float left_scale, float right_scale, float top_scale, float bottom_scale,
-	int interpolation = cv::INTER_LINEAR);
 
-inline cv::Mat resize(const cv::Mat& image, const cv::Point2f& pivot, const cv::Vec4f& scale, int interpolation = cv::INTER_LINEAR)
-{
-	return resize(image, pivot, scale[0], scale[1], scale[2], scale[3], interpolation);
-}
-
-/**
- * Given four points, calculate the intersection point of the two lines (left-right and top-bottom).
- * @see https://en.wikipedia.org/wiki/Line–line_intersection
- */
-cv::Vec4f calcuateDistance(cv::Point2f& pivot, const cv::Point2f& left, const cv::Point2f& right, const cv::Point2f& top, const cv::Point2f& bottom);
 
 /* NOTES
  *

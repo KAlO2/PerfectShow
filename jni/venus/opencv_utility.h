@@ -141,10 +141,6 @@ cv::Point2f bezier3(float t, const cv::Point2f& p0, const cv::Point2f& p1, const
  */
 cv::Mat susan(const cv::Mat& image, int radius, int tolerance);
 
-/**
- * related to cv::addWeighted(), but use a mask for weight
- */
-void addWeighted(const cv::Mat& src, const cv::Mat& mask, cv::Mat& dst);
 
 } /* namespace venus */
 #endif /* VENUS_OPENCV_UTILITY_H_ */

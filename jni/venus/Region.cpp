@@ -1,5 +1,7 @@
 #include "venus/Region.h"
 
+#include <stdint.h>
+
 #include <opencv2/imgproc.hpp>
 
 using namespace cv;
@@ -48,19 +50,50 @@ Region Region::merge(const Region& region1, const Region& region2)
 	return Region(pivot, size, mask);
 }
 
+cv::Mat Region::resize(const cv::Mat& image, const Point2f& pivot,
+	float left_scale, float top_scale, float right_scale, float bottom_scale,
+	int interpolation/* = INTER_LINEAR */)
+{
+	int pivot_x = cvRound(pivot.x), pivot_y = cvRound(pivot.y);
+//	printf("pivot: %d %d, image(%dx%d)", pivot_x, pivot_y, image.cols, image.rows);
+	assert(0 <= pivot_x && pivot_x < image.cols);
+	assert(0 <= pivot_y && pivot_y < image.rows);
+
+	cv::Mat top, bottom;  // seperate the whole image vertically
+	image(Rect2i(0, 0, image.cols, pivot_y)).copyTo(top);
+	image(Rect2i(0, pivot_y, image.cols, image.rows - pivot_y)).copyTo(bottom);
+
+	const cv::Size EMPTY(0, 0);
+	cv::resize(top, top, EMPTY, 1.0f, top_scale, interpolation);
+	cv::resize(bottom, bottom, EMPTY, 1.0f, bottom_scale, interpolation);
+
+	cv::Mat result;
+	cv::vconcat(top, bottom, result);
+
+	cv::Mat left, right;  // seperate the whole image horizontally
+	result(Rect2i(0, 0, pivot_x, result.rows)).copyTo(left);
+	result(Rect2i(pivot_x, 0, result.cols - pivot_x, result.rows)).copyTo(right);
+
+	cv::resize(left, left, EMPTY, left_scale, 1.0f, interpolation);
+	cv::resize(right, right, EMPTY, right_scale, 1.0f, interpolation);
+
+	cv::hconcat(left, right, result);
+	return result;
+}
+
 cv::Mat Region::inset(const cv::Mat& mat, int offset)
 {
+	assert(!mat.empty());
+
 	Rect rect(0, 0, mat.cols, mat.rows);
 	inset(rect, offset);
-
-	if(rect.width == 0 || rect.height == 0)
-		return Mat();
 
 	if(rect.x >= 0)  // rect.x == rect.y
 		return mat(rect).clone();
 
+	Rect rect2(-offset, -offset, mat.cols, mat.rows);
 	Mat mat2(rect.size(), mat.type(), Scalar::all(0));
-	mat.copyTo(mat2(Rect(offset, offset, mat.cols, mat.rows)));
+	mat.copyTo(mat2(rect2));
 	return mat2;
 }
 
@@ -75,15 +108,17 @@ void Region::inset(float offset)
 
 cv::Rect2i Region::boundingRect(const cv::Mat& mask)
 {
-	std::vector<uchar> row(mask.cols, 0), col(mask.rows, 0);
-	const uchar* p = mask.ptr<uchar>();
+	assert(mask.depth() == CV_8U);
+
+	std::vector<uint8_t> row(mask.cols, 0), col(mask.rows, 0);
+	const uint8_t* p = mask.ptr<uint8_t>();
 	const int channel = mask.channels();
 	for(int r = 0; r < mask.rows; ++r)
 	for(int c = 0; c < mask.cols; ++c)
 	{
 		// single channel is alpha, multiple channels select the last channel as alpha.
-		uchar value = p[(r * mask.cols + c) * channel + channel - 1];
-//		uchar value = mask.at<uchar>(r, c);
+		uint8_t value = p[(r * mask.cols + c + 1) * channel - 1];
+//		uint8_t value = mask.at<uint8_t>(r, c);
 		row[c] |= value;
 		col[r] |= value;
 	}
@@ -102,7 +137,7 @@ cv::Rect2i Region::boundingRect(const cv::Mat& mask)
 	instead of
 		std::reverse_iterator<decltype(left)>(left)
 */
-	auto predicate = [](uchar ch) { return ch == 0; };
+	auto predicate = [](uint8_t ch) { return ch == 0; };
 	auto left   = std::find_if_not(row.begin(),  row.end(),  predicate);
 	auto right  = std::find_if_not(row.rbegin(), std::reverse_iterator<decltype(left)>(left), predicate);
 	auto top    = std::find_if_not(col.begin(),  col.end(),  predicate);
@@ -117,7 +152,7 @@ cv::Rect2i Region::boundingRect(const cv::Mat& mask)
 	for(int i = 0; i < mask.rows; ++i)         if(col[i] != 0) { top    = i; break; }
 	for(int i = mask.rows - 1; i >= top; --i)  if(col[i] != 0) { bottom = i; break; }
 
-	if(left > right || top > bottom)  // In fact, arbitrary one judgment should be enough.
+	if(left > right || top > bottom)  // In fact, arbitrary one condition should be enough.
 		return Rect2i(0, 0, 0, 0);    // Empty rectangle means the input mask is all zeros!
 
 	int width = right - left + 1, height = bottom - top + 1;
@@ -125,35 +160,35 @@ cv::Rect2i Region::boundingRect(const cv::Mat& mask)
 #endif
 }
 
-cv::Mat Region::shrink(const cv::Mat& mask, int offset)
+void Region::shrink(cv::Mat& dst, const cv::Mat& mask, int offset)
 {
-	if(offset == 0)
-		return mask;  // .clone();
+	mask.copyTo(dst);  // self copy will be skipped
+	if(offset == 0)  // shortcut
+		return;
 
-	int morph_radius = std::abs(offset);
-	int morph_size = morph_radius * 2 + 1;
-	Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE, Size(morph_size, morph_size), Point(morph_radius, morph_radius));
+	int radius  = std::abs(offset);
+	int size    = radius * 2 + 1;
+	Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE, Size(size, size), Point(radius, radius));
 
 	// Apply the specified morphology operation
-	Mat result;
-	const Point anchor(-1, -1);  //  default value (-1, -1) means that the anchor is at the element center.
+	const Point anchor(-1, -1);  // default value (-1, -1) means that the anchor is at the element center.
 	int iterations = 1;
 	if(offset > 0)
-		cv::erode(mask, result, element, anchor, iterations);
+		cv::erode(mask, dst, element, anchor, iterations);
 	else
-		cv::dilate(mask, result, element, anchor, iterations);
-
-	return result;
+		cv::dilate(mask, dst, element, anchor, iterations);
 }
 
-cv::Mat Region::grow(const cv::Mat& mask, int offset)
+void Region::grow(cv::Mat& dst, const cv::Mat& mask, int offset)
 {
-	return shrink(mask, -offset);
+	shrink(dst, mask, -offset);
 }
 
-void Region::overlay(cv::Mat& mat, const Region& mask, const cv::Point2f& position, const cv::Mat& patch)
+void Region::overlay(cv::Mat& dst, const cv::Mat& patch, const cv::Point2i& position, const cv::Mat& mask)
 {
-
+	assert(patch.size() == mask.size());
+	Rect rect(position, mask.size());
+	patch.copyTo(dst(rect), mask);
 }
 
 cv::Mat Region::transform(cv::Size& size, cv::Point2f& pivot, float angle, const cv::Vec2f& scale/* = cv::Vec2f(1.0f, 1.0f) */)
