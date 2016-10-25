@@ -13,19 +13,19 @@ using namespace cv;
 
 namespace venus {
 
-cv::Mat Makeup::pack(uint32_t color, const cv::Mat& gray)
+cv::Mat Makeup::pack(uint32_t color, const cv::Mat& mask)
 {
-	assert(gray.type() == CV_8UC1);
-	cv::Mat image(gray.rows, gray.cols, CV_8UC4);
+	assert(mask.type() == CV_8UC1);
+	cv::Mat image(mask.rows, mask.cols, CV_8UC4);
 
-	const int length = gray.rows * gray.cols;
-	const uint8_t* gray_data = gray.data;
+	const int length = mask.rows * mask.cols;
+	const uint8_t* mask_data = mask.data;
 	uint32_t* image_data = reinterpret_cast<uint32_t*>(image.data);
 
 	#pragma omp parallel for
 	for(int i = 0; i < length; ++i)
 	{
-		uint8_t alpha = ((color >> 24) * gray_data[i] + 127) / 255;
+		uint8_t alpha = ((color >> 24) * mask_data[i] + 127) / 255;
 #if USE_OPENCV_BGRA_LAYOUT
 		// Swap R and B channel, then assembly it to BGRA format.
 		image_data[i] = ((color >> 16) & 0xff) | (color &0x00ff00) | ((color & 0xff) << 16) | (alpha << 24);
@@ -35,6 +35,41 @@ cv::Mat Makeup::pack(uint32_t color, const cv::Mat& gray)
 	}
 
 	return image;
+}
+
+std::vector<cv::Point2f> Makeup::createHeartShape(const Point2f& center, float radius, float angle/* = 0.0F*/)
+{
+	const int N = 32;  // can be tweaked!
+	std::vector<Point2f> heart(N);
+
+	const float cosa = std::cos(angle), sina = std::sin(angle);
+
+	// http://mathworld.wolfram.com/HeartCurve.html
+	// x = 16 * sin(t)^3
+	// y = 13 * cos(t) - 5 * cos(2*t) - 2 * cos(3*t) - cos(4*t)
+	// where parameter t in range [0 : 2*pi]
+	//
+	// cos(2*t) = cos(t)^2 - sin(t)^2
+	// cos(3*t) = 4*cos(t)^3 - 3*cos(t)
+	// cos(4*t) = 2*sin(2*t)*cos(2*t)
+	for(int i = 0; i < N; ++i)
+	{
+		float t     = i * static_cast<float>(2*M_PI / N);
+		float sint  = std::sin(t), cost = std::cos(t);
+		float sin2t = 2*sint*cost, cos2t = cost*cost - sint*sint;
+		float cos3t = cost*cos2t - sint*sin2t;
+		float cos4t = cos2t*cos2t - sin2t*sin2t;
+
+		float x = sint * sint * sint;
+		// A negative sign makes Y up coordinates to Y down coordinates.
+		float y = (13*cost - 5*cos2t - 2*cos3t - cos4t) / -16;
+
+		// rotate (x, y) by angle:
+		// (x + y*i)(cosa + sina * i) = (x*cosa - y*sina, x*sina + y*cosa)
+		Point2f rotated(x*cosa - y*sina, x*sina + y*cosa);
+		heart[i] = center + radius * rotated;
+	}
+	return heart;
 }
 
 std::vector<cv::Point2f> Makeup::createShape(const std::vector<cv::Point2f>& points, BlushShape shape, bool right)
@@ -49,7 +84,6 @@ std::vector<cv::Point2f> Makeup::createShape(const std::vector<cv::Point2f>& poi
 	const Point2f& _41 = points[right ? 41:51];
 	const Point2f& _61 = points[right ? 61:59];
 	const Point2f& _03 = points[right ?  3: 9];
-	const Point2f& _63 = points[right ? 63:69];
 
 	switch(shape)
 	{
@@ -105,34 +139,20 @@ std::vector<cv::Point2f> Makeup::createShape(const std::vector<cv::Point2f>& poi
 
 	case BlushShape::HEART:
 	{
-		Point2f center((_62.x + _02.x)/2, (points[53].y + points[56].y)/2);
-		float radius = std::abs(_62.x - _02.x)/2;
+		Point2f _x = (_62 + _02)/2;
+		Point2f _y = (points[53] + points[56]*2)/3;
 
-		const int N = 32;
-		std::vector<Point2f> heart(N);
+		Vec4f line = Feature::getSymmetryAxis(points);
+		float radius = std::abs(distance(_62, line) - distance(_02, line));
+		
+		Point2f down(line[0], line[1]);
+		float d = distance(_x, line);
+		Point2f N = right?Point2f(line[1], -line[0]):Point2f(-line[1], line[0]);
+		Point2f center = _y + d * N;
+		
+		float angle = std::atan2(down.y, down.x) - static_cast<float>(M_PI/2);
 
-		// http://mathworld.wolfram.com/HeartCurve.html
-		// x = 16 * sin(t)^3
-		// y = 13 * cos(t) - 5 * cos(2*t) - 2 * cos(3*t) - cos(4*t)
-		// where parameter t in range [0 : 2*pi]
-		//
-		// cos(2*t) = cos(t)^2 - sin(t)^2
-		// cos(3*t) = 4*cos(t)^3 - 3*cos(t)
-		// cos(4*t) = 2*sin(2*t)*cos(2*t)
-		for(int i = 0; i < N; ++i)
-		{
-			float t = i * static_cast<float>(2*M_PI / N);
-			float sint  = std::sin(t), cost = std::cos(t);
-			float sin2t = 2*sint*cost, cos2t = cost*cost - sint*sint;
-			float cos3t = cost*cos2t - sint*sin2t;
-			float cos4t = cos2t*cos2t - sin2t*sin2t;
-			float x = sint * sint * sint;
-			float y = (13*cost - 5*cos2t - 2*cos3t - cos4t) / -16;
-			// A negative sign makes Y up coordinates to Y down coordinates.
-
-			heart[i] = center + radius * Point2f(x, y);
-		}
-		return heart;
+		return createHeartShape(center, radius, angle);
 	}
 		break;
 

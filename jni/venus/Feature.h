@@ -1,4 +1,4 @@
-#ifndef VENUS_FEATURE_H_
+ï»¿#ifndef VENUS_FEATURE_H_
 #define VENUS_FEATURE_H_
 
 #include <stdint.h>
@@ -17,7 +17,7 @@ class Feature
 {
 public:
 	static const size_t COUNT;
-	static const std::vector<cv::Vec3i> triangle_indices;
+	static const std::vector<cv::Vec3b> triangle_indices;
 
 private:
 	const cv::Mat image;
@@ -26,7 +26,7 @@ private:
 
 private:
 
-	static void triangulate(cv::Mat& image, const std::vector<cv::Point2f>& points, const std::vector<cv::Vec3i>& triangles);
+	static void triangulate(cv::Mat& image, const std::vector<cv::Point2f>& points, const std::vector<cv::Vec3b>& triangles);
 
 	static Region calculateBrowRegion(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right);
 	static Region calculateEyeRegion(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right);
@@ -52,7 +52,7 @@ public:
 	 *          (x0, y0) is a point on the line, or to be more exact, center of the detected face.
 	 */
 	static cv::Vec4f getSymmetryAxis(const std::vector<cv::Point2f>& points);
-	cv::Vec4f getSymmetryAxis() const { return line; }
+	inline cv::Vec4f getSymmetryAxis() const { return line; }
 
 	static cv::Mat createMask(const std::vector<cv::Point2f>& points, float blur_radius = 0.0F, cv::Point2i* position = nullptr);
 
@@ -74,9 +74,9 @@ public:
 
 	/**
 	 * Given four points, calculate the intersection point of the two lines (left-right and top-bottom).
-	 * @see https://en.wikipedia.org/wiki/Line¡§Cline_intersection
+	 * @see https://en.wikipedia.org/wiki/Lineâ€“line_intersection
 	 */
-	static cv::Vec4f calcuateDistance(cv::Point2f& pivot, const cv::Point2f& left, const cv::Point2f& right, const cv::Point2f& top, const cv::Point2f& bottom);
+	static cv::Vec4f calcuateDistance(cv::Point2f& pivot, const cv::Point2f& left, const cv::Point2f& top, const cv::Point2f& right, const cv::Point2f& bottom);
 
 	cv::Vec4f calcuateEyeRadius(bool right) const { return calcuateEyeRadius(points, line, right); }
 

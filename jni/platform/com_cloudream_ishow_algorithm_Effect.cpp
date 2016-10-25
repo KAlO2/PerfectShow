@@ -67,7 +67,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeCatmullRomSpline
 	setJavaPoint(env, _result, result);
 }
 
-void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeTone(JNIEnv *env,
+void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeTone(JNIEnv* env,
 		jclass clazz, jobject _bitmap, jint color, jfloat amount)
 {
 	assert(0.0f <= amount && amount <= 1.0f);
@@ -108,7 +108,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeTone(JNIEnv *env,
 }
 
 void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeGrayToAlpha
-	(JNIEnv *env, jclass clazz, jobject _src_bitmap, jobject _dst_bitmap)
+	(JNIEnv* env, jclass clazz, jobject _src_bitmap, jobject _dst_bitmap)
 {
 	AndroidBitmapInfo src_info, dst_info;
 	uint32_t* src_pixels = lockJavaBitmap(env, _src_bitmap, src_info);
@@ -179,7 +179,7 @@ cv::Vec4f getNativeColor(jint color)
 	return rgba;
 }
 
-void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeSelectContiguousRegionByColor(JNIEnv *env,
+void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeSelectContiguousRegionByColor(JNIEnv* env,
 		jclass clazz, jobject _mask, jobject _image, jint _color, jint _select_criterion, jfloat threshold, jboolean antialias, jboolean select_transparent)
 {
 	AndroidBitmapInfo image_info;

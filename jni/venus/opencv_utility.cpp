@@ -64,6 +64,16 @@ float distance(const cv::Point2f& point, const cv::Point2f& A, const cv::Point2f
 	return std::abs(dy*point.x - dx*point.y + B.x*A.y - B.y*A.x) / (dx*dx + dy*dy);
 }
 
+float distance(const cv::Point2f& point, const cv::Vec4f& line)
+{
+	assert(std::abs(line[0]*line[0] + line[1]*line[1] - 1.0F) <= 1E-5);
+	Point2f vector(point.x - line[2], point.y - line[3]);
+	Point2f along(line[0], line[1]);
+	Point2f project = (vector.x * along.x + vector.y * along.y) * along;
+	Point2f normal = vector - project;
+	return std::sqrt(normal.x*normal.x + normal.y*normal.y);
+}
+
 cv::Mat merge(const cv::Mat& rgb, const cv::Mat& alpha)
 {
 	assert(rgb.depth() == alpha.depth());

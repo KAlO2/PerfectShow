@@ -918,7 +918,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendEyeLash(
 	Vec4f scale_r, scale_l;
 	for(int i = 0; i < 4; ++i)  // no operator / overloaded for Vec4f.
 		scale_r[i] = distance_r[i] / DISTANCE[i];
-	LOGI("right lash scale left: %f, right: %f, top: %f, bottom: %f", scale_r[0], scale_r[1], scale_r[2], scale_r[3]);
+	LOGI("scale factor left: %f, right: %f, top: %f, bottom: %f", scale_r[0], scale_r[1], scale_r[2], scale_r[3]);
 	// use INTER_LANCZOS4 instead of INTER_LINEAR for best anti-aliasing result
 	Mat eye_lash_r = Region::resize(eye_lash, PIVOT, scale_r, INTER_LANCZOS4);
 

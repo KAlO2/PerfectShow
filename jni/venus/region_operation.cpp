@@ -623,7 +623,7 @@ RoiInfo calcuateLipsRegionInfo(const std::vector<Point2f>& points, int radius/* 
 	return RoiInfo(origion, pivot, mask);
 }
 
-Mat stretchImage(const Mat& image, const Size& src_size, const Size& dst_size, const std::vector<Point2f>& src_points, const std::vector<Point2f>& dst_points, const std::vector<Vec3i>& indices)
+Mat stretchImage(const Mat& image, const Size& src_size, const Size& dst_size, const std::vector<Point2f>& src_points, const std::vector<Point2f>& dst_points, const std::vector<Vec3b>& indices)
 {
 	assert(src_points.size() == dst_points.size());
 	Mat result(dst_size, image.type());
@@ -649,7 +649,7 @@ Mat stretchImage(const Mat& image, const Size& src_size, const Size& dst_size, c
 // http://www.learnopencv.com/face-morph-using-opencv-cpp-python/
 // https://www.learnopencv.com/warp-one-triangle-to-another-using-opencv-c-python/
 // affine src image to dst image with respect to some feature points.
-Mat& stretchImage(const Mat& src_image, Mat& dst_image, const std::vector<Point2f>& src_points, const std::vector<Point2f>& dst_points, const std::vector<Vec3i>& indices)
+Mat& stretchImage(const Mat& src_image, Mat& dst_image, const std::vector<Point2f>& src_points, const std::vector<Point2f>& dst_points, const std::vector<Vec3b>& indices)
 {
 	assert(src_points.size() == dst_points.size());
 	assert(src_image.type() == dst_image.type() && src_image.depth() == CV_32F);
@@ -741,7 +741,7 @@ void splitColorAndAlpha(const Mat& image, Mat& color, Mat& alpha)
 	}
 }
 
-cv::Mat& stretchImageWithAlpha(const Mat& src_image, Mat& dst_image, const std::vector<cv::Point2f>& src_points, const std::vector<cv::Point2f>& dst_points, const std::vector<cv::Vec3i>& indices)
+cv::Mat& stretchImageWithAlpha(const Mat& src_image, Mat& dst_image, const std::vector<cv::Point2f>& src_points, const std::vector<cv::Point2f>& dst_points, const std::vector<cv::Vec3b>& indices)
 {
 	Mat src_image_bgr, src_image_a;
 	splitColorAndAlpha(src_image, src_image_bgr, src_image_a);

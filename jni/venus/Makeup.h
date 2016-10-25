@@ -26,16 +26,17 @@ public:
 	};
 
 private:
-	static cv::Mat pack(uint32_t color, const cv::Mat& gray);
+	static cv::Mat pack(uint32_t color, const cv::Mat& mask);
 
 	static std::vector<cv::Point2f> createShape(const std::vector<cv::Point2f>& points, BlushShape shape, bool right);
+
+	static std::vector<cv::Point2f> createHeartShape(const cv::Point2f& center, float radius, float angle = 0.0F);
 public:
 
-
 	/**
-	 * @param[in,out] dst The destination image
+	 * @param[out] dst    The destination image
 	 * @param[in] src     The source image
-	 * @param[in] mask, value 0 means transparent, namely blending area, 255 means opaque.
+	 * @param[in] mask    Value 0 means transparent, namely blending area, 255 means opaque.
 	 * @param[in] origin  Relative origin of the <code>src</code> image on <code>dst</code> image.
 	 * @param[in] amount  Blending amount in range [0, 1], 0 being no effect, 1 being fully applied.
 	 */
@@ -47,7 +48,7 @@ public:
 	 * http://www.makeupforever.com/us/en-us/learn/how-to/blush-applications
 	 * <a href="https://simple.wikipedia.org/wiki/Blush_(color)">Tones of blush color</a> that used for theatre makeup.
 	 *
-	 * @param[in,out] dst
+	 * @param[out] dst
 	 * @param[in] src
 	 * @param[in] points Feature points detected from <code>src</code> image.
 	 * @param[in] shape  Shape of blush.

@@ -49,7 +49,51 @@ cv::Vec<T, N> interpolate(const Mat& image,
 	return color;
 }
 
-cv::Mat Effect::gaussianBlur(const cv::Mat& image, float radius)
+void Effect::tone(cv::Mat& dst, const cv::Mat& src, uint32_t color, float amount)
+{
+	assert(src.type() == CV_8UC4 || src.type() == CV_32FC4);
+	dst.create(src.size(), src.type());
+
+	const float l_amount = 1.0F - amount;
+	if(src.type() == CV_32FC4)
+		amount /= 255;
+
+	uint8_t r = color, g = color >> 8, b = color >> 16;
+#if USE_OPENCV_BGRA_LAYOUT
+	const Vec3f target(b * amount, g * amount, r * amount);
+#else
+	const Vec3f target(r * amount, g * amount, b * amount);
+#endif
+	
+	switch(src.type())
+	{
+	case CV_8UC4:
+		for(int r = 0; r < src.rows; ++r)
+		for(int c = 0; c < src.cols; ++c)
+		{
+			const Vec4b& src_color = src.at<Vec4b>(r, c);
+			Vec4b& dst_color = dst.at<Vec4b>(r, c);
+			for(int i = 0; i < 3; ++i)  // loop unrolling
+				dst_color[i] = src_color[i] * l_amount + target[i];
+		}
+		break;
+	case CV_32FC4:
+		for(int r = 0; r < src.rows; ++r)
+		for(int c = 0; c < src.cols; ++c)
+		{
+			const Vec4f& src_color = src.at<Vec4f>(r, c);
+			Vec4f& dst_color = dst.at<Vec4f>(r, c);
+			for(int i = 0; i < 3; ++i)  // loop unrolling
+				dst_color[i] = src_color[i] * l_amount + target[i];
+		}
+		break;
+	default:
+		assert(false);
+		break;
+	}
+}
+
+void Effect::gaussianBlur(cv::Mat& dst, const cv::Mat& src, float radius)
 {
 	assert(radius >= 0);
 	int r = cvRound(radius);
@@ -58,9 +102,7 @@ cv::Mat Effect::gaussianBlur(const cv::Mat& image, float radius)
 	double std_dev = radius * 3;  // 3-sigma rule https://en.wikipedia.org/wiki/68–95–99.7_rule
 
 	cv::Mat result;
-	cv::GaussianBlur(image, result, Size(width, width), std_dev);
-
-	return result;
+	cv::GaussianBlur(src, dst, Size(width, width), std_dev);
 }
 
 

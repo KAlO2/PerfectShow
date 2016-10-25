@@ -79,9 +79,9 @@ RoiInfo calcuateEyeRegionInfo_l(const std::vector<cv::Point2f>& points);
 RoiInfo calcuateBlusherRegionInfo(const std::vector<cv::Point2f>& points, bool right = true);
 RoiInfo calcuateLipsRegionInfo(const std::vector<cv::Point2f>& points, int radius = 0, const cv::Scalar& color = cv::Scalar(255, 255, 255, 255));
 
-cv::Mat stretchImage(const cv::Mat& image, const cv::Size& src_size, const cv::Size& dst_size, const std::vector<cv::Point2f>& src_points, const std::vector<cv::Point2f>& dst_points, const std::vector<cv::Vec3i>& indices);
-cv::Mat& stretchImage(const cv::Mat& src_image, cv::Mat& dst_image, const std::vector<cv::Point2f>& src_points, const std::vector<cv::Point2f>& dst_points, const std::vector<cv::Vec3i>& indices);
-cv::Mat& stretchImageWithAlpha(const cv::Mat& src_image, cv::Mat& dst_image, const std::vector<cv::Point2f>& src_points, const std::vector<cv::Point2f>& dst_points, const std::vector<cv::Vec3i>& indices);
+cv::Mat stretchImage(const cv::Mat& image, const cv::Size& src_size, const cv::Size& dst_size, const std::vector<cv::Point2f>& src_points, const std::vector<cv::Point2f>& dst_points, const std::vector<cv::Vec3b>& indices);
+cv::Mat& stretchImage(const cv::Mat& src_image, cv::Mat& dst_image, const std::vector<cv::Point2f>& src_points, const std::vector<cv::Point2f>& dst_points, const std::vector<cv::Vec3b>& indices);
+cv::Mat& stretchImageWithAlpha(const cv::Mat& src_image, cv::Mat& dst_image, const std::vector<cv::Point2f>& src_points, const std::vector<cv::Point2f>& dst_points, const std::vector<cv::Vec3b>& indices);
 
 cv::Mat cloneFace(const std::string& user_image_path, const std::string& model_image_path, const std::string& datadir);
 
