@@ -24,15 +24,15 @@ using namespace venus;
 
 jobject getJavaRoiInfo(JNIEnv* env, const RoiInfo& roi)
 {
-	jobject _origion = getJavaPoint(env, roi.origion);
-	jobject _pivot   = getJavaPoint(env, roi.pivot);
-	jobject _mask    = getJavaMat(env, roi.mask);
+	jobject _origin = getJavaPoint(env, roi.origin);
+	jobject _pivot  = getJavaPoint(env, roi.pivot);
+	jobject _mask   = getJavaMat(env, roi.mask);
 
 	jclass class_RoiInfo = env->FindClass("com/cloudream/ishow/algorithm/FaceDetector$RoiInfo");
 	jmethodID method_RoiInfo = env->GetMethodID(class_RoiInfo, "<init>", "(Landroid/graphics/PointF;Landroid/graphics/PointF;Lorg/opencv/core/Mat;)V");
 	assert(class_RoiInfo != nullptr && method_RoiInfo != nullptr);
 
-	return env->NewObject(class_RoiInfo, method_RoiInfo, _origion, _pivot, _mask);
+	return env->NewObject(class_RoiInfo, method_RoiInfo, _origin, _pivot, _mask);
 }
 
 // used for debugging intermediate output image
@@ -178,14 +178,14 @@ jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeDetec
 					 &class_RoiInfo, &method_RoiInfo]
 					 (const RoiInfo& info, int region)
 		{
-			jobject PointF_origion = env->NewObject(class_PointF, method_PointF, info.origion.x, info.origion.y);
+			jobject PointF_origin = env->NewObject(class_PointF, method_PointF, info.origin.x, info.origin.y);
 			jobject PointF_pivot = env->NewObject(class_PointF, method_PointF, info.pivot.x, info.pivot.y);
 
 			jobject Mat_mask = env->NewObject(class_Mat, method_Mat, &info.mask);
 			jlong pointer_mask = env->CallLongMethod(Mat_mask, method_getNativeObjAddr);
 			*reinterpret_cast<Mat*>(pointer_mask) = info.mask;
 
-			jobject RoiInfo_region = env->NewObject(class_RoiInfo, method_RoiInfo, PointF_origion, PointF_pivot, Mat_mask);
+			jobject RoiInfo_region = env->NewObject(class_RoiInfo, method_RoiInfo, PointF_origin, PointF_pivot, Mat_mask);
 			env->SetObjectArrayElement(RoiInfoArray_regions, region, RoiInfo_region);
 		};
 
@@ -200,14 +200,14 @@ jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeDetec
 			jfieldID field_y = env->GetFieldID(class_PointF, "y", "F");
 			assert(field_x != nullptr && field_y != nullptr);
 			env->SetIntField(thiz, field_image_width, size.x);
-			jobject PointF_origion = env->NewObject(class_PointF, method_PointF, info.origion.x, info.origion.y);
+			jobject PointF_origin = env->NewObject(class_PointF, method_PointF, info.origin.x, info.origin.y);
 			jobject PointF_pivot = env->NewObject(class_PointF, method_PointF, info.pivot.x, info.pivot.y);
 
 			jobject Mat_mask = env->NewObject(class_Mat, method_Mat, &info.mask);
 			jlong pointer_mask = env->CallLongMethod(Mat_mask, method_getNativeObjAddr);
 			*reinterpret_cast<Mat*>(pointer_mask) = info.mask;
 
-			jobject RoiInfo_region = env->NewObject(class_RoiInfo, method_RoiInfo, PointF_origion, PointF_pivot, Mat_mask);
+			jobject RoiInfo_region = env->NewObject(class_RoiInfo, method_RoiInfo, PointF_origin, PointF_pivot, Mat_mask);
 			env->SetObjectArrayElement(RoiInfoArray_regions, region, RoiInfo_region);
 		};
 */
@@ -221,14 +221,14 @@ jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeDetec
 	return RoiInfoArray_regions;
 /*
 	RoiInfo lips = calcuateLipsRoiInfo(points);
-	jobject PointF_origion = env->NewObject(class_PointF, method_PointF, lips.origion.x, lips.origion.y);
+	jobject PointF_origin = env->NewObject(class_PointF, method_PointF, lips.origin.x, lips.origin.y);
 	jobject PointF_pivot = env->NewObject(class_PointF, method_PointF, lips.pivot.x, lips.pivot.y);
 
 	jobject Mat_mask = env->NewObject(class_Mat, method_Mat, &lips.mask);
 	jlong pointer_mask = env->CallLongMethod(Mat_mask, method_getNativeObjAddr);
 	*reinterpret_cast<Mat*>(pointer_mask) = lips.mask;
 
-	jobject RoiInfo_lips = env->NewObject(class_RoiInfo, method_RoiInfo, PointF_origion, PointF_pivot, Mat_mask);
+	jobject RoiInfo_lips = env->NewObject(class_RoiInfo, method_RoiInfo, PointF_origin, PointF_pivot, Mat_mask);
 	env->SetObjectArrayElement(RoiInfoArray_regions, LIPS, RoiInfo_lips);
 */
 }
@@ -794,8 +794,8 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendBlusher(
 	assert(image_pixels != nullptr);
 	Mat image(image_info.height, image_info.width, CV_8UC4, image_pixels);
 
-	Makeup::blend(image, blush_r, Point2f(blush_r_l, blush_r_t), amount);
-	Makeup::blend(image, blush_l, Point2f(blush_l_l, blush_l_t), amount);
+	Makeup::blend(image, image, blush_r, Point2f(blush_r_l, blush_r_t), amount);
+	Makeup::blend(image, image, blush_l, Point2f(blush_l_l, blush_l_t), amount);
 
 //	dump("result.png", image);
 	unlockJavaBitmap(env, _blush);
@@ -847,8 +847,8 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendEyeBrow(
 	assert(image_pixels != nullptr);
 	Mat image(image_info.height, image_info.width, CV_8UC4, image_pixels);
 
-	Makeup::blend(image, eye_brow_r, pivot_r, amount);
-	Makeup::blend(image, eye_brow_l, pivot_l, amount);
+	Makeup::blend(image, image, eye_brow_r, pivot_r, amount);
+	Makeup::blend(image, image, eye_brow_l, pivot_l, amount);
 
 	unlockJavaBitmap(env, _image);
 }
@@ -947,8 +947,8 @@ void JNICALL Java_com_cloudream_ishow_algorithm_FaceDetector_nativeBlendEyeLash(
 
 	// rotate if skew too much
 
-	Makeup::blend(image, eye_lash_r, position_r, amount);
-	Makeup::blend(image, eye_lash_l, position_l, amount);
+	Makeup::blend(image, image, eye_lash_r, position_r, amount);
+	Makeup::blend(image, image, eye_lash_l, position_l, amount);
 
 //	dump("result.png", image);
 	unlockJavaBitmap(env, _eye_lash);

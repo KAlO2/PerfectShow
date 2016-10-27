@@ -9,11 +9,43 @@ extern "C" {
 #endif
 /*
  * Class:     com_cloudream_ishow_algorithm_Makeup
- * Method:    nativeApplyLipColor
- * Signature: (IF)V
+ * Method:    nativeApplyBrow
+ * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;Landroid/graphics/Bitmap;F)V
  */
-JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyLipColor
-  (JNIEnv *, jclass, jint, jfloat);
+JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyBrow
+  (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobject, jfloat);
+
+/*
+ * Class:     com_cloudream_ishow_algorithm_Makeup
+ * Method:    nativeApplyEye
+ * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;Landroid/graphics/Bitmap;F)V
+ */
+JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyEye
+  (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobject, jfloat);
+
+/*
+ * Class:     com_cloudream_ishow_algorithm_Makeup
+ * Method:    nativeApplyEyeLash
+ * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;Landroid/graphics/Bitmap;IF)V
+ */
+JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyEyeLash
+  (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobject, jint, jfloat);
+
+/*
+ * Class:     com_cloudream_ishow_algorithm_Makeup
+ * Method:    nativeApplyEyeShadow
+ * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;[Landroid/graphics/Bitmap;[IF)V
+ */
+JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyEyeShadow
+  (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobjectArray, jintArray, jfloat);
+
+/*
+ * Class:     com_cloudream_ishow_algorithm_Makeup
+ * Method:    nativeApplyIris
+ * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;F)V
+ */
+JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyIris
+  (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobject, jobject, jfloat);
 
 /*
  * Class:     com_cloudream_ishow_algorithm_Makeup
@@ -25,42 +57,10 @@ JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyBlus
 
 /*
  * Class:     com_cloudream_ishow_algorithm_Makeup
- * Method:    nativeBlendIris
- * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;F)V
- */
-JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeBlendIris
-  (JNIEnv *, jclass, jobject, jobject, jobjectArray, jfloat);
-
-/*
- * Class:     com_cloudream_ishow_algorithm_Makeup
- * Method:    nativeBlendIris2
- * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;IF)V
- */
-JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeBlendIris2
-  (JNIEnv *, jclass, jobject, jobject, jobject, jobjectArray, jint, jfloat);
-
-/*
- * Class:     com_cloudream_ishow_algorithm_Makeup
- * Method:    nativeBlendBlusher
+ * Method:    nativeApplyLipColor
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;IF)V
  */
-JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeBlendBlusher
-  (JNIEnv *, jclass, jobject, jobject, jobjectArray, jint, jfloat);
-
-/*
- * Class:     com_cloudream_ishow_algorithm_Makeup
- * Method:    nativeBlendEyeBrow
- * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;[Landroid/graphics/PointF;F)V
- */
-JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeBlendEyeBrow
-  (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobjectArray, jfloat);
-
-/*
- * Class:     com_cloudream_ishow_algorithm_Makeup
- * Method:    nativeBlendEyeLash
- * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;IF)V
- */
-JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeBlendEyeLash
+JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyLipColor
   (JNIEnv *, jclass, jobject, jobject, jobjectArray, jint, jfloat);
 
 #ifdef __cplusplus

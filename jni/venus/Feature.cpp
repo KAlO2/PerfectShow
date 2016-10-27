@@ -645,25 +645,7 @@ cv::Mat Feature::createMask(const std::vector<cv::Point2f>& points, float blur_r
 	return mask;
 }
 
-cv::Mat Feature::maskPolygon(const cv::Rect2i& rect, const std::vector<cv::Point2f>& points, const int indices[], int length)
-{
-	assert(indices != nullptr && length >= 3);
 
-	std::vector<Point> contour(length);
-	for(int j = 0; j < length; ++j)
-	{
-		const int& i = indices[j];
-		float x = points[i].x - rect.x;  // make it relative
-		float y = points[i].y - rect.y;
-		contour.push_back(Point(cvRound(x), cvRound(y)));
-	}
-
-	const Point* polygons[] = { contour.data() };
-	const int  num_points[] = { length };
-	Mat mask(rect.size(), CV_8UC1, Scalar(0));
-	cv::fillPoly(mask, polygons, num_points, 1, Scalar(255));
-	return mask;
-}
 
 cv::Mat Feature::maskPolygon(const cv::Rect2i& rect, const std::vector<cv::Point2f>& points, int start, int length)
 {
@@ -672,9 +654,9 @@ cv::Mat Feature::maskPolygon(const cv::Rect2i& rect, const std::vector<cv::Point
 
 	std::vector<Point> contour(length);
 
-	const Point2i origion = rect.tl();
+	const Point2i origin = rect.tl();
 	for(int i = 0; i < length; ++i)
-		contour[i] = static_cast<Point2i>(points[start + i]) - origion;
+		contour[i] = static_cast<Point2i>(points[start + i]) - origin;
 
 	const Point* polygons[] = { contour.data() };
 	const int  num_points[] = { length };
@@ -698,7 +680,7 @@ cv::Mat Feature::maskPolygonSmooth(const cv::Rect2i& rect, const std::vector<cv:
 	Point2f center = sum / static_cast<int>(points.size());
 
 //	Rect rect = cv::boundingRect(points);  // expose rect as parameter
-	const Point2f origion = rect.tl();
+	const Point2f origin = rect.tl();
 	std::vector<Point2i> tmp_points = cast(points);
 	Mat mask(rect.size(), CV_8UC1, Scalar(0));
 
@@ -709,7 +691,7 @@ cv::Mat Feature::maskPolygonSmooth(const cv::Rect2i& rect, const std::vector<cv:
 		float FACTOR = std::sqrt(1.0f - static_cast<float>(j-1)/level);  // every step shrinks a little bit.
 
 		for(size_t i = 0; i < points.size(); ++i)
-			tmp_points[i] = (points[i] - center) * FACTOR + center - origion;
+			tmp_points[i] = (points[i] - center) * FACTOR + center - origin;
 
 		cv::fillPoly(mask, polygons, num_points, 1, Scalar(j*255.0/level));
 	}
@@ -791,10 +773,10 @@ Region Feature::calculateBrowRegion(const std::vector<cv::Point2f>& points, cons
 
 	Mat mask(rect.size(), CV_8UC1, Scalar(0));
 
-	Point2i origion = rect.tl();
+	Point2i origin = rect.tl();
 	std::vector<Point2i> polygon2 = venus::cast(polygon);
 	for(size_t i = 0, length = polygon.size(); i < length; ++i)
-		polygon2[i] -= origion;
+		polygon2[i] -= origin;
 
 	cv::fillConvexPoly(mask, polygon2, Scalar(255));
 
@@ -889,6 +871,77 @@ std::vector<cv::Point2f> Feature::calculateNosePolygon(const std::vector<cv::Poi
 	};
 }
 
+std::vector<cv::Point2f> Feature::calculateLipPolygon(const std::vector<cv::Point2f>& points, bool upper)
+{
+/*
+	Below are lips feature point indices:
+	
+                  /64\    /66\    /68\
+                 /    \65/    \67/    \   
+                /                      \
+              63-----72----71----70-----69
+                \-----73---74----75-----/
+                 \80\              /76/
+                     \79---78---77/
+
+*/
+/*
+	const int lip_indices[] =
+	{
+		63, 64, 65, 66, 67, 68, 69, 70, 71, 72,  // upper lip
+		63, 73, 74, 75, 69, 76, 77, 78, 79, 80,  // lower lip
+	};
+*/
+	if(upper)  // for upper lip
+	{
+#if 0
+		constexpr int BEGIN = 63, END = 73;
+		std::vector<Point2f> polygon(END - BEGIN);
+		for(int i = BEGIN; i < END; ++i)
+			polygon[i - BEGIN] = points[i];
+
+		return polygon;
+#else
+		// I almost forgot that std::vector has range [first, last) constructor.
+		return std::vector<Point2f>(points.begin() + 63, points.begin() + 73);
+#endif
+	}
+	else  // for lower lip
+	{
+		constexpr int N = 10 + (79 - 76 + 1)*3;
+		std::vector<Point2f> polygon;
+		polygon.reserve(N);
+
+		polygon.push_back(points[63]);
+
+		polygon.push_back(points[73]);
+		polygon.push_back(catmullRomSpline(1.0f/3, points[63], points[73], points[74], points[75]));
+		polygon.push_back(catmullRomSpline(2.0f/3, points[63], points[73], points[74], points[75]));
+		polygon.push_back(points[74]);
+		polygon.push_back(catmullRomSpline(1.0f/3, points[73], points[74], points[75], points[69]));
+		polygon.push_back(catmullRomSpline(2.0f/3, points[73], points[74], points[75], points[69]));
+		polygon.push_back(points[75]);
+
+		polygon.push_back(points[69]);
+		polygon.push_back(points[76]);
+
+		for(int i = 76; i <= 79; ++i)
+		{
+			int i0 = i == 76 ? 69 : i-1;
+			int i1 = i;
+			int i2 = i + 1;
+			int i3 = i == 79 ? 63 : i+2;
+			polygon.push_back(catmullRomSpline(1.0f/3, points[i0], points[i1], points[i2], points[i3]));
+			polygon.push_back(catmullRomSpline(2.0f/3, points[i0], points[i1], points[i2], points[i3]));
+			polygon.push_back(points[i2]);
+		}
+
+		// if assertion failed, change value N according to contour.size();
+		assert(polygon.size() == N);
+		return polygon;
+	}
+}
+
 std::vector<cv::Point2f> Feature::calculateTeethPolygon(const std::vector<cv::Point2f>& points)
 {
 	return std::vector<Point2f>
@@ -927,81 +980,32 @@ Region Feature::calculateEyeRegion(const std::vector<cv::Point2f>& points, const
 
 Region Feature::calculateLipsRegion(const std::vector<cv::Point2f>& points, const cv::Vec4f& line)
 {
-/*
-	Below are lips feature point indices:
-	
-                  /64\    /66\    /68\
-                 /    \65/    \67/    \   
-                /                      \
-              63-----72----71----70-----69
-                \-----73---74----75-----/
-                 \80\              /76/
-                     \79---78---77/
+	std::vector<cv::Point2f> polygon_t = calculateLipPolygon(points, true);
+	std::vector<cv::Point2f> polygon_b = calculateLipPolygon(points, false);
 
-*/
-#if 0  // although fast, it's not ready/precise for skew mouth.
-	float left = points[63].x, right = points[69].x;
-	float top = std::min(points[65].y, points[67].y), bottom = points[78].y;
-	Vec4f box(left, top, right, bottom);
-#else
-	Vec4f box = boundingBox(points, 63, 80 - 63 + 1);
-#endif
+	const int length_t = static_cast<int>(polygon_t.size());
+	const int length_b = static_cast<int>(polygon_b.size());
+	std::vector<cv::Point2f> polygon(length_t + length_b);
+	std::copy(polygon_t.begin(), polygon_t.end(), polygon.begin());
+	std::copy(polygon_b.begin(), polygon_b.end(), polygon.begin() + length_t);
+
+	Vec4f box = venus::boundingBox(polygon);
 	Rect2i rect = box2Rect(box);
+//	Rect2i rect_t = cv::boundingRect(polygon_t);
+//	Rect2i rect_b = cv::boundingRect(polygon_b);
+//	Rect2i rect = rect_t & rect_b;
 
 	Point2f pivot = (rect.tl() + rect.br())/2.0f;
 	Size2f size = calculateSize(box, line);
-/*
-	const int lip_indices[] =
-	{
-		63, 64, 65, 66, 67, 68, 69, 70, 71, 72,  // upper lip
-		63, 73, 74, 75, 69, 76, 77, 78, 79, 80,  // lower lip
-	};
-*/
-	const int N = 32;  // make it fixed so that no need to allocate memory later.
-	std::vector<Point2i> contour;
-	contour.reserve(N);
-	
-	// upper lip
-	for(int i = 63; i <= 72; ++i)
-		contour.push_back(points[i]);
 
-	// lower lip
-	contour.push_back(points[63]);
-
-	contour.push_back(points[73]);
-	contour.push_back(catmullRomSpline(1.0f/3, points[63], points[73], points[74], points[75]));
-	contour.push_back(catmullRomSpline(2.0f/3, points[63], points[73], points[74], points[75]));
-	contour.push_back(points[74]);
-	contour.push_back(catmullRomSpline(1.0f/3, points[73], points[74], points[75], points[69]));
-	contour.push_back(catmullRomSpline(2.0f/3, points[73], points[74], points[75], points[69]));
-	contour.push_back(points[75]);
-
-	contour.push_back(points[69]);
-	contour.push_back(points[76]);
-
-	for(int i = 76; i <= 79; ++i)
-	{
-		int i0 = i == 76 ? 69 : i-1;
-		int i1 = i;
-		int i2 = i + 1;
-		int i3 = i == 79 ? 63 : i+2;
-		contour.push_back(catmullRomSpline(1.0f/3, points[i0], points[i1], points[i2], points[i3]));
-		contour.push_back(catmullRomSpline(2.0f/3, points[i0], points[i1], points[i2], points[i3]));
-		contour.push_back(points[i2]);
-	}
-
-	// if assertion failed, change value N according to contour.size();
-	assert(contour.size() == N);
-
+	std::vector<cv::Point2i> _polygon = cast(polygon);
 	const Point2i position = rect.tl();
-	for(Point2i& point : contour)
+	for(Point2i& point : _polygon)
 		point -= position;
 
-	int upper_length = 72 - 63 + 1;       // upper lip has fixed length
-	int lower_length = N - upper_length;  // and lower lip the rest
-	const Point* polygons[2] = { contour.data(), contour.data() + upper_length };
-	const int num_points[] = { upper_length, lower_length };
-	Mat mask(rect.size(), CV_8UC1, Scalar(0));  // Bitmap.Config.A8 transparent
+	const Point2i* polygons[] = { _polygon.data(), _polygon.data() + length_t };
+	const int    num_points[] = { length_t, length_b };
+	Mat mask(rect.size(), CV_8UC1, Scalar(0));
 	cv::fillPoly(mask, polygons, num_points, 2, Scalar(255));
 
 	return Region(pivot, size, mask);
@@ -1054,8 +1058,9 @@ Region Feature::calculateTeethRegion() const
 cv::Vec4f Feature::calcuateDistance(cv::Point2f& pivot, const cv::Point2f& left, const cv::Point2f& top, const cv::Point2f& right, const cv::Point2f& bottom)
 {
 	assert(left.x < right.x && top.y < bottom.y);
-	assert(top.y < left.y && left.y < bottom.y && top.y < right.y && right.y < bottom.y);
-	assert(left.x < top.x && top.x < right.x && left.x < bottom.x && bottom.x < right.x);
+	assert(left.x <= top.x && top.x <= right.x && left.x <= bottom.x && bottom.x <= right.x);
+	assert(top.y <= left.y && left.y <= bottom.y && top.y <= right.y && right.y <= bottom.y);
+	
 #if 0
 	// non-skew version
 	pivot = Point2f((top.x + bottom.x)/2, (left.y + right.y)/2);
@@ -1068,12 +1073,12 @@ cv::Vec4f Feature::calcuateDistance(cv::Point2f& pivot, const cv::Point2f& left,
 	float w = top.x*bottom.y - top.y*bottom.x;
 	float x = z*(top.x - bottom.x) - w*(left.x - right.x);
 	float y = z*(top.y - bottom.y) - w*(left.y - right.y);
-	pivot.x = x/denorm;
-	pivot.y = y/denorm;
+	pivot.x = x / denorm;
+	pivot.y = y / denorm;
 
 	x = venus::distance(pivot, left);
-	y = venus::distance(pivot, right);
-	z = venus::distance(pivot, top);
+	y = venus::distance(pivot, top);
+	z = venus::distance(pivot, right);
 	w = venus::distance(pivot, bottom);
 	return Vec4f(x, y, z, w);
 #endif

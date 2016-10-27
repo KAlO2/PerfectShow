@@ -130,8 +130,8 @@ static void correctIris(const Mat& image, std::vector<Point2f>& points)
 	RoiInfo eye_info_r = calcuateEyeRegionInfo_r(points);
 	RoiInfo eye_info_l = calcuateEyeRegionInfo_l(points);
 
-	Mat eye_r = image(Rect(eye_info_r.origion, eye_info_r.mask.size()));
-	Mat eye_l = image(Rect(eye_info_l.origion, eye_info_l.mask.size()));
+	Mat eye_r = image(Rect(eye_info_r.origin, eye_info_r.mask.size()));
+	Mat eye_l = image(Rect(eye_info_l.origin, eye_info_l.mask.size()));
 
 	// roughly estimate iris radius
 	const int iris_indices_r[] = {35, 37, 39, 41};
@@ -198,7 +198,7 @@ static void correctIris(const Mat& image, std::vector<Point2f>& points)
 	if(circles_r.size() == 1)
 	{
 		cv::Vec3f circle = circles_r[0];
-		points[42] = Point2f(circle[0] + eye_info_r.origion.x, circle[1] + eye_info_r.origion.y);
+		points[42] = Point2f(circle[0] + eye_info_r.origin.x, circle[1] + eye_info_r.origin.y);
 		const float r = circle[2];
 		for(size_t i = 0; i < NELEM(iris_indices_r); ++i)
 			radical_scale(points[42], points[iris_indices_r[i]], r);
@@ -207,7 +207,7 @@ static void correctIris(const Mat& image, std::vector<Point2f>& points)
 	if(circles_l.size() == 1)
 	{
 		cv::Vec3f circle = circles_l[0];
-		points[43] = Point2f(circle[0] + eye_info_l.origion.x, circle[1] + eye_info_l.origion.y);
+		points[43] = Point2f(circle[0] + eye_info_l.origin.x, circle[1] + eye_info_l.origin.y);
 		const float r = circle[2];
 		for(size_t i = 0; i < NELEM(iris_indices_l); ++i)
 			radical_scale(points[43], points[iris_indices_l[i]], r);
@@ -415,7 +415,7 @@ RoiInfo calcuateFaceRegionInfo(const std::vector<cv::Point2f>& points)
 {
 	Rect rect = cv::boundingRect(points);
 
-	Point2f origion = rect.tl();
+	Point2f origin = rect.tl();
 	Point2f pivot(rect.x + rect.width/2.0f, rect.y + rect.height/2.0f);
 
 	Mat mask(rect.size(), CV_8UC3, BACKGROUD_COLOR);
@@ -424,7 +424,7 @@ RoiInfo calcuateFaceRegionInfo(const std::vector<cv::Point2f>& points)
 		polygon[i] = Point(cvRound(points[i].x - rect.x), cvRound(points[i].y - rect.y));
 	cv::fillConvexPoly(mask, polygon, NELEM(polygon), FOREGROUD_COLOR);
 
-	return RoiInfo(origion, pivot, mask);
+	return RoiInfo(origin, pivot, mask);
 }
 
 RoiInfo calcuateEyeBrowRegionInfo(const std::vector<cv::Point2f>& points, bool right/* = true*/)
@@ -437,7 +437,7 @@ RoiInfo calcuateEyeBrowRegionInfo(const std::vector<cv::Point2f>& points, bool r
 		polygon[i] = Point(cvRound(points[i].x), cvRound(points[i].y));
 	
 	Rect rect = cv::boundingRect(polygon);
-	Point2f origion = rect.tl();
+	Point2f origin = rect.tl();
 	Point2f pivot;
 	if(right)
 	{
@@ -453,12 +453,12 @@ RoiInfo calcuateEyeBrowRegionInfo(const std::vector<cv::Point2f>& points, bool r
 	Mat mask(rect.size(), CV_8UC3, BACKGROUD_COLOR);
 	for(int i = 0; i < count; ++i)
 	{
-		polygon[i].x -= cvRound(origion.x);
-		polygon[i].y -= cvRound(origion.y);
+		polygon[i].x -= cvRound(origin.x);
+		polygon[i].y -= cvRound(origin.y);
 	}
 
 	cv::fillConvexPoly(mask, polygon, FOREGROUD_COLOR);
-	return RoiInfo(origion, pivot, mask);
+	return RoiInfo(origin, pivot, mask);
 }
 
 // note that these pivot points are chose according to the sample image.
@@ -466,7 +466,7 @@ RoiInfo calcuateEyeRegionInfo_r(const std::vector<cv::Point2f>& points)
 {
 	float left = points[38].x, right = points[34].x;
 	float top = points[36].y, bottom = points[40].y;
-	Point2f origion(left, top);
+	Point2f origin(left, top);
 	Point2f pivot((points[37].x + points[39].x)/2, (points[37].y + points[39].y)/2);
 
 	int rows = cvRound(bottom - top);
@@ -475,14 +475,14 @@ RoiInfo calcuateEyeRegionInfo_r(const std::vector<cv::Point2f>& points)
 	Rect rect(cvRound(left), cvRound(top), cols, rows);
 	Mat mask = polygonMask(rect, points, indices, NELEM(indices));
 
-	return RoiInfo(origion, pivot, mask);
+	return RoiInfo(origin, pivot, mask);
 }
 
 RoiInfo calcuateEyeRegionInfo_l(const std::vector<cv::Point2f>& points)
 {
 	float left = points[44].x, right = points[48].x;
 	float top = points[46].y, bottom = points[50].y;
-	Point2f origion(left, top);
+	Point2f origin(left, top);
 	Point2f pivot((points[47].x + points[49].x)/2, (points[47].y + points[49].y)/2);
 
 	int rows = cvRound(bottom - top);
@@ -491,16 +491,16 @@ RoiInfo calcuateEyeRegionInfo_l(const std::vector<cv::Point2f>& points)
 	Rect rect(cvRound(left), cvRound(top), cols, rows);
 	Mat mask = polygonMask(rect, points, indices, NELEM(indices));
 
-	return RoiInfo(origion, pivot, mask);
+	return RoiInfo(origin, pivot, mask);
 }
 
 RoiInfo calcuateBlusherRegionInfo(const std::vector<Point2f>& points, bool right/* = true*/)
 {
-	Point2f origion;
+	Point2f origin;
 	Mat mask;
 	if(right)
 	{
-		origion = Point2f(points[1].x, points[1].y);
+		origin = Point2f(points[1].x, points[1].y);
 
 		// blush_index_l = {1, 2, 3, 62, (34+62)/2, 62, (62+41)/2 };
 		Point polygon_r[] = 
@@ -518,7 +518,7 @@ RoiInfo calcuateBlusherRegionInfo(const std::vector<Point2f>& points, bool right
 	}
 	else
 	{
-		origion = Point2f(points[1].x, points[1].y);
+		origin = Point2f(points[1].x, points[1].y);
 
 		Point polygon_l[] = 
 		{
@@ -533,8 +533,8 @@ RoiInfo calcuateBlusherRegionInfo(const std::vector<Point2f>& points, bool right
 		cv::fillConvexPoly(mask, polygon_l, NELEM(polygon_l), Scalar(255, 255, 255));
 	}
 
-	Point2f pivot = origion;
-	return RoiInfo(origion, pivot, mask);
+	Point2f pivot = origin;
+	return RoiInfo(origin, pivot, mask);
 }
 
 static void subdivLine(std::vector<Point>& contour, const Point2f& p0, const Point2f& p1, const Point2f& p2, const Point2f& p3)
@@ -554,7 +554,7 @@ RoiInfo calcuateLipsRegionInfo(const std::vector<Point2f>& points, int radius/* 
 	left -= radius; right += radius;
 	top -= radius; bottom += radius;
 
-	Point2f origion(left, top);
+	Point2f origin(left, top);
 	Point2f pivot(points[74].x + radius, points[74].y + radius);
 	Rect region(cvRound(left), cvRound(top), cvRound(right - left), cvRound(bottom - top));
 	Size size = region.size();
@@ -620,7 +620,7 @@ RoiInfo calcuateLipsRegionInfo(const std::vector<Point2f>& points, int radius/* 
 		cv::blur(mask, mask, Size(radius, radius));
 #endif
 //	imshow("mouth_mask", mask);
-	return RoiInfo(origion, pivot, mask);
+	return RoiInfo(origin, pivot, mask);
 }
 
 Mat stretchImage(const Mat& image, const Size& src_size, const Size& dst_size, const std::vector<Point2f>& src_points, const std::vector<Point2f>& dst_points, const std::vector<Vec3b>& indices)
@@ -800,15 +800,15 @@ cv::Mat cloneFace(const std::string& user_image_path, const std::string& model_i
 	TIME_STOP("cloneFace > calcuateFaceRoiInfo");
 	
 	// make all the stuff relative to face, not entire image.
-	Rect user_face_rect(cvRound(user_face_info.origion.x), cvRound(user_face_info.origion.y), user_face_info.mask.cols, user_face_info.mask.rows);
-	Rect model_face_rect(cvRound(model_face_info.origion.x), cvRound(model_face_info.origion.y), model_face_info.mask.cols, model_face_info.mask.rows);
+	Rect user_face_rect(cvRound(user_face_info.origin.x), cvRound(user_face_info.origin.y), user_face_info.mask.cols, user_face_info.mask.rows);
+	Rect model_face_rect(cvRound(model_face_info.origin.x), cvRound(model_face_info.origin.y), model_face_info.mask.cols, model_face_info.mask.rows);
 	Mat user_face = user(user_face_rect);
 	Mat model_face = model(model_face_rect);
 
 	for(Point2f& point: user_points)
-		point -= user_face_info.origion;
+		point -= user_face_info.origin;
 	for(Point2f& point: model_points)
-		point -= model_face_info.origion;
+		point -= model_face_info.origin;
 	TIME_STOP("cloneFace > cropFace");
 	
 	user_face.convertTo(user_face, CV_32FC3, 1/255.0);

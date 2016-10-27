@@ -4,14 +4,17 @@ import com.cloudream.ishow.BuildConfig;
 import com.cloudream.ishow.util.MathUtils;
 
 import android.graphics.Bitmap;
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.graphics.RectF;
 import android.graphics.Paint.Style;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 class Feature
 {
@@ -106,7 +109,7 @@ class Feature
 		path.lineTo(point.x, point.y);
 	}
 	
-	static Path getEyeBrowPath(@NonNull final PointF points[], int _1, int _2, int _3, int _4, int _5, int _6)
+	static Path getBrowPath(@NonNull final PointF points[], int _1, int _2, int _3, int _4, int _5, int _6)
 	{
 		Path path = new Path();
 		final float portion = 1.0f/4;
@@ -256,8 +259,8 @@ class Feature
 		
 		paint.setStyle(Style.STROKE);
 		Path path_face = getClosedPath(points, 0, 19);
-		Path path_eye_brow_r = getEyeBrowPath(points, 22, 21, 20 ,25, 24 ,23);
-		Path path_eye_brow_l = getEyeBrowPath(points, 29, 28, 27, 26, 31, 30);
+		Path path_eye_brow_r = getBrowPath(points, 22, 21, 20 ,25, 24 ,23);
+		Path path_eye_brow_l = getBrowPath(points, 29, 28, 27, 26, 31, 30);
 		Path path_eye_r = getClosedPath(points, 34, 41);
 		Path path_eye_l = getClosedPath(points, 44, 51);
 //		Path path_upper_lip = getUpperLip(points);
@@ -354,6 +357,48 @@ class Feature
 		y1 = points[69].y * 2 - points[58].y;
 		canvas.drawLine(points[58].x, points[58].y, x1, y1, paint);
 		
+		return bitmap;
+	}
+	
+	/**
+	 * create closed path and filled with specified color.
+	 * 
+	 * @param path 
+	 * @param color the color of filled region.
+	 * @param blur_radius Blur radius, use it to get smooth mask.
+	 * @param position stores the mask top-left position if <code>position</code> is not null.
+	 * @return mask
+	 * 
+	 * @see #Color
+	 */
+	public static Bitmap createMask(final Path path, int color, float blur_radius, @Nullable PointF position)
+	{
+		if(path == null || path.isEmpty())
+			return null;
+		
+		RectF bounds = new RectF();
+		path.computeBounds(bounds, true);
+		bounds.inset(-blur_radius, -blur_radius);
+		
+		int width  = (int)bounds.width();
+		int height = (int)bounds.height();
+		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);  // mutable
+		Canvas canvas = new Canvas(bitmap);
+		canvas.drawColor(Color.TRANSPARENT);
+		
+		Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+		paint.setMaskFilter(new BlurMaskFilter(blur_radius, BlurMaskFilter.Blur.NORMAL));
+		paint.setColor(color);
+		paint.setStyle(Style.FILL);
+		path.offset(-bounds.left, -bounds.top);
+		canvas.drawPath(path, paint);
+		
+		if(position != null)
+		{
+			position.x = bounds.left;
+			position.y = bounds.top;
+		}
+			
 		return bitmap;
 	}
 	

@@ -34,14 +34,14 @@ enum Roi
 class RoiInfo
 {
 public:
-	cv::Point2f origion;
+	cv::Point2f origin;
 	cv::Point2f pivot;
 	cv::Mat     mask;
 
 public:
 	RoiInfo() = default;
-	RoiInfo(cv::Point2f& origion, cv::Point2f& pivot, cv::Mat& mask)
-		:origion(origion)
+	RoiInfo(cv::Point2f& origin, cv::Point2f& pivot, cv::Mat& mask)
+		:origin(origin)
 		,pivot(pivot)
 		,mask(mask)
 	{}

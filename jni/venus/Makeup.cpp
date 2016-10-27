@@ -13,7 +13,7 @@ using namespace cv;
 
 namespace venus {
 
-cv::Mat Makeup::pack(uint32_t color, const cv::Mat& mask)
+cv::Mat Makeup::pack(const cv::Mat& mask, uint32_t color)
 {
 	assert(mask.type() == CV_8UC1);
 	cv::Mat image(mask.rows, mask.cols, CV_8UC4);
@@ -191,10 +191,15 @@ std::vector<cv::Point2f> Makeup::createShape(const std::vector<cv::Point2f>& poi
 	}
 }
 
-void Makeup::blend(cv::Mat& dst, const cv::Mat& src, const cv::Point2i& origin, float amount)
+void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, const cv::Point2i& origin, float amount)
 {
-	assert(src.channels() == 4 && dst.channels() == 4 && src.depth() == dst.depth());
-	
+	assert(src.channels() == 4);
+
+	// Note that dst.copyTo(result); will invoke result.create(src.size(), src.type());
+	// which has this clause if( dims <= 2 && rows == _rows && cols == _cols && type() == _type && data ) return;
+	// which means that result's memory will only be allocated the first time in if result is empty.
+	dst.copyTo(result);
+
 	Rect rect_src(origin.x, origin.y, src.cols, src.rows);
 	Rect rect_dst(0, 0, dst.cols, dst.rows);
 	Rect rect = rect_dst & rect_src;
@@ -206,7 +211,7 @@ void Makeup::blend(cv::Mat& dst, const cv::Mat& src, const cv::Point2i& origin, 
 		for(int c = rect.x, c_end = rect.x + rect.width;  c < c_end; ++c)
 		{
 			const cv::Vec4b& src_color = src.at<cv::Vec4b>(r - origin.y, c - origin.x);
-			cv::Vec4b& dst_color = dst.at<cv::Vec4b>(r, c);
+			cv::Vec4b& dst_color = result.at<cv::Vec4b>(r, c);
 
 			dst_color = venus::mix(dst_color, src_color, amount);
 		}
@@ -217,7 +222,7 @@ void Makeup::blend(cv::Mat& dst, const cv::Mat& src, const cv::Point2i& origin, 
 		for(int c = rect.x, c_end = rect.x + rect.width;  c < c_end; ++c)
 		{
 			const cv::Vec3f& src_color = src.at<cv::Vec3f>(r - origin.y, c - origin.x);
-			cv::Vec3f& dst_color = dst.at<cv::Vec3f>(r, c);
+			cv::Vec3f& dst_color = result.at<cv::Vec3f>(r, c);
 
 			dst_color = venus::mix(dst_color, src_color, amount);
 		}
@@ -228,7 +233,7 @@ void Makeup::blend(cv::Mat& dst, const cv::Mat& src, const cv::Point2i& origin, 
 		for(int c = rect.x, c_end = rect.x + rect.width;  c < c_end; ++c)
 		{
 			const cv::Vec4f& src_color = src.at<cv::Vec4f>(r - origin.y, c - origin.x);
-			cv::Vec4f& dst_color = dst.at<cv::Vec4f>(r, c);
+			cv::Vec4f& dst_color = result.at<cv::Vec4f>(r, c);
 
 			dst_color = venus::mix(dst_color, src_color, amount);
 		}
@@ -239,10 +244,11 @@ void Makeup::blend(cv::Mat& dst, const cv::Mat& src, const cv::Point2i& origin, 
 	}
 }
 
-void Makeup::blend(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, const cv::Point2i& origin, float amount)
+void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, const cv::Point2i& origin, float amount)
 {
 	assert(src.channels() == dst.channels() && src.depth() == dst.depth());
 	assert(mask.type() == CV_8UC1);
+	dst.copyTo(result);
 
 	Rect rect_src(origin.x, origin.y, src.cols, src.rows);
 	Rect rect_dst(0, 0, dst.cols, dst.rows);
@@ -257,7 +263,7 @@ void Makeup::blend(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, const 
 	{
 		const int src_r = r - origin.y, src_c = c - origin.x;
 		Point2i mask_position(src_c - offset_x, src_r - offset_y);
-		if(!rect_mask.contains(mask_position) || mask.at<uchar>(mask_position) != 0)
+		if(!rect_mask.contains(mask_position) || mask.at<uchar>(mask_position) == 0)
 			continue;
 
 		const cv::Vec4b& src_color = src.at<cv::Vec4b>(src_r, src_c);
@@ -267,7 +273,7 @@ void Makeup::blend(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, const 
 		case CV_8UC4:
 		{
 			const cv::Vec4b& src_color = src.at<cv::Vec4b>(src_r, src_c);
-			cv::Vec4b& dst_color = dst.at<cv::Vec4b>(r, c);
+			cv::Vec4b& dst_color = result.at<cv::Vec4b>(r, c);
 
 			dst_color = venus::mix(dst_color, src_color, amount);
 		}
@@ -275,7 +281,7 @@ void Makeup::blend(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, const 
 		case CV_32FC3:
 		{
 			const cv::Vec3f& src_color = src.at<cv::Vec3f>(src_r, src_c);
-			cv::Vec3f& dst_color = dst.at<cv::Vec3f>(r, c);
+			cv::Vec3f& dst_color = result.at<cv::Vec3f>(r, c);
 
 			dst_color = venus::mix(dst_color, src_color, amount);
 		}
@@ -283,7 +289,7 @@ void Makeup::blend(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, const 
 		case CV_32FC4:
 		{
 			const cv::Vec4f& src_color = src.at<cv::Vec4f>(src_r, src_c);
-			cv::Vec4f& dst_color = dst.at<cv::Vec4f>(r, c);
+			cv::Vec4f& dst_color = result.at<cv::Vec4f>(r, c);
 
 			dst_color = venus::mix(dst_color, src_color, amount);
 		}
@@ -295,14 +301,117 @@ void Makeup::blend(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, const 
 	}
 }
 
+void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& brow, float amount)
+{
+
+}
+
+void Makeup::applyEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& cosmetic, float amount)
+{
+	assert(src.type() == CV_8UC4 && cosmetic.type() == CV_8UC4);
+	src.copyTo(dst);
+
+	// I've rearrange eye lashes into file doc/eye_lash.xcf
+	const Point2f LEFT(284, 287), RIGHT(633, 287);
+	const Point2f TOP(458, 213), BOTTOM(458, 362);
+	Point2f PIVOT, pivot;
+	Vec4f DISTANCE = Feature::calcuateDistance(PIVOT, LEFT, TOP, RIGHT, BOTTOM);
+
+	Feature feature(src, points);
+
+	for(int i = 0; i <= 1; ++i)
+	{
+		const bool is_right = (i == 0);
+		Vec4f distance = feature.calcuateEyeRadius(is_right);
+
+		Vec4f scale;
+		for(int i = 0; i < 4; ++i)  // sighs, no operator / overloaded for Vec4f.
+			scale[i] = distance[i] / DISTANCE[i];
+//		std::cout << "scale factor left: " << scale[0] << " top: " << scale[1] << " right: " << scale[2] << " bottom: " << scale[3] << '\n';
+
+		Mat _cosmetic = cosmetic;
+
+		if(!is_right)  // mirror for left part
+		{
+			std::swap(scale[0], scale[2]);  // std::swap(left, right);
+			PIVOT.x = static_cast<float>(cosmetic.cols - 1) - PIVOT.x;  // left + right == width - 1
+			cv::flip(_cosmetic, _cosmetic, 1/* horizontally */);
+		}
+
+		// use INTER_LANCZOS4 instead of INTER_LINEAR for best anti-aliasing result
+		_cosmetic = Region::resize(_cosmetic, PIVOT, scale, INTER_LANCZOS4);
+
+		// make pivot coincides
+		Region region = feature.calculateEyeRegion(is_right);
+		Rect rect = region.getRect();
+		Point2f position(rect.x - (_cosmetic.cols - rect.width )/2.0F,
+			             rect.y - (_cosmetic.rows - rect.height)/2.0F);
+
+		// rotate if skew too much
+
+		Makeup::blend(dst, dst, _cosmetic, position, amount);
+	}
+
+}
+
+void Makeup::applyEyeLash(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, uint32_t color, float amount)
+{
+	assert(mask.type() == CV_8UC1);
+	Mat eye_lash = pack(mask, color);
+
+	applyEye(dst, src, points, eye_lash, amount);
+}
+
+cv::Mat Makeup::createEyeShadow(cv::Mat mask[3], uint32_t color[3]/*, const int& COUNT = 3 */)
+{
+	const int cols = mask[0].cols, rows = mask[0].rows;
+	Mat bitmap(rows, cols, CV_8UC4);
+	constexpr int COUNT = 3;
+
+	auto unpack = [](uint32_t c) -> cv::Vec3i { return cv::Vec3i(c & 0xFF, (c>>8) & 0xFF, (c>>16) & 0xFF/*, (c>>24) & 0xFF*/); };
+	const Vec3i _color[COUNT] = { unpack(color[0]), unpack(color[1]), unpack(color[2]) };
+	const Vec3i _127(127, 127, 127);
+
+	for(int r = 0; r < rows; ++r)
+	for(int c = 0; c < cols; ++c)
+	{
+		Vec3i rgb(0, 0, 0);
+		int a = 0;
+		for(int i = 0; i < COUNT; ++i)
+		{
+			uint8_t alpha = mask[i].at<uint8_t>(r, c);
+			rgb += _color[i] * alpha;
+			a   += alpha;
+		}
+		rgb = (rgb + _127) / 255;
+		a   = (a + COUNT/2)/COUNT;
+
+		for(int i = 0; i < 3; ++i)
+			assert(0 <= rgb[i] && rgb[i] <= 255);
+
+		bitmap.at<Vec4b>(r, c) = Vec4b(
+#if USE_OPENCV_BGRA_LAYOUT
+			rgb[2], rgb[1], rgb[0],
+#else
+			rgb[0], rgb[1], rgb[2],
+#endif
+			a);
+	}
+
+	return bitmap;
+}
+
+void Makeup::applyEyeShadow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, cv::Mat mask[3], uint32_t color[3], float amount)
+{
+	Mat eye_shadow = createEyeShadow(mask, color);
+	applyEye(dst, src, points, eye_shadow, amount);
+}
+
 void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, BlushShape shape, uint32_t color, float amount)
 {
 	assert(!src.empty() && points.size() == Feature::COUNT);
 	assert(0 <= amount && amount <= 1);
 
-	// Note that src.copyTo(dst); will invoke dst.create(src.size(), src.type());
-	// which has this clause if( dims <= 2 && rows == _rows && cols == _cols && type() == _type && data ) return;
-	// which means that dst's memory will only be allocated the first time in if dst is empty.
 	src.copyTo(dst);
 
 	for(int i = 0; i <= 1; ++i)  // i == 0 for left cheek, i == 1 for right cheek
@@ -314,48 +423,39 @@ void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::
 
 		Rect rect = cv::boundingRect(polygon);
 		Mat  mask = Feature::maskPolygonSmooth(rect, polygon, 8);  // level (here 8) can be tuned.
-		Mat blush = pack(color, mask);
-		
-		blend(dst, blush, rect.tl(), amount);
+		Mat blush = pack(mask, color);
+//		cv::imshow(std::string("blush mask ") + (i == 0 ? "left":"right"), mask);
+		blend(dst, dst, blush, rect.tl(), amount);
 	}
 }
 
-/*
-void Makeup::applyLipColor(const uint32_t* dst, const uint32_t* const src, int width, int height, const Region& region, uint32_t color, float amount)
-{
-	Rect rect(0, 0, width, height);
-	const Rect rect_mask = region.getRect();
-	rect &= rect_mask;
-	
-	if(rect.area() <= 0)  // not overlap
-		return;
-
-	for(int r = rect.y, r_end = rect.y + rect.height; r < r_end; ++r)
-	for(int c = rect.x, c_end = rect.x + rect.width;  c < c_end; ++c)
-	{
-		uint8_t mask = region.mask.at<uint8_t>(r - rect_mask.x, c - rect_mask.y);
-
-		// skip transparent area
-		if(mask == 0)
-			continue;
-
-
-	}
-}
-*/
-
-void Makeup::applyLipColor(cv::Mat& dst, const cv::Mat& src, const Region& region, uint32_t color, float amount)
+void Makeup::applyLipColor(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, uint32_t color, float amount)
 {
 	assert(!src.empty() && src.channels() == 4);  // only handles RGBA image
-	src.copyTo(dst);
+
+	Feature feature(src, points);
+	Region region = feature.calculateLipshRegion();
+	const Mat& mask = region.mask;
+	const Point2f& pivot = region.pivot;
+	const int rows = mask.rows, cols = mask.cols;
+	const Point2i& origin = pivot - Point2f(mask.cols, mask.rows)/2;
 	
-	Rect rect(0, 0, src.cols, src.rows);
-	const Rect rect_mask = region.getRect();
-	rect &= rect_mask;
+/*
+	Rect all(0, 0, src.cols, src.rows);
+	Rect lip(origin.x, origin.y, rows, cols);
+	const Rect rect = all & lip;
 	
 	if(rect.area() <= 0)  // not overlap
 		return;
+*/
+	cv::Mat lip(rows, cols, CV_8UC4, Scalar::all(0));
+	uint32_t* lip_data = reinterpret_cast<uint32_t*>(lip.data);
+	for(int i = 0, length = rows * cols; i < length; ++i)
+		lip_data[i] = color;
 
+#if 1
+	blend(dst, src, lip, mask, origin, amount);
+#else
 	// SRC_OVER mode, [Sa + (1 - Sa)*Da, Rc = Sc + (1 - Sa)*Dc]
 	const float l_amount = 1 - amount;
 	if(src.type() == CV_8UC4)
@@ -416,6 +516,7 @@ void Makeup::applyLipColor(cv::Mat& dst, const cv::Mat& src, const Region& regio
 	}
 	else
 		assert(false);  // unimplemented yet
+#endif
 }
 
 } /* namespace venus */

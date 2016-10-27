@@ -78,7 +78,7 @@ uint32_t* lockJavaBitmap(JNIEnv* env, jobject bitmap, AndroidBitmapInfo& info)
 	ret = AndroidBitmap_lockPixels(env, bitmap, reinterpret_cast<void**>(&pixels));
 	if(ret < 0)
 	{
-		LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
+		LOGE("AndroidBitmap_lockPixels() failed ! error = %d", ret);
 		return nullptr;
 	}
 

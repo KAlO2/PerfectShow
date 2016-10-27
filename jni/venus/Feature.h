@@ -56,15 +56,15 @@ public:
 
 	static cv::Mat createMask(const std::vector<cv::Point2f>& points, float blur_radius = 0.0F, cv::Point2i* position = nullptr);
 
-	static cv::Mat maskPolygon(const cv::Rect2i& rect, const std::vector<cv::Point2f>& points, const int indices[], int length);
 	static cv::Mat maskPolygon(const cv::Rect2i& rect, const std::vector<cv::Point2f>& points, int start, int length);
 	static cv::Mat maskPolygon(const cv::Rect2i& rect, const std::vector<cv::Point2f>& points);
 	static cv::Mat maskPolygonSmooth(const cv::Rect2i& rect, const std::vector<cv::Point2f>& points, const int level = 8);
 
-	static std::vector<cv::Point2f> calculateBrowPolygon(const std::vector<cv::Point2f>& points, bool right);
-	static std::vector<cv::Point2f> calculateEyePolygon(const std::vector<cv::Point2f>& points, bool right);
+	static std::vector<cv::Point2f> calculateBrowPolygon (const std::vector<cv::Point2f>& points, bool right);
+	static std::vector<cv::Point2f> calculateEyePolygon  (const std::vector<cv::Point2f>& points, bool right);
 	static std::vector<cv::Point2f> calculateBlushPolygon(const std::vector<cv::Point2f>& points, bool right);
-	static std::vector<cv::Point2f> calculateNosePolygon(const std::vector<cv::Point2f>& points);
+	static std::vector<cv::Point2f> calculateNosePolygon (const std::vector<cv::Point2f>& points);
+	static std::vector<cv::Point2f> calculateLipPolygon  (const std::vector<cv::Point2f>& points, bool upper);
 	static std::vector<cv::Point2f> calculateTeethPolygon(const std::vector<cv::Point2f>& points);
 
 	Region calculateBrowRegion(bool right) const { return calculateBrowRegion(points, line, right);  }

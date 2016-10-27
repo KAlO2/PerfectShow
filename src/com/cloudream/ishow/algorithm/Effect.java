@@ -15,7 +15,6 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
-import android.widget.Toast;
 import android.graphics.Paint.Style;
 
 
@@ -78,9 +77,9 @@ public class Effect
 	}
 	
 	/**
-	 * Tone is a color term commonly used by painters. 
-	 * tone a bitmap with specified color, it's like mixing the color pixel by pixel,
-	 * the color resulting in layering a color dst RGB with a src color RGB is:
+	 * Tone is a color term commonly used by painters. Toning a bitmap with specified color, it's 
+	 * like mixing the color pixel by pixel, the color resulting in layering a color 
+	 * <code>dst</code> RGB with a <code>src</code> color RGB is:
 	 * 
 	 * <pre>
 	 * new_R = dst_R + (src_R - dst_R) * amount
@@ -92,7 +91,7 @@ public class Effect
 	 * 
 	 * @param bitmap
 	 * @param color RGB
-	 * @param amount color blending amount, with 0 being unchangeable, with 1 being the pure color.
+	 * @param amount color blending amount, with 0 being unchanged, with 1 being the pure color.
 	 * @return
 	 */
 	public static Bitmap tone(Bitmap bitmap, int color, float amount)
@@ -200,46 +199,6 @@ public class Effect
 		paint.setStyle(Style.FILL);
 		
 		canvas.drawPath(path, paint);
-		return bitmap;
-	}
-	
-	/**
-	 * 
-	 * @param path [in]
-	 * @param color [in]
-	 * @param blur_radius [in]
-	 * @param position [out]
-	 * @return
-	 */
-	public static Bitmap createMask(final Path path, int color, float blur_radius, @Nullable PointF position)
-	{
-		if(path == null || path.isEmpty())
-			return null;
-		
-		RectF bounds = new RectF();
-		path.computeBounds(bounds, true);
-//		final float left = bounds.left, top = bounds.top;
-		bounds.inset(-blur_radius, -blur_radius);
-		
-		int width = (int)bounds.width();
-		int height = (int)bounds.height();
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);  // mutable
-		Canvas canvas = new Canvas(bitmap);
-		canvas.drawColor(Color.TRANSPARENT);
-		
-		Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-		paint.setMaskFilter(new BlurMaskFilter(blur_radius, BlurMaskFilter.Blur.NORMAL));
-		paint.setColor(color);
-		paint.setStyle(Style.FILL);
-		path.offset(-bounds.left, -bounds.top);
-		canvas.drawPath(path, paint);
-		
-		if(position != null)
-		{
-			position.x = bounds.left;
-			position.y = bounds.top;
-		}
-			
 		return bitmap;
 	}
 	

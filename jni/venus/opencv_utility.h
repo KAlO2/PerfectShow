@@ -81,7 +81,7 @@ inline cv::Vec<T, 4> boundingBox(const std::vector<cv::Point_<T>>& points)
 
 
 std::vector<cv::Point2i> cast(const std::vector<cv::Point2f>& points);
-cv::Scalar cast(uint32_t color);
+cv::Vec4f cast(uint32_t color);
 
 cv::Rect2i box2Rect(const cv::Vec4f& box);
 
