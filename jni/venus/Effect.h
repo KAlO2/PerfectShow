@@ -5,9 +5,16 @@
 
 namespace venus {
 
+enum class RangeMode
+{
+	SHADOWS,
+	MIDTONES,
+	HIGHLIGHTS,
+};
 class Effect
 {
 private:
+	static float mapColorBalance(float value, float lightness, float shadows, float midtones, float highlights);
 
 public:
 	/**
@@ -46,6 +53,19 @@ public:
 	static void gaussianBlur(cv::Mat& dst, const cv::Mat& src, float radius);
 	inline static void gaussianBlur(cv::Mat& image, float radius) { gaussianBlur(image, image, radius); }
 
+	/**
+	 * color balance is the global adjustment of the intensities of the colors (typically red, green, and blue primary colors).
+	 * @see https://en.wikipedia.org/wiki/Color_balance for details.
+	 *
+	 * @param[out] dst
+	 * @param[in]  src
+	 * @param[in]  config Array of {shadows, midtones, highlights}, each RangeMode is a Vec3f(CYAN_RED, MAGENTA_GREEN, YELLOW_BLUE)
+	 *                    each channel is in range [-1.0, 1.0].
+	 * @param[in] preserve_luminosity
+	 */
+	static void adjustColorBalance(float* const dst, const float* const src, int width, int height, const cv::Vec3f config[3], bool preserve_luminosity);
+//	static void adjustColorBalance(uint8_t* const dst, const uint8_t* const src, int width, int height, const cv::Vec3f config[3], bool preserve_luminosity);
+//	static void adjustColorBalance(cv::Mat& dst, const cv::Mat& src, const cv::Vec3f config[3], bool preserve_luminosity);
 	
 };
 

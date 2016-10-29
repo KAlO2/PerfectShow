@@ -9,7 +9,9 @@
 #include <opencv2/highgui.hpp>
 #endif
 
+#include "venus/colorspace.h"
 #include "venus/Effect.h"
+#include "venus/scalar.h"
 
 
 using namespace cv;
@@ -105,6 +107,64 @@ void Effect::gaussianBlur(cv::Mat& dst, const cv::Mat& src, float radius)
 	cv::GaussianBlur(src, dst, Size(width, width), std_dev);
 }
 
+float Effect::mapColorBalance(float value, float lightness, float shadows, float midtones, float highlights)
+{
+	/* Apply masks to the corrections for shadows, midtones and highlights so that each correction affects only one range.
+	 * Those masks look like this:
+	 *     ‾\___
+	 *     _/‾\_
+	 *     ___/‾
+	 * with ramps of width a at x = b and x = 1 - b.
+	 *
+	 * The sum of these masks equals 1 for x in 0..1, so applying the same correction in the shadows and in the midtones 
+	 * is equivalent to applying this correction on a virtual shadows_and_midtones range.
+	 */
+	const float a = 0.25f, b = 1.00f/3, scale = 0.70f;
+	
+	constexpr auto clamp_01 = [](float x) -> float { return clamp<float>(x, 0, 1); };
 
+	shadows = shadows * clamp_01((lightness - b) / -a + 0.5f) * scale;
+	midtones = midtones * clamp_01((lightness - b) /  a + 0.5f) *
+			clamp_01((lightness + b - 1) / -a + 0.5f) * scale;
+	highlights = highlights * clamp_01((lightness + b - 1) / a + 0.5f) * scale;
+	
+	value += shadows;
+	value += midtones;
+	value += highlights;
+	value = clamp_01(value);
+	
+	return value;
+}
 
+void Effect::adjustColorBalance(float* const dst, const float* const src, int width, int height, const cv::Vec3f config[3], bool preserve_luminosity)
+{
+	assert(src != nullptr && dst != nullptr);
+	constexpr int SHADOWS    = static_cast<int>(RangeMode::SHADOWS);
+	constexpr int MIDTONES   = static_cast<int>(RangeMode::MIDTONES);
+	constexpr int HIGHLIGHTS = static_cast<int>(RangeMode::HIGHLIGHTS);
+	
+	for(int i = 0, length = height * width * 4; i < length; i += 4)
+	{
+		const cv::Vec3f& rgb = src[i];
+		cv::Vec3f hsl = rgb2hsl(rgb);
+
+		float& lightness = hsl[2];
+		cv::Vec3f rgb2 = dst[i];
+		rgb2[0] = mapColorBalance(rgb[0], lightness, config[SHADOWS][0], config[MIDTONES][0], config[HIGHLIGHTS][0]);
+		rgb2[1] = mapColorBalance(rgb[1], lightness, config[SHADOWS][1], config[MIDTONES][1], config[HIGHLIGHTS][1]);
+		rgb2[2] = mapColorBalance(rgb[2], lightness, config[SHADOWS][2], config[MIDTONES][2], config[HIGHLIGHTS][2]);
+
+		if(preserve_luminosity)
+		{
+			cv::Vec3f hsl2 = rgb2hsl(rgb2);
+			hsl2[2] = hsl[2];  // preserve brightness info
+			rgb2 = hsl2rgb(hsl2);
+		}
+
+		dst[i+3] = src[i+3];  // keep alpha
+
+		for(int b = 0; b < 3; ++b)
+			assert(0 <= dst[b] && dst[b] <= 1);
+	}
+}
 } /* namespace venus */
