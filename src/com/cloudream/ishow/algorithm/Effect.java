@@ -173,18 +173,29 @@ public class Effect
 		return tone(bitmap, Color.WHITE, amount);
 	}
 	
-/*		
-	int width = 640, height = 640;
-	Path path = new Path();
-	path.moveTo(160, 160);
-	path.lineTo(160, 480);
-	path.lineTo(480, 480);
-	path.lineTo(480, 160);
-	path.close();  //	path.lineTo(160, 160);
-	Bitmap bitmap = Effect.createMask(width, height, path, Color.RED, 80);
-	SettingsActivity.saveImage(this, null, bitmap);
-*/	
-	public static Bitmap createMask(int width, int height, final Path path, int color, int blurRadius)
+	/**
+	 * <pre>
+	 * {@code
+	 * int width = 640, height = 640;
+	 * Path path = new Path();
+	 * path.moveTo(160, 160);
+	 * path.lineTo(160, 480);
+	 * path.lineTo(480, 480);
+	 * path.lineTo(480, 160);
+	 * path.close();  // path.lineTo(160, 160);
+	 * Bitmap bitmap = Effect.createMask(width, height, path, Color.RED, 80);
+	 * SettingsActivity.saveImage(this, null, bitmap);
+	 * }
+	 * </pre>
+	 * 
+	 * @param width       The resulting mask width
+	 * @param height      The resulting mask height
+	 * @param path
+	 * @param color       Color of the filled region
+	 * @param blur_radius used to smooth the region
+	 * @return bitmap     The resulting mask
+	 */
+	public static Bitmap createMask(int width, int height, final Path path, int color, int blur_radius)
 	{
 		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);  // mutable
 		Canvas canvas = new Canvas(bitmap);
@@ -194,7 +205,7 @@ public class Effect
 //		https://github.com/chiuki/android-graphics-demo/tree/master/app/src/main/java/com/sqisland/android/graphics_demo
 //		 if(Build.VERSION.SDK_INT >= 11)
 //			 view.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-		paint.setMaskFilter(new BlurMaskFilter(blurRadius, BlurMaskFilter.Blur.NORMAL));
+		paint.setMaskFilter(new BlurMaskFilter(blur_radius, BlurMaskFilter.Blur.NORMAL));
 		paint.setColor(color);
 		paint.setStyle(Style.FILL);
 		

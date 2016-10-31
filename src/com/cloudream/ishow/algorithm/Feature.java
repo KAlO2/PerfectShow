@@ -59,10 +59,9 @@ class Feature
 			throw new NullPointerException("missing feature point data");
 		
 		Path path = new Path();
-		PointF point = new PointF();
+		path.moveTo(points[first].x, points[first].y);
 		
 		final int N = last - first + 1;
-		path.moveTo(points[first].x, points[first].y);
 		for(int i = first; i <= last; ++i)
 		{
 			int _0 = first + (i - first + N - 1)%N; // MathUtils.wrap(i - 1, first, last);
@@ -70,21 +69,13 @@ class Feature
 			int _2 = first + (i - first + 1)%N;     // MathUtils.wrap(i + 1, first, last);
 			int _3 = first + (i - first + 2)%N;     // MathUtils.wrap(i + 2, first, last);
 			
-//			lineTo(path, points[_0], points[_1], points[_2], points[_3]);
+			lineTo(path, points[_0], points[_1], points[_2], points[_3]);
 			
 //			path.cubicTo(points[_1].x, points[_1].y, points[_2].x, points[_2].y, points[_3].x, points[_3].y);
 //			path.moveTo(points[_3].x, points[_3].y);
-			
-			Effect.catmullRomSpline(point, 0.25f, points[_0], points[_1], points[_2], points[_3]);
-			path.lineTo(point.x, point.y);
-			Effect.catmullRomSpline(point, 0.50f, points[_0], points[_1], points[_2], points[_3]);
-			path.lineTo(point.x, point.y);
-			Effect.catmullRomSpline(point, 0.75f, points[_0], points[_1], points[_2], points[_3]);
-			path.lineTo(point.x, point.y);
 		}
 		
 		path.close();  // path.lineTo(points[first].x, points[first].y);
-
 		return path;
 	}
 	
@@ -253,7 +244,7 @@ class Feature
 			final float radius = 1;
 			final PointF point = points[i];
 			canvas.drawCircle(point.x, point.y, radius, paint);
-//			canvas.drawPoint(point.x, point.y, paint);
+			canvas.drawPoint(point.x, point.y, paint);
 			canvas.drawText(String.valueOf(i), point.x + radius, point.y, paint);
 		}
 		
@@ -398,7 +389,7 @@ class Feature
 			position.x = bounds.left;
 			position.y = bounds.top;
 		}
-			
+		
 		return bitmap;
 	}
 	
