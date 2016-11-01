@@ -92,6 +92,16 @@ public:
 	static cv::Mat transform(cv::Size& size, cv::Point2f& pivot, float angle, const cv::Vec2f& scale = cv::Vec2f(1.0f, 1.0f));
 
 	/**
+	 * Like void cv::transform(InputArray src, OutputArray dst, InputArray m);, but operate on cv::Point2f,
+	 * the result will be matrix multiplication (affine * point).
+	 *
+	 * @param[in] affine Affine matrix.
+	 * @param[in] point  Position of the point.
+	 * @return           Transformed position.
+	 */
+	static cv::Point2f transform(const cv::Mat& affine, const cv::Point2f& point);
+
+	/**
 	 * @param mat a 2x3 affine transform
 	 * @return the inverse of the matrix
 	 */

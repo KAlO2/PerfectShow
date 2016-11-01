@@ -245,6 +245,15 @@ cv::Mat Region::transform(cv::Size& size, cv::Point2f& pivot, float angle, const
 	return affine;
 }
 
+cv::Point2f Region::transform(const cv::Mat& affine, const cv::Point2f& point)
+{
+	assert(affine.rows == 2 && affine.cols == 3);
+	const float* m = affine.ptr<float>();
+	return Point2f(
+		m[0] * point.x + m[1] * point.y + m[2],
+		m[3] * point.x + m[4] * point.y + m[5]);
+}
+
 cv::Mat Region::invert(const cv::Mat& mat)
 {
 	assert(mat.rows == 2 && mat.cols == 3);

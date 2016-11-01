@@ -45,19 +45,19 @@ std::vector<cv::Point2f> Makeup::createHeartShape(const Point2f& center, float r
 	const float cosa = std::cos(angle), sina = std::sin(angle);
 
 	// http://mathworld.wolfram.com/HeartCurve.html
-	// x = 16 * sin(t)^3
-	// y = 13 * cos(t) - 5 * cos(2*t) - 2 * cos(3*t) - cos(4*t)
+	// x = 16*sin(t)^3
+	// y = 13*cos(t) - 5*cos(2*t) - 2*cos(3*t) - cos(4*t)
 	// where parameter t in range [0 : 2*pi]
 	//
 	// cos(2*t) = cos(t)^2 - sin(t)^2
 	// cos(3*t) = 4*cos(t)^3 - 3*cos(t)
-	// cos(4*t) = 2*sin(2*t)*cos(2*t)
+	// cos(4*t) = cos(2*t)^2 - sin(2*t)^2
 	for(int i = 0; i < N; ++i)
 	{
 		float t     = i * static_cast<float>(2*M_PI / N);
-		float sint  = std::sin(t), cost = std::cos(t);
+		float sint  = std::sin(t), cost  = std::cos(t);
 		float sin2t = 2*sint*cost, cos2t = cost*cost - sint*sint;
-		float cos3t = cost*cos2t - sint*sin2t;
+		float cos3t = cost *cos2t - sint *sin2t;
 		float cos4t = cos2t*cos2t - sin2t*sin2t;
 
 		float x = sint * sint * sint;
@@ -65,7 +65,7 @@ std::vector<cv::Point2f> Makeup::createHeartShape(const Point2f& center, float r
 		float y = (13*cost - 5*cos2t - 2*cos3t - cos4t) / -16;
 
 		// rotate (x, y) by angle:
-		// (x + y*i)(cosa + sina * i) = (x*cosa - y*sina, x*sina + y*cosa)
+		// (x + y*i)*(cosa + sina * i) = (x*cosa - y*sina) + (x*sina + y*cosa)*i
 		Point2f rotated(x*cosa - y*sina, x*sina + y*cosa);
 		heart[i] = center + radius * rotated;
 	}
@@ -311,7 +311,109 @@ void Makeup::applyEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Po
 	assert(src.type() == CV_8UC4 && cosmetic.type() == CV_8UC4);
 	src.copyTo(dst);
 
-	// I've rearrange eye lashes into file doc/eye_lash.xcf
+/*
+	Below are eye feature point indices:
+
+
+				36                    46
+			 37    35              45    47
+	right  38   42   34 -------- 44   43   48   left
+			 39    41              51    49
+				40                    50
+
+*/
+#if 1
+	// 	I rearrange eye lashes into file doc/eye_lash.xcf
+	const std::vector<Point2f> src_points  // corresponding index 34~41
+	{
+		Point2f(633, 287), Point2f(534, 228), Point2f(458, 213), Point2f(386, 228),
+		Point2f(290, 287), Point2f(386, 350), Point2f(458, 362), Point2f(534, 353),
+	};
+
+	constexpr int N = 41 - 34 + 1;
+	std::vector<Point2f> dst_points(N);
+
+	auto calcuateEyeParams = [](const Point2f& right, const Point2f& left) -> cv::Vec4f
+	{
+		Point2f pivot = (right + left)/2;
+		float radius = venus::distance(pivot, left);
+
+		Point2f delta = right - left;
+		if(delta.x < 0)
+			delta = -delta;  // map angle into interval [-pi/2, pi/2]
+		float angle = std::atan2(delta.y, delta.x);
+
+		return Vec4f(pivot.x, pivot.y, radius, angle);
+	};
+
+	const Vec4f PARAMS = calcuateEyeParams(src_points[0], src_points[4]);
+
+	for(int j = 0; j <= 1; ++j)
+	{
+		const bool right = (j == 0);
+		const int  START = right ? 34:44;
+		
+		// for right: 34 35 36 37 38 39 40 41, formular 34 + i;
+		// for left : 48 47 46 45 44 51 50 49, formular 44 + (12 - i)%8;
+		if(right)
+			for(int i = 0; i < N; ++i)
+				dst_points[i] = points[34 + i];
+		else
+		{
+			const float sum = points[44].x + points[48].x;  // only flip horizontally
+			for(int i = 0; i < N; ++i)
+				dst_points[i] = Point2f(sum - points[44 + i].x, points[44 + i].y);
+		}
+
+		Vec4f params = calcuateEyeParams(dst_points[0], dst_points[4]);
+		printf("pivot: (%f, %f), radius: %f, angle: %f\n", params[0], params[1], params[2], rad2deg(params[3]));
+
+		Size size(cosmetic.cols, cosmetic.rows);
+		Point2f pivot(PARAMS[0], PARAMS[1]);
+		float angle = params[3];
+		float scale = params[2]/PARAMS[2];
+		
+		Mat affine = Region::transform(size, pivot, angle, Point2f(scale, scale));
+
+		cv::Mat _cosmetic;
+		cv::warpAffine(cosmetic, _cosmetic, affine, size, cv::INTER_LANCZOS4, cv::BORDER_CONSTANT);
+		
+		std::vector<Point2f> affined_src_points;
+		cv::transform(src_points, affined_src_points, affine);
+		pivot = Region::transform(affine, Point2f(PARAMS[0], PARAMS[1]));
+
+		// and then move points to make src_points and dst_points' pivots coincide.
+		const Point2f dst_pivot = (points[START] + points[START+4])/2;
+		const Point2f offset = (affined_src_points[0] + affined_src_points[4])/2 - dst_pivot;
+		for(size_t i = 0; i < N; ++i)
+			dst_points[i] = dst_points[i] + offset;
+
+		ImageWarp_MLS_Rigid warp;
+		warp.setMappingPoints(dst_points, affined_src_points);
+		warp.setSize(_cosmetic.cols, _cosmetic.rows);
+		warp.setTargetSize(_cosmetic.cols, _cosmetic.rows);
+		warp.alpha = 1.0F;
+		warp.gridSize = 5;
+		warp.calcDelta();
+		_cosmetic = warp.genNewImage(_cosmetic, 1.0F);
+//		cv::imshow("test" + std::to_string(j), _cosmetic);
+
+		if(!right)
+		{
+			pivot = Point2f(_cosmetic.cols, _cosmetic.rows) - pivot;
+			cv::flip(_cosmetic, _cosmetic, 1/* horizontally */);
+		}
+		Point2i origin = dst_pivot - pivot;
+
+		//std::vector<Point2f> polygon = Feature::calculateEyePolygon(points, right);
+		//Rect rect = cv::boundingRect(polygon);
+		//
+		//Point2f position(rect.x - (_cosmetic.cols - rect.width )/2.0F,
+		//	             rect.y - (_cosmetic.rows - rect.height)/2.0F);
+		
+		Makeup::blend(dst, dst, _cosmetic, origin, amount);
+	}
+#else
 	const Point2f LEFT(284, 287), RIGHT(633, 287);
 	const Point2f TOP(458, 213), BOTTOM(458, 362);
 	Point2f PIVOT, pivot;
@@ -351,7 +453,7 @@ void Makeup::applyEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Po
 
 		Makeup::blend(dst, dst, _cosmetic, position, amount);
 	}
-
+#endif
 }
 
 void Makeup::applyEyeLash(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, uint32_t color, float amount)
@@ -372,19 +474,24 @@ cv::Mat Makeup::createEyeShadow(cv::Mat mask[3], uint32_t color[3]/*, const int&
 	const Vec3i _color[COUNT] = { unpack(color[0]), unpack(color[1]), unpack(color[2]) };
 	const Vec3i _127(127, 127, 127);
 
+	// note that blending mode can be tweaked!
 	for(int r = 0; r < rows; ++r)
 	for(int c = 0; c < cols; ++c)
 	{
 		Vec3i rgb(0, 0, 0);
-		int a = 0;
+		int a = 0, a_max = 0;
 		for(int i = 0; i < COUNT; ++i)
 		{
 			uint8_t alpha = mask[i].at<uint8_t>(r, c);
 			rgb += _color[i] * alpha;
 			a   += alpha;
+
+			if(a_max < alpha)
+				a_max = alpha;
 		}
-		rgb = (rgb + _127) / 255;
-		a   = (a + COUNT/2)/COUNT;
+		if(a != 0)
+			rgb = rgb/a;//(rgb + _127) / 255;
+		a   = a_max;//(a + COUNT/2)/COUNT;
 
 		for(int i = 0; i < 3; ++i)
 			assert(0 <= rgb[i] && rgb[i] <= 255);
