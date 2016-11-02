@@ -33,10 +33,6 @@
             android:name=".activity.GalleryActivity"
             android:screenOrientation="portrait" >
         </activity>
-        <activity
-            android:name=".activity.Makeup2Activity"
-            android:screenOrientation="portrait" >
-        </activity>
 
     </application>
 
