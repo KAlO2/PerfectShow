@@ -105,11 +105,11 @@
 	<string name="no_face_detected">Sorry, no face detected. Please use front face for better result.</string>
 	<string name="apply_modification_or_not">Apply modifications or not?</string>
 
-	<string name="preserve_luminosity">preserve luminosity</string>
-	<string name="reset">reset</string>
-	<string name="shadows">shadows</string>
-	<string name="midtones">midtones</string>
-	<string name="highlights">highlights</string>
+	<string name="preserve_luminosity">Preserve luminosity</string>
+	<string name="reset">Reset</string>
+	<string name="shadows">Shadows</string>
+	<string name="midtones">Midtones</string>
+	<string name="highlights">Highlights</string>
 
 	<string name="posterize_levels">Posterize levels</string>
 	<string name="image_storage_path">Image storage path</string>
@@ -123,7 +123,7 @@
 	<string name="eye_shadow">Eye shadow</string>
 	<string name="iris">Iris</string>
 	<string name="nose_shadow">Nose shadow</string>
-	<string name="blusher">Blusher</string>
+	<string name="blush">Blush</string>
 	<string name="lip_color">Lip color</string>
 
 	<!-- SettingsActivity -->
@@ -142,7 +142,8 @@
 	<string name="image_quality">Image quality(valid for JPG format, the bigger, the better quality with bigger size) %1$d</string>
 	<string name="color">Color</string>
 	<string name="change_theme">Change theme</string>
-
+	<string name="mark">Mark</string>
+	
 	<string name="save">Save</string>
 	<string name="image_saved_to">Image saved to %1$s</string>
 	<string name="select_picture">Select picture(s)</string>
@@ -165,7 +166,6 @@
 	<string name="permission_denied">Permission denied</string>
 	<string name="permission_read_external_storage">Storage read permission is required to pick files.</string>
 	<string name="permission_write_external_storage">Storage write permission is required to save the image.</string>
-	
 	<string name="format_s_result_d_d">%1$s Result (%2$dx%3$d)</string>
 	<!-- MainActivity -->
 	<string name="crop">Crop</string>

@@ -1,9 +1,17 @@
 package com.cloudream.ishow.algorithm;
 
+import java.io.File;
+
+import org.opencv.android.Utils;
+
 import com.cloudream.ishow.BuildConfig;
+import com.cloudream.ishow.R;
+import com.cloudream.ishow.util.BitmapUtils;
 import com.cloudream.ishow.util.MathUtils;
 
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -15,8 +23,20 @@ import android.graphics.RectF;
 import android.graphics.Paint.Style;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
-class Feature
+/*
+ * Accidently found that Android itself has a FaceDetector class {@link android.media.FaceDetector}
+ * but it only gives found faces without feature points.
+ * It use FFTEm library, I will dig it later.
+ * FFT is Fast Fourier Transform, EM may refer to "expectation-maximization".
+ * see <a href="http://stackoverflow.com/questions/3353696/underlying-technique-of-androids-facedetector">
+ * FaceDetector</a>
+ * <a href="https://github.com/lqs/neven">https://github.com/lqs/neven</a><br>
+ * <a href="https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm">
+ * Expectation-maximization_algorithm</a><br>
+ */
+public class Feature
 {
 	private static final String TAG = Feature.class.getSimpleName();
 	private static final boolean NATIVE = true;
@@ -25,7 +45,7 @@ class Feature
 	private final PointF points[];
 	
 	private PointF center_point;  // face center
-	private PointF up_vector;     // face up direction, note that Y axis is top down.
+	private PointF down_vector;     // face up direction, note that Y axis is top down.
 	
 	public Feature(Bitmap image, final PointF points[])
 	{
@@ -35,9 +55,39 @@ class Feature
 		if(BuildConfig.DEBUG && points == null)
 			throw new IllegalStateException("need to call FaceDetector.detect() method first");
 		
-		final PointF center_up[] = getSymmetryAxis(points);
-		center_point = center_up[0];
-		up_vector = center_up[1];
+		PointF down_center[] = nativeGetSymmetryAxis(points);
+		down_vector  = down_center[0];
+		center_point = down_center[1];
+	}
+	
+	public static PointF[] detectFace(Context context, Bitmap image, @Nullable String image_name)
+	{
+		if(BuildConfig.DEBUG)
+		{
+	        String fullname = context.getResources().getString(R.raw.haarcascade_frontalface_alt2);
+	        Log.i(TAG, "fullname: " + fullname);
+	        String resName = fullname.substring(fullname.lastIndexOf("/") + 1);
+	        Log.i(TAG, "resName: " + resName);
+	        
+	        // Enter "OpenCV_data", you will get "/data/data/<PACKAGE_NAME>/app_OpenCV_data", why a "app_" prefix?
+	        File resDir = context.getDir("OpenCV_data", Context.MODE_PRIVATE);
+	        Log.i(TAG, "resDir: " + resDir.getAbsolutePath());
+		}
+		
+		String path = Utils.exportResource(context, R.raw.haarcascade_frontalface_alt2);
+		Utils.exportResource(context, R.raw.haarcascade_mcs_lefteye);
+		Utils.exportResource(context, R.raw.haarcascade_mcs_mouth);
+		Utils.exportResource(context, R.raw.haarcascade_mcs_righteye);
+		String CLASSIFIER_DIR = path.substring(0, path.lastIndexOf('/'));
+		Log.d(TAG, "cascade data directory: " + CLASSIFIER_DIR);
+		
+		return nativeDetectFace(image, image_name, CLASSIFIER_DIR);
+	}
+	
+	public static PointF[] detectFace(Context context, String image_name)
+	{
+		Bitmap image = BitmapFactory.decodeFile(image_name, BitmapUtils.OPTION_RGBA_8888);
+		return detectFace(context, image, image_name);
 	}
 	
 	public final PointF[] getFeaturePoints()
@@ -316,15 +366,15 @@ class Feature
 		
 		// draw perpendicular bisector
 		float startX = 0, startY = 0, stopX = image.getWidth() - 1, stopY = image.getHeight() - 1;
-		if(Math.abs(up_vector.x) < Math.abs(up_vector.y))
+		if(Math.abs(down_vector.x) < Math.abs(down_vector.y))
 		{
-			float k = up_vector.y / up_vector.x;
+			float k = down_vector.y / down_vector.x;
 			startY = k * (startX - center_point.x) + center_point.y;
 			stopY = k * (stopX - center_point.x) + center_point.y;
 		}
 		else
 		{
-			float reciprocal_k = up_vector.x / up_vector.y;
+			float reciprocal_k = down_vector.x / down_vector.y;
 			startX = reciprocal_k * (startY -  center_point.y) + center_point.x;
 			stopX = reciprocal_k * (stopY - center_point.y) + center_point.x;
 		}
@@ -393,5 +443,13 @@ class Feature
 		return bitmap;
 	}
 	
-	private static native PointF[] getSymmetryAxis(PointF points[]);
+	private static native PointF[] nativeDetectFace(Bitmap image, String image_name, String classifier_dir);
+	private static native PointF[] nativeGetSymmetryAxis(PointF points[]);
+	
+	static
+	{
+//		System.loadLibrary("c++_shared");
+		System.loadLibrary("opencv_java3");
+		System.loadLibrary("venus");
+	}
 }

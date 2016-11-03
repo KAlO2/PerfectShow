@@ -11,10 +11,18 @@ extern "C" {
 #define com_cloudream_ishow_algorithm_Feature_NATIVE 1L
 /*
  * Class:     com_cloudream_ishow_algorithm_Feature
- * Method:    getSymmetryAxis
+ * Method:    nativeDetectFace
+ * Signature: (Landroid/graphics/Bitmap;Ljava/lang/String;Ljava/lang/String;)[Landroid/graphics/PointF;
+ */
+JNIEXPORT jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_Feature_nativeDetectFace
+  (JNIEnv *, jclass, jobject, jstring, jstring);
+
+/*
+ * Class:     com_cloudream_ishow_algorithm_Feature
+ * Method:    nativeGetSymmetryAxis
  * Signature: ([Landroid/graphics/PointF;)[Landroid/graphics/PointF;
  */
-JNIEXPORT jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_Feature_getSymmetryAxis
+JNIEXPORT jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_Feature_nativeGetSymmetryAxis
   (JNIEnv *, jclass, jobjectArray);
 
 #ifdef __cplusplus

@@ -67,13 +67,14 @@
 		<CheckBox
             android:id="@+id/mark"
             style="@style/CheckBox"
-            android:text="标记"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="@string/mark"
             android:visibility="gone"
             />
 	</LinearLayout>
 	
     <HorizontalScrollView
-        android:id="@+id/secondary"
         android:layout_width="match_parent"
         android:layout_height="80dp"
         android:layout_gravity="center_vertical"
@@ -137,10 +138,10 @@
                 android:text="@string/eye_brow" />
             
             <Button
-                android:id="@+id/blusher"
+                android:id="@+id/blush"
                 style="@style/ImageWithTextBelowIt"
-                android:drawableTop="@drawable/blusher"
-                android:text="@string/blusher" />
+                android:drawableTop="@drawable/blush"
+                android:text="@string/blush" />
 
             <Button
                 android:id="@+id/lip_color"

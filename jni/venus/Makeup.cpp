@@ -1,6 +1,7 @@
 #include "venus/Makeup.h"
 
 #include "venus/blend.h"
+#include "venus/ImageWarp.h"
 #include "venus/Feature.h"
 #include "venus/opencv_utility.h"
 #include "venus/Scalar.h"
@@ -388,7 +389,7 @@ void Makeup::applyEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Po
 		for(size_t i = 0; i < N; ++i)
 			dst_points[i] = dst_points[i] + offset;
 
-		ImageWarp_MLS_Rigid warp;
+		ImageWarp_Rigid warp;
 		warp.setMappingPoints(dst_points, affined_src_points);
 		warp.setSize(_cosmetic.cols, _cosmetic.rows);
 		warp.setTargetSize(_cosmetic.cols, _cosmetic.rows);

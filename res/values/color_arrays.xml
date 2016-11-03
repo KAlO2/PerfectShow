@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<array name="eye_brow_colors">
+		<item>#111312</item>
+		<item>#493A37</item>
+		<item>#745225</item>
+		<item>#616161</item>
+		<item>#9A7F79</item>
+		<item>#592970</item>
+		<item>#376247</item>
+		<item>#257470</item>
+	</array>
+	
+	<array name="eye_lash_colors">
+		<item>#111312</item>
+		<item>#493a37</item>
+		<item>#745225</item>
+		<item>#616161</item>
+		<item>#9a7f79</item>
+		<item>#376247</item>
+		<item>#257470</item>
+		<item>#592970</item>
+	</array>
+	
+	<array name="eye_shadow_colors">
+		<item>#FF0000</item>
+	    <item>#D28F00</item>
+		<item>#008AFF</item>
+		
+		<item>#D28F00</item>
+	    <item>#735315</item>
+		<item>#000000</item>
+		
+		<item>#F0000F</item>
+		<item>#D06EA6</item>
+		<item>#393097</item>
+		
+		<item>#000000</item>
+		<item>#292424</item>
+		<item>#773190</item>
+		
+		<item>#998533</item>
+		<item>#0000FF</item>
+		<item>#00FFFF</item>
+		
+		<item>#FDB69F</item>
+		<item>#1899E2</item>
+		<item>#3B2B4A</item>
+		
+		<item>#3E4245</item>
+		<item>#3F7E7E</item>
+		<item>#3F80AB</item>
+		
+		<item>#515A4E</item>
+		<item>#601F40</item>
+		<item>#FF0000</item>
+		
+		<item>#744EDF</item>
+		<item>#7AFF02</item>
+		<item>#7E7E3F</item>
+		
+		<item>#7F7F7F</item>
+		<item>#8EF6F1</item>
+		<item>#96AFF8</item>
+		
+		<item>#ADC84F</item>
+		<item>#C19B81</item>
+		<item>#C3C3C3</item>
+		
+		<item>#C7301F</item>
+		<item>#D2E0F4</item>
+		<item>#DD7B02</item>
+		
+		<item>#E331D5</item>
+		<item>#F5F5C2</item>
+		<item>#F6A16A</item>
+		
+		<item>#F9A22F</item>
+		<item>#FAA3C7</item>
+		<item>#0FD80E</item>
+		
+		<item>#162C16</item>
+		<item>#FFFF00</item>
+		<item>#DAC6B9</item>
+		
+		<item>#995129</item>
+		<item>#361708</item>
+		<item>#367702</item>
+		
+		<item>#E9DA67</item>
+		<item>#5220B1</item>
+		<item>#8CC0CE</item>
+		
+		<item>#C196DB</item>
+		<item>#FF6B6B</item>
+		<item>#CD0066</item>
+		
+		<item>#32C38E</item>
+		<item>#00CCFF</item>
+		<item>#E05CA1</item>
+	</array>
+	
+	<array name="iris_colors">
+		<item>#EDD3A1</item>
+		<item>#C99CF2</item>
+		<item>#77FF75</item>
+		<item>#171C1C</item>
+		<item>#E0A9C2</item>
+		<item>#84F1E6</item>
+		<item>#40B1FC</item>
+		<item>#FDF4A5</item>
+		<item>#544EEF</item>
+		<item>#AAF3B9</item>
+		<item>#ED67F4</item>
+		<item>#725B4B</item>
+		<item>#A260E2</item>
+		<item>#CFE260</item>
+		<item>#1DD4E2</item>
+		<item>#1BBB47</item>
+	</array>
+	
+	<array name="blush_colors">
+		<item>#FFDDC8</item>
+		<item>#FFC0D5</item>
+		<item>#FFBCA7</item>
+		<item>#FF9E8C</item>
+		<item>#FFC4DB</item>
+		<item>#FFACAC</item>
+		<item>#FD9DC1</item>
+		<item>#FFAEAE</item>
+		<item>#FFC4DB</item>
+		<item>#FFC7B5</item>
+		<item>#FFC1D8</item>
+		<item>#FFB9CC</item>
+		<item>#F999A3</item>
+		<item>#FFA3BC</item>
+		<item>#F7846A</item>
+		<item>#FFA4BD</item>
+		<item>#F3899C</item>
+		<item>#FF9985</item>
+		<item>#FF9884</item>
+		<item>#FF84C9</item>
+
+		<item>#FE3B5D</item>
+		<item>#FFA3BC</item>
+		<item>#FE899C</item>
+		<item>#ED6631</item>
+		<item>#FFBFBD</item>
+		<item>#F78469</item>
+		<item>#FF7980</item>
+		<item>#F04F71</item>
+	</array>
+	
+	<array name="lip_colors">
+		<item>#BF2267</item>
+		<item>#DF7862</item>
+		<item>#DDC8A3</item>
+		<item>#FFA6D2</item>
+		<item>#F95B96</item>
+		<item>#EFC7A3</item>
+		<item>#EF9884</item>
+		<item>#ED8FB4</item>
+		<item>#D86B7E</item>
+		<item>#E3623B</item>
+		<item>#D95B96</item>
+		<item>#EF426F</item>
+    </array>
+</resources>

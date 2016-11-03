@@ -85,19 +85,5 @@
     <!-- HorizontalProgressWheelView -->
     <color name="HorizontalProgressWheelView_line">#808080</color>
     <color name="widget_selected">#FF6E40</color>
-    
-    <!-- lips color -->
-    <color name="lips_color_00">#ef426f</color>
-   	<color name="lips_color_01">#bf2267</color>
-	<color name="lips_color_02">#df7862</color>
-	<color name="lips_color_03">#ddc8a3</color>
-	<color name="lips_color_04">#ffa6d2</color>
-	<color name="lips_color_05">#f95b96</color>
-	<color name="lips_color_06">#efc7a3</color>
-	<color name="lips_color_07">#ef9884</color>
-	<color name="lips_color_08">#ed8fb4</color>
-	<color name="lips_color_09">#d86b7e</color>
-	<color name="lips_color_10">#e3623b</color>
-	<color name="lips_color_11">#d95b96</color>
-	
+    	
 </resources>

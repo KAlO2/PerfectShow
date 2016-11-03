@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<!-- android-sdk/docs/guide/topics/resources/more-resources.html -->
+	
+	<string-array name="cosmetic_option">
+        <item>Texture</item>
+        <item>Color</item>
+	</string-array>
+	
+</resources>

@@ -1,11 +1,12 @@
-#include "venus/Feature.h"
+#include <opencv2/imgcodecs.hpp>
 
 #include "venus/Effect.h"
+#include "venus/Feature.h"
 #include "venus/opencv_utility.h"
-#include "venus/region_operation.h"
+#include "venus/scalar.h"
 
-//#include "opencv2/highgui.hpp"
-//#include "opencv2/imgproc.hpp"
+#include "stasm/stasm_lib.h"
+
 
 using namespace cv;
 
@@ -300,6 +301,182 @@ Feature::Feature(const cv::Mat& image, const std::vector<cv::Point2f>& points):
 	line = getSymmetryAxis(points);
 }
 
+/*
+	here are some useful links about hypot, I tried to use std::hypot(x, y), later changed to std::sqrt(a*a + b*b);
+	http://stackoverflow.com/questions/3764978/why-hypot-function-is-so-slow
+	also STL Bugs Fixed In Visual Studio 2012
+	718865	STL: hypot not hoisted into the std namespace by cmath
+	https://blogs.msdn.microsoft.com/vcblog/2012/06/15/stl-bugs-fixed-in-visual-studio-2012/
+*/
+static float angle(const Vec2f& v1, const Vec2f& v2)
+{
+	float numerator = v1[0]*v2[0] + v1[1]*v2[1];  // v1.dot(v2);
+	float v1_length = std::sqrt(v1[0]*v1[0] + v1[1]*v1[1]);
+	float v2_length = std::sqrt(v2[0]*v2[0] + v2[1]*v2[1]);
+	float denominator = v1_length * v2_length;
+//	assert(!isZero<T>(denominator));
+	return std::acos(numerator/denominator);
+}
+
+static cv::Vec2f rotate(const cv::Vec2f& v, float angle)
+{
+//	std::complex<T>(x,y) * complex<T>(cos(angle), sin(angle));
+	const float c = std::cos(angle);
+	const float s = std::sin(angle);
+	float _x = c * v[0] - s * v[1];
+	float _y = s * v[0] + c * v[1];
+
+	return cv::Vec2f(_x, _y);
+}
+
+std::vector<cv::Point2f> Feature::detectFace(const cv::Mat& image, const std::string& tag, const std::string& classifier_dir)
+{
+	assert(image.channels() == 1);  // single channel required, namely gray image.
+
+	std::vector<Point2f> points;
+
+    int foundface;
+    float landmarks[stasm_NLANDMARKS * 2]; // x, y coords (note the 2)
+	const char* image_path = tag.c_str();
+    if(!stasm_search_single(&foundface, landmarks,
+			reinterpret_cast<const char*>(image.data), image.cols, image.rows,
+			image_path, classifier_dir.c_str()))
+    {
+        printf("Error in stasm_search_single: %s\n", stasm_lasterr());
+        return points;
+    }
+
+    if(!foundface)
+		printf("No face found in %s\n", image_path);
+    else
+    {
+        // draw the landmarks on the image as white dots (image is monochrome)
+        stasm_force_points_into_image(landmarks, image.cols, image.rows);
+#if 0
+		points.reserve(stasm_NLANDMARKS);
+        for(int i = 0; i < stasm_NLANDMARKS; i++)
+		{
+			printf("Point(%d, %d),\n", (int)landmarks[i*2], (int)landmarks[i*2+1]);
+			points.push_back(Point2f(landmarks[i*2], landmarks[i*2+1]));
+		}
+
+#else  // add bonus feature points(use Bezier or spline curve) for better subdivision result.
+		const int extra_count = 4;
+		points.reserve(stasm_NLANDMARKS + extra_count);
+
+		int i = 0;
+		for(; i < 13; ++i)
+			points.push_back(Point2f(landmarks[i*2], landmarks[i*2+1]));
+		
+		{
+			int ia = 13, ib = 12, ic = 11;  // triangle 11/12/13
+			const Point2f& A = *reinterpret_cast<const Point2f*>(landmarks + ia*2);
+			const Point2f& B = *reinterpret_cast<const Point2f*>(landmarks + ib*2);
+			const Point2f& C = *reinterpret_cast<const Point2f*>(landmarks + ic*2);
+
+			Point2f O = centerOfCircumscribedCircle(A, B, C);
+			Vec2f vOA(A.x - O.x, A.y - O.y);
+			Vec2f vOB(B.x - O.x, B.y - O.y);
+			float theta = angle(vOA, vOB);
+
+			Vec2f vOB_r = rotate(vOB, -theta/3);
+			Vec2f vOA_l = rotate(vOA, +theta/3);
+			points.push_back(Point2f(O.x + vOB_r[0], O.y + vOB_r[1]));
+			points.push_back(Point2f(O.x + vOA_l[0], O.y + vOA_l[1]));
+		}
+
+		for(; i < 16; ++i)
+			points.push_back(Point2f(landmarks[i*2], landmarks[i*2+1]));
+
+		{
+			int ia = 15, ib = 0, ic = 1;  // triangle 15/0/1
+			const Point2f& A = *reinterpret_cast<const Point2f*>(landmarks + ia*2);
+			const Point2f& B = *reinterpret_cast<const Point2f*>(landmarks + ib*2);
+			const Point2f& C = *reinterpret_cast<const Point2f*>(landmarks + ic*2);
+
+			Point2f O = centerOfCircumscribedCircle(A, B, C);
+			Vec2f vOA(A.x - O.x, A.y - O.y);
+			Vec2f vOB(B.x - O.x, B.y - O.y);
+			float theta = angle(vOA, vOB);
+
+			Vec2f vOA_r = rotate(vOA, -theta/3);
+			Vec2f vOB_l = rotate(vOB, +theta/3);
+			points.push_back(Point2f(O.x + vOA_r[0], O.y + vOA_r[1]));
+			points.push_back(Point2f(O.x + vOB_l[0], O.y + vOB_l[1]));
+
+//			points.push_back(O + vOA.rotate(-theta/3));
+//			points.push_back(O + vOB.rotate(+theta/3));
+		}
+
+		for(; i < stasm_NLANDMARKS; ++i)
+			points.push_back(Point2f(landmarks[i*2], landmarks[i*2+1]));
+#if 0
+		// add more points for better Delaunay triangulation result.
+		Point2f pm1(points[22]), p0(points[21]), p1(points[20]), p2(points[25]);
+		Point2f eye_brow_top_r = catmullRomSpline(0.50f, pm1, p0, p1, p2);
+//		cv::circle(image, Point(cvRound(eye_brow_top_r.x), cvRound(eye_brow_top_r.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
+		points.push_back(eye_brow_top_r);
+
+		pm1 = points[29]; p0 = points[28]; p1 = points[27]; p2 = points[26];
+		Point2f eye_brow_top_l = catmullRomSpline(0.50f, pm1, p0, p1, p2);
+//		cv::circle(image, Point(cvRound(eye_brow_top_l.x), cvRound(eye_brow_top_l.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
+//		points.push_back(eye_brow_top_l);
+
+		Point2f eye_brow_top_m = (eye_brow_top_r + eye_brow_top_l)/2;
+//		cv::circle(image, Point(cvRound(eye_brow_top_m.x), cvRound(eye_brow_top_m.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
+//		points.push_back(eye_brow_top_m);
+
+		Point2f eye_pupil_m = (points[42] + points[43])/2;
+//		cv::circle(image, Point(cvRound(eye_pupil_m.x), cvRound(eye_pupil_m.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
+		points.push_back(eye_pupil_m);
+
+		// 3|9 62|58 63|69
+		Point2f eye_cheek_1r = (points[3] + points[62] + 0.5 * points[63])/2.5f;
+		Point2f eye_cheek_1l = (points[9] + points[58] + 0.5 * points[69])/2.5f;
+//		cv::circle(image, Point(cvRound(eye_cheek_1r.x), cvRound(eye_cheek_1r.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
+//		cv::circle(image, Point(cvRound(eye_cheek_1l.x), cvRound(eye_cheek_1l.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
+		points.push_back(eye_cheek_1r);
+		points.push_back(eye_cheek_1l);
+
+		// 40:50 62:58
+		Point2f eye_cheek_2r = (points[40] + points[62])/2;
+		Point2f eye_cheek_2l = (points[50] + points[58])/2;
+//		cv::circle(image, Point(cvRound(eye_cheek_2r.x), cvRound(eye_cheek_2r.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
+//		cv::circle(image, Point(cvRound(eye_cheek_2l.x), cvRound(eye_cheek_2l.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
+		points.push_back(eye_cheek_2r);
+		points.push_back(eye_cheek_2l);
+
+		// 39:49 1:11
+		Point2f eye_cheek_3r = (points[39] + points[1])/2;
+		Point2f eye_cheek_3l = (points[49] + points[11])/2;
+//		cv::circle(image, Point(cvRound(eye_cheek_3r.x), cvRound(eye_cheek_3r.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
+//		cv::circle(image, Point(cvRound(eye_cheek_3l.x), cvRound(eye_cheek_3l.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
+		points.push_back(eye_cheek_2r);
+		points.push_back(eye_cheek_2l);
+#endif
+#endif
+    }
+
+//	correctIris(image, points);
+
+	return points;
+}
+
+std::vector<cv::Point2f> Feature::detectFace(cv::Size2i* size, const std::string& image_name, const std::string& classifier_dir)
+{
+	cv::Mat image = cv::imread(image_name, cv::IMREAD_GRAYSCALE);
+	if(!image.data)
+    {
+        printf("Cannot load %s\n", image_name.c_str());
+        return std::vector<Point2f>();
+    }
+
+	if(size != nullptr)
+		*size = Size2i(image.cols, image.rows);
+
+	return detectFace(image, image_name, classifier_dir);
+}
+
 cv::Mat Feature::mark() const
 {
 	Mat image2 = image.clone();
@@ -366,7 +543,7 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 		cv::circle(image, pt, 1,  CV_RGB(0, 255, 0), 1, LINE_AA);
 	}
 
-#if 0  // draw triangles
+#if 0  // enable it to draw triangles
 	for(const Vec3i& tri: triangle_indices)
 	{
 		for(int k = 0; k < 3; ++k)
@@ -378,7 +555,7 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 		cv::line(image, points[tri[2]], points[tri[0]], FOREGROUD_COLOR, 1, LINE_AA);
 	}
 #endif
-#if 1
+#if 1  // enable it to draw horizontal/vertical lines
 	const Scalar LINE_COLOR(255, 0, 0);
 	Point2f pm1(points[22]), p0(points[21]), p1(points[20]), p2(points[25]);
 	Point2f eye_brow_top_r = catmullRomSpline(0.50f, pm1, p0, p1, p2);
@@ -462,16 +639,13 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 	}
 #endif
 
-	/*
-	        /21----20\            /27----28\ 
-	      22  23  24  25        26  31  30  29
-    
-				36                    46
-			 37    35              45    47
-	right  38   42   34 -------- 44   43   48   left
-			 39    41              51    49
-				40                    50
-	*/
+/*
+            36                    46
+         37    35              45    47
+right  38   42   34 -------- 44   43   48   left
+         39    41              51    49
+            40                    50
+*/
 	const Point2f& pupil_r = points[42];
 	const Point2f& pupil_l = points[43];
 	float pupil_r_radius = (
@@ -489,6 +663,14 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 	cv::circle(image, pupil_r, static_cast<int>(pupil_r_radius), CV_RGB(0, 255, 0), 1, LINE_AA);
 	cv::circle(image, pupil_l, static_cast<int>(pupil_l_radius), CV_RGB(0, 255, 0), 1, LINE_AA);
 
+	for(int i = 0; i <= 1; ++i)
+	{
+		bool is_right = i == 0;
+		std::vector<cv::Point2f> polygon = Feature::calculateEyePolygon(points, is_right);
+		const size_t N = polygon.size();
+		for(size_t i = 0; i < N; ++i)
+			cv::line(image, polygon[i], polygon[(i+1)%N], CV_RGB(0, 255, 25), 1, LINE_AA);
+	}
 //	cv::circle(image, Point(cvRound(eye_brow_top_m.x), cvRound(eye_brow_top_m.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
 
 //	Point2f pm1(points[22]), p0(points[21]), p1(points[20]), p2(points[25]);
@@ -811,10 +993,23 @@ std::vector<cv::Point2f> Feature::calculateEyePolygon(const std::vector<cv::Poin
 	const int start = right?34:44;
 
 	// Point2f implicitly cast to Point2i, which calls saturate_cast(), which calls cvRound()
+#if 0
 	std::vector<Point2f> polygon(length);
 	for(int i = 0; i < length; ++i)
 		polygon[i] = points[start + i];
-
+#else
+	std::vector<Point2f> polygon;
+	for(int i = 0; i < length; ++i)
+	{
+		const Point2f& _0 = points[start + (i+length-1)%length];
+		const Point2f& _1 = points[start + i];
+		const Point2f& _2 = points[start + (i+length+1)%length];
+		const Point2f& _3 = points[start + (i+length+2)%length];
+		polygon.push_back(_1);
+		polygon.push_back(catmullRomSpline(1.0f/3, _0, _1, _2, _3));
+		polygon.push_back(catmullRomSpline(2.0f/3, _0, _1, _2, _3));
+	}
+#endif
 	return polygon;
 }
 

@@ -23,6 +23,7 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Pair;
 import android.view.View;
 import android.view.View.MeasureSpec;
@@ -76,37 +77,6 @@ public final class BitmapUtils
 		OPTION_RGBA_8888.inDither = false;
 		OPTION_RGBA_8888.inMutable = true;
 		OPTION_RGBA_8888.inPremultiplied = false;
-	}
-	
-	/**
-	 * #Color use #AARRGGBB, namely BGRA in memory layout, while native layer use #AABBGGRR, namely
-	 * RGBA memory layout, need a swap(R, B) here.
-	 * 
-	 * @param  color in BGRA layout, as expressed in #Color
-	 * @return color in RGBA layout
-	 */
-	public static int bgra2rgba(int color)
-	{
-		int alpha = color & 0xff000000;  // alplha >>> 24
-		int red   = Color.red(color);
-		int green = color & 0x0000ff00;  // (color >> 8) & 0xFF
-		int blue  = Color.blue(color);
-		return alpha | (blue << 16) | green | red;
-	}
-	
-	/**
-	 * Output human readable string for color.
-	 * 
-	 * @param  Android #AARRGGBB format, 0xBBGGRRAA
-	 * @return string "#RRGGBBAA"
-	 */
-	public static String colorToString(int color)
-	{
-		return String.format("#%02X%02X%02X%02X",
-				(byte)(Color.red  (color)&0xff),
-				(byte)(Color.green(color)&0xff),
-				(byte)(Color.blue (color)&0xff),
-				(byte)(Color.alpha(color)&0xff));
 	}
 	
 	/**
@@ -905,7 +875,16 @@ public final class BitmapUtils
 		return bitmap;
 	}
 	
-	public static Bitmap decodeFile(String pathName, Options opts)
+	/**
+	 * It's like BitmapFactory#decodeFile(String, Options), but take EXIF information into account.
+	 * 
+	 * @param pathName Complete path name for the file to be decoded.
+	 * @param opts     Image Decoding options.
+	 * @return         The decoded bitmap.
+	 * 
+	 * @see BitmapFactory#decodeFile(String, Options)
+	 */
+	public static Bitmap decodeFile(String pathName, @Nullable Options opts)
 	{
 		Bitmap bitmap = BitmapFactory.decodeFile(pathName, opts);
 		int orientation = ExifInterface.ORIENTATION_UNDEFINED;

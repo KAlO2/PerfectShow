@@ -35,8 +35,26 @@ private:
 	static cv::Vec4f calcuateEyeRadius(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right);
 public:
 	Feature(const cv::Mat& image, const std::vector<cv::Point2f>& points);
-//	void setFeaturePoints(const std::vector<cv::Point>& points);
 	
+	/**
+	 * Detect feature points from an image if there are face(s) in the image.
+	 *
+	 * @param[in] image          The <em>gray</em> image to be detected.
+	 * @param[in] tag            Nullable, for debugging usage, usually the image name.
+	 * @param[in] classifier_dir The classifiers (haarcascade_frontalface_alt2.xml and so on) directory.
+	 * @return                   Feature points.
+	 */
+	static std::vector<cv::Point2f> detectFace(const cv::Mat& image, const std::string& tag, const std::string& classifier_dir);
+
+	/**
+	 * Detect feature points from given path.
+	 * @param[out] size          The image size.
+	 * @param[in] image_name     The image name.
+	 * @param[in] classifier_dir The classifiers (haarcascade_frontalface_alt2.xml and so on) directory.
+	 * @return                   Feature points.
+	 */
+	static std::vector<cv::Point2f> detectFace(cv::Size2i* size, const std::string& image_name, const std::string& classifier_dir);
+
 	cv::Mat mark() const;
 	static void mark(cv::Mat& image, const std::vector<cv::Point2f>& points);
 	

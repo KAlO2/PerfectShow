@@ -108,6 +108,11 @@ float distance(const cv::Point2f& point, const cv::Point2f& A, const cv::Point2f
  */
 float distance(const cv::Point2f& point, const cv::Vec4f& line);
 
+/**
+ * Triangle ABC Circumscribed_circle https://en.wikipedia.org/wiki/Circumscribed_circle
+ */
+cv::Point2f centerOfCircumscribedCircle(const cv::Point2f& A, const cv::Point2f& B, const cv::Point2f& C);
+
 cv::Mat merge(const cv::Mat& rgb, const cv::Mat& alpha);
 
 /**

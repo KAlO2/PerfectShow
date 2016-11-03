@@ -78,6 +78,73 @@ float distance(const cv::Point2f& point, const cv::Vec4f& line)
 	return std::sqrt(normal.x*normal.x + normal.y*normal.y);
 }
 
+/*
+	Let (h,k) be the coordinates of the center of the circle, and r its
+	radius. Then the equation of the circle is:
+
+		 (x-h)^2 + (y-k)^2 = r^2
+
+	Since the three points all lie on the circle, their coordinates will
+	satisfy this equation. That gives you three equations:
+
+		 (x1-h)^2 + (y1-k)^2 = r^2
+		 (x2-h)^2 + (y2-k)^2 = r^2
+		 (x3-h)^2 + (y3-k)^2 = r^2
+
+	in the three unknowns h, k, and r. To solve these, subtract the first
+	from the other two. That will eliminate r, h^2, and k^2 from the last
+	two equations, leaving you with two simultaneous linear equations in
+	the two unknowns h and k. Solve these, and you'll have the coordinates
+	(h,k) of the center of the circle. Finally, set:
+
+		 r = sqrt[(x1-h)^2 + (y1-k)^2]
+
+	and you'll have everything you need to know about the circle.
+
+	This can all be done symbolically, of course, but you'll get some
+	pretty complicated expressions for h and k. The simplest forms of
+	these involve determinants, if you know what they are:
+
+			 |x1^2+y1^2  y1  1|        |x1  x1^2+y1^2  1|
+			 |x2^2+y2^2  y2  1|        |x2  x2^2+y2^2  1|
+			 |x3^2+y3^2  y3  1|        |x3  x3^2+y3^2  1|
+		 h = ------------------,   k = ------------------
+				 |x1  y1  1|               |x1  y1  1|
+			   2*|x2  y2  1|             2*|x2  y2  1|
+				 |x3  y3  1|               |x3  y3  1|
+
+
+	Point A and B construct a line, the midnormal equation is 
+	(B.x - A.x)*x + (B.y - A.y)*y = (B.x - A.x)*(B.x + A.x)/2 + (B.y - A.y)*(B.y + A.y)/2
+
+	and ditto for point A and C, you can choose B and C as well.
+	(C.x - A.x)*x + (C.y - A.y)*y = (C.x - A.x)*(C.x + A.x)/2 + (C.y - A.y)*(C.y + A.y)/2
+	
+	Two midnormal line intersect at some point O (the circumcircle) if they aren't parallel.
+	[ (B.x - A.x)  (B.y - A.y) ] [ x ] = [ (B.x - A.x)*(B.x + A.x)/2 + (B.y - A.y)*(B.y + A.y)/2 ]
+	[ (C.x - A.x)  (C.y - A.y) ] [ y ] = [ (C.x - A.x)*(C.x + A.x)/2 + (C.y - A.y)*(C.y + A.y)/2 ]
+
+	By means of solving the matrix equation above, we get the circumcircle center point O.
+*/
+cv::Point2f centerOfCircumscribedCircle(const cv::Point2f& A, const cv::Point2f& B, const cv::Point2f& C)
+{
+	float AB_x = B.x - A.x, AC_x = C.x - A.x;
+	float AB_y = B.y - A.y, AC_y = C.y - A.y;
+
+//	[ AB_x  AB_y ] [ x ] = [ AB_x*AB_mx + AB_y*AB_my ]
+//	[ AC_x  AC_y ] [ y ] = [ AC_x*AC_mx + AC_y*AC_my ]
+
+	float denorm = AB_x * AC_y - AC_x * AB_y;
+	assert(std::abs(denorm) > std::numeric_limits<float>::epsilon());
+
+	float M_x = AB_x*(B.x + A.x)/2 + AB_y*(B.y + A.y)/2;
+	float M_y = AC_x*(C.x + A.x)/2 + AC_y*(C.y + A.y)/2;
+
+	float x = (M_x*AC_y - M_y*AB_y)/denorm;
+	float y = (AB_x*M_y - AC_x*M_x)/denorm;
+	return Point2f(x, y);
+}
+
 cv::Mat merge(const cv::Mat& rgb, const cv::Mat& alpha)
 {
 	assert(rgb.depth() == alpha.depth());
