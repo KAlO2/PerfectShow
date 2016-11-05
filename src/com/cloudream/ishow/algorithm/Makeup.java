@@ -1,11 +1,8 @@
 package com.cloudream.ishow.algorithm;
 
-import com.cloudream.ishow.util.BitmapUtils;
 import com.cloudream.ishow.util.ColorUtils;
 
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
 import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
@@ -16,7 +13,6 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Shader;
-import android.support.annotation.FloatRange;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -44,70 +40,6 @@ public class Makeup extends BitmapWrapper
 	public Bitmap markFeaturePoints()
 	{
 		return feature.mark();
-	}
-	
-	/**
-	 * All the makeup stuff in one go, with corresponding parameters.
-	 * 
-	 * @param context
-	 * @param makeup  #Makeup
-	 * @param region  #Region
-	 * @param indices <ul>
-	 *                	<li>For {@link Region#EYE_BROW} single drawable resource of the cosmetics.</li>
-	 *                	<li>For {@link Region#EYE_LASH} ditto.</li>
-	 *                	<li>For {@link Region#EYE_SHADOW} multiple drawable resources of the cosmetics.
-	 *                  Note that they are masks loaded with Bitmap.Config.ALPHA_8 parameter.
-	 *                  </li>
-	 *                	<li>For {@link Region#IRIS} multiple drawable resources of the cosmetics.</li>
-	 *                	<li>For {@link Region#BLUSH}, it's {@link Makeup.BlushShape} ordinal.</li>
-	 *                	<li>For {@link Region#NOSE} </li>
-	 *                	<li>For {@link Region#LIP}, unused, pass null is OK.</li>
-	 *                <ul>
-	 * @param colors  Color of the cosmetics. {@link Region#EYE_SHADOW} use multiple colors probably,
-	 *                since they enhance the face's beauty.
-	 * @param amount  Blending amount in range [0, 1], 0 being no effect, 1 being fully applied.
-	 * 
-	 * @see {@link android.graphics.Bitmap.Config#ALPHA_8}
-	 */
-	public void applyCosmestic(Context context, Region region,
-			int indices[], @NonNull int colors[], @FloatRange(from=0.0D, to=1.0D) float amount)
-	{
-		switch(region)
-		{
-		case LIP:
-			applyLipColor(colors[0], amount);
-			break;
-		case BLUSH:
-			applyBlush(Makeup.BlushShape.values()[indices[0]], colors[0], amount);
-			break;
-		case EYE_BROW:
-		{
-			Bitmap bmp_eye_brow = BitmapFactory.decodeResource(context.getResources(), indices[0], BitmapUtils.OPTION_RGBA_8888);
-			applyBrow(bmp_eye_brow, amount);
-		}
-			break;
-		case IRIS:
-			break;
-		case EYE_LASH:
-		{
-			Bitmap bmp_eye_lash = BitmapFactory.decodeResource(context.getResources(), indices[0], BitmapUtils.OPTION_RGBA_8888);
-			applyEyeLash(bmp_eye_lash, colors[0], amount);
-		}
-			break;
-		case EYE_SHADOW:
-		{
-			final int length = indices.length;
-			Bitmap mask[] = new Bitmap[length];
-			BitmapFactory.Options options = new BitmapFactory.Options();
-			options.inPreferredConfig = Bitmap.Config.ALPHA_8;
-			for(int i = 0; i < 3; ++i)
-				mask[i] = BitmapFactory.decodeResource(context.getResources(), indices[i], options);
-			applyEyeShadow(mask, colors, amount);
-		}
-			break;
-		default:
-			throw new UnsupportedOperationException("not implemented yet");
-		}
 	}
 	
 	public void applyBrow(final Bitmap eye_brow, float amount)
@@ -177,7 +109,7 @@ public class Makeup extends BitmapWrapper
 			for(int i = 0; i < 3; ++i)
 				layers[i] = Effect.tone(mask[i], color[i]);
 	
-			Bitmap eye_shadow = mergeLayers(layers); 
+			Bitmap eye_shadow = mergeLayers(layers);
 			nativeApplyEye(bmp_step, bmp_stop, points, eye_shadow, amount);
 		}
 		else
@@ -205,7 +137,7 @@ public class Makeup extends BitmapWrapper
 	 * @param color an #ARGB integer, @see #Color
 	 * @param amount 0 means no change, and 1 means fully applied.
 	 */
-	public void applyLipColor(int color, float amount)
+	public void applyLip(int color, float amount)
 	{
 		final PointF position = new PointF();
 
@@ -234,7 +166,7 @@ public class Makeup extends BitmapWrapper
 	private static native void nativeApplyEyeShadow(Bitmap dst, Bitmap src, final PointF points[], Bitmap mask[], int color[], float amount);
 	private static native void nativeApplyIris     (Bitmap dst, Bitmap src, final PointF points[], Bitmap iris, Bitmap mask, float amount);
 	private static native void nativeApplyBlush    (Bitmap dst, Bitmap src, final PointF points[], int shape, int color, float amount);
-	private static native void nativeApplyLipColor (Bitmap dst, Bitmap src, final PointF points[], int color, float amount);
+	private static native void nativeApplyLip      (Bitmap dst, Bitmap src, final PointF points[], int color, float amount);
 
 	
 }

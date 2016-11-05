@@ -30,9 +30,8 @@ if(MSVC)
 endif()
 
 if(MSVC)
-	set(CMAKE_CXX_FLAGS_DEBUG
-	"${CMAKE_CXX_FLAGS_DEBUG} /MTd"
-	CACHE STRING "Debug builds CMAKE CXX flags " FORCE)
+	set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} /MTd" CACHE STRING "Debug builds CMAKE CXX flags"   FORCE)
+	SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEBUG} /MT"  CACHE STRING "Release builds CMAKE CXX flags" FORCE)
 endif()
 
 option(ENABLE_FAST_MATH "Enable fast math optimizations" OFF)

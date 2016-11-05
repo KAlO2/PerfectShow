@@ -60,7 +60,7 @@ JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyBlus
  * Method:    nativeApplyLipColor
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;IF)V
  */
-JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyLipColor
+JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyLip
   (JNIEnv *, jclass, jobject, jobject, jobjectArray, jint, jfloat);
 
 #ifdef __cplusplus

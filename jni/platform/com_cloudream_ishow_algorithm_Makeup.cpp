@@ -117,7 +117,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyBlush(JNIEnv* 
 	PROLOGUE_EXIT
 }
 
-void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyLipColor(JNIEnv* env,
+void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyLip(JNIEnv* env,
 		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jint _color, jfloat amount)
 {
 	PROLOGUE_ENTER
@@ -143,7 +143,8 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyLipColor(JNIEn
 	Unlike static_cast, but like const_cast, the reinterpret_cast expression does not compile to any CPU instructions.
 */
 	uint32_t color = static_cast<uint32_t>(_color);
-	Makeup::applyLipColor(dst, src, points, color, amount);
+
+	Makeup::applyLip(dst, src, points, color, amount);
 
 	PROLOGUE_EXIT
 }

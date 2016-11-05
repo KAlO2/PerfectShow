@@ -7,6 +7,7 @@ import com.cloudream.ishow.R;
 import com.cloudream.ishow.algorithm.Feature;
 import com.cloudream.ishow.algorithm.Makeup;
 import com.cloudream.ishow.algorithm.Region;
+import com.cloudream.ishow.algorithm.Makeup.BlushShape;
 import com.cloudream.ishow.bean.MakeupParams;
 import com.cloudream.ishow.util.BitmapUtils;
 import com.cloudream.ishow.util.ColorUtils;
@@ -14,14 +15,20 @@ import com.cloudream.ishow.util.Compatibility;
 import com.cloudream.ishow.util.MathUtils;
 import com.cloudream.ishow.view.ImageViewTouch;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PointF;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.support.annotation.FloatRange;
+import android.support.annotation.NonNull;
 import android.util.Log;
+import android.util.TimingLogger;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
@@ -31,6 +38,7 @@ import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.Toast;
 import android.widget.AdapterView;
 
@@ -39,20 +47,21 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 	private static final String TAG = MakeupActivity.class.getSimpleName();
 	
 	private ImageViewTouch iv_image;
-//	private TextView  tv_reset;
 
 	private SeekBar   sb_weight;
-	private SeekBar   sb_size;
 	
 	private LinearLayout ll_styles;
-	private LinearLayout ll_regions;
 	
 	private Region region;
 	private int region_id = 0;
-//	private View last_region;
 	
-	private int indices[];
-	private int colors[];
+	// Spinner options
+	private static final int OPTION_TEXTURE = 0;
+	private static final int OPTION_COLOR   = 1;
+	
+	private int option = OPTION_TEXTURE;
+	private int textures[];  //< OPTION_TEXTURE
+	private int colors[];    //< OPTION_COLOR
 	
 	private Makeup makeup;
 	
@@ -78,56 +87,98 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 	// They can be final static since it need context to load resources.
 	private final int ROI_COLORS[][] = new int [Region.values().length][];
 	
-	private final int[] obtainRegionColorArray(Region region)
+	private final void initRegionColorArray()
 	{
-		int roi = region.ordinal();
-		int array[] = ROI_COLORS[roi];
-		if(array != null)
-			return array;
-		
-		switch(region)
-		{
-		case EYE_BROW:   array = ColorUtils.obtainColorArray(this, R.array.eye_brow_colors);   break;
-		case EYE_LASH:   array = ColorUtils.obtainColorArray(this, R.array.eye_lash_colors);   break;
-		case EYE_SHADOW: array = ColorUtils.obtainColorArray(this, R.array.eye_shadow_colors); break;
-		case IRIS:       array = ColorUtils.obtainColorArray(this, R.array.iris_colors);       break;
-		case BLUSH:      array = ColorUtils.obtainColorArray(this, R.array.blush_colors);      break;
-		case LIP:        array = ColorUtils.obtainColorArray(this, R.array.lip_colors);        break;
-		default:         throw new UnsupportedOperationException("not implemented yet");
-		}
-	
-		return array;
+		ROI_COLORS[Region.EYE_BROW  .ordinal()] = ColorUtils.obtainColorArray(this, R.array.eye_brow_colors);
+		ROI_COLORS[Region.EYE_LASH  .ordinal()] = ColorUtils.obtainColorArray(this, R.array.eye_lash_colors);
+		ROI_COLORS[Region.EYE_SHADOW.ordinal()] = ColorUtils.obtainColorArray(this, R.array.eye_shadow_colors);
+		ROI_COLORS[Region.IRIS      .ordinal()] = ColorUtils.obtainColorArray(this, R.array.iris_colors);
+		ROI_COLORS[Region.BLUSH     .ordinal()] = ColorUtils.obtainColorArray(this, R.array.blush_colors);
+		ROI_COLORS[Region.LIP       .ordinal()] = ColorUtils.obtainColorArray(this, R.array.lip_colors);
+//		ROI_COLORS[Region.SKIN      .ordinal()] = N/A;
 	}
 	
-	// This listener controls variable indices[].
+	private final int[] obtainRegionColorArray(Region region)
+	{
+		return ROI_COLORS[region.ordinal()];
+	}
+	
+	private void selectTexture(Region region, int index)
+	{
+		switch(region)
+		{
+		case EYE_SHADOW:
+			// eye shadow use 3 layers for color blending
+			int start = (index - R.drawable.thumb_eye_shadow_00) * 3 + R.drawable.eye_shadow_001;
+			textures = new int[]{ start, start+1, start+2 };
+			break;
+		case IRIS:
+			// iris use 2 layers for color blending
+			start = (index - R.drawable.thumb_iris_00) * 2 + R.drawable.iris_000;
+			textures = new int[]{ start, start+1 };
+			break;
+
+		case LIP:
+//			indices = null;  // dispensable, leave it alone.
+			break;
+//		case EYE_BROW:
+//		case EYE_LASH:
+//		case BLUSH:  // fall through intended
+		default:
+			if(textures != null && textures.length == 1)
+				textures[0] = index;
+			else
+				textures = new int[]{ index };
+			break;
+		}
+	}
+	
+	// This listener controls variable textures[].
 	private final View.OnClickListener lsn_texture = new View.OnClickListener()
 	{
 		@Override
 		public void onClick(View v)
 		{
 			int index = (Integer)v.getTag();
-			switch(region)
-			{
-			case IRIS:
-				// iris use 2 layers for color blending
-				int start = (index - R.drawable.thumb_iris_00) * 2 + R.drawable.iris_000;
-				indices = new int[]{ start, start+1 };
-				break;
-			case EYE_SHADOW:
-				// eye shadow use 3 layers for color blending
-				start = (index - R.drawable.thumb_eye_shadow_00) * 3 + R.drawable.eye_shadow_001;
-				indices = new int[]{ start, start+1, start+2 };
-				break;
-			default:
-				if(indices != null && indices.length == 1)
-					indices[0] = index;
-				else
-					indices = new int[]{ index };
-				break;
-			}
+			selectTexture(region, index);
 		}
 
 	};
+	
+	private void selectColor(Region region, int index)
+	{
+		int COLORS[] = obtainRegionColorArray(region);
+		int color = COLORS[index];
+		
+		boolean single = true;
+		switch(region)
+		{
+		case LIP:
+			// TODO experiment, modify alpha or store alpha value in XML file.
+			color = (color & 0x00FFFFFF) | (Color.alpha(color) >> 2 << 24);
+//			Log.i(TAG, "use color: " + ColorUtils.colorToString(color));
+			break;
+		case BLUSH:
+			// TODO experiment
+//			color = (color & 0x00FFFFFF) | (((int)(amount * 128)) << 24);
+			color = (color & 0x00FFFFFF) | (0x80 << 24);
+			break;
+		case EYE_SHADOW:
+			single = false;  // currently only Region#EYE_SHADOW use multiple colors.
+			colors = new int[]{ color, COLORS[index+1], COLORS[index+2] };
+			break;
+		default:
+			break;
+		}
+		
+		if(single)
+		{
+			if(colors != null && colors.length == 1)
+				colors[0] = color;
+			else
+				colors = new int[]{ color };
+		}
+	}
 	
 	// This listener controls variable colors[].
 	private final View.OnClickListener lsn_color = new View.OnClickListener()
@@ -136,43 +187,12 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		public void onClick(View v)
 		{
 			int index = (Integer)v.getTag();
-			int COLORS[] = obtainRegionColorArray(region);
-			int color = COLORS[index];
-			
-			boolean single = true;
-			switch(region)
-			{
-			case LIP:
-				// TODO experiment, modify alpha or store alpha value in XML file.
-				color = (color & 0x00FFFFFF) | (Color.alpha(color) >> 2 << 24);
-//				Log.i(TAG, "use color: " + ColorUtils.colorToString(color));
-				break;
-			case BLUSH:
-				// TODO experiment
-//				color = (color & 0x00FFFFFF) | (((int)(amount * 128)) << 24);
-				color = (color & 0x00FFFFFF) | (0x80 << 24);
-				break;
-			case EYE_SHADOW:
-				single = false;  // currently only Region#EYE_SHADOW use multiple colors.
-				colors = new int[]{ color, COLORS[index+1], COLORS[index+2] };
-				break;
-			default:
-				break;
-			}
-			
-			if(single)
-			{
-				if(colors != null && colors.length == 1)
-					colors[0] = color;
-				else
-					colors = new int[]{ color };
-			}
+			selectColor(region, index);
 			
 			randomProgress(sb_weight);
 		}
 	};
 	
-	// This listener controls variable indices[].
 	private final SeekBar.OnSeekBarChangeListener lsn_weight = new SeekBar.OnSeekBarChangeListener()
 	{
 		@Override
@@ -180,79 +200,12 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		{
 			float amount = (float)progress / seekBar.getMax();
 			
-			switch(region)
-			{
-			case LIP:
-			{
-				int color = obtainRegionColorArray(region)[id_selected];
-//				color = Color.argb(Color.alpha(color)>>2, Color.red(lip_color), Color.green(lip_color), Color.blue(lip_color));
-				color = (color & 0x00FFFFFF) | (Color.alpha(color) >> 2 << 24);
-				Log.i(TAG, "use color: " + ColorUtils.colorToString(color));
-				makeup.applyLipColor(color, amount);
-			}
-				break;
-			case BLUSH:
-			{
-				int id = id_selected - R.drawable.blusher01;
-				int color = obtainRegionColorArray(region)[id];
-/*
-				id = MathUtils.wrap(id, R.drawable.blush_mask_00, R.drawable.blush_mask_04);
-				
-				color = (color & 0x00ffffff) | (((int)(amount * 128)) << 24);
-				Bitmap bmp_blush = BitmapFactory.decodeResource(getResources(), id, BitmapUtils.OPTION_RGBA_8888);
-				bmp_modified = detector.blendBlusher(bmp_step, bmp_blush, color, amount);
-*/
-				id = MathUtils.wrap(id, R.drawable.blush_mask_00, R.drawable.blush_mask_04);
-				final Makeup.BlushShape shapes[] = Makeup.BlushShape.values();
-				Makeup.BlushShape shape = shapes[id % shapes.length];
-				makeup.applyBlush(shape, color, amount);
-			}
-				break;
-			case EYE_BROW:
-				Bitmap bmp_eye_brow = BitmapFactory.decodeResource(getResources(), id_selected, BitmapUtils.OPTION_RGBA_8888);
-				makeup.applyBrow(bmp_eye_brow, amount);
-				break;
+			TimingLogger timings = new TimingLogger(TAG, "makeup");
 			
-			case IRIS:
-				// TODO
-				Bitmap bmp_iris_color = BitmapFactory.decodeResource(getResources(), id_selected, BitmapUtils.OPTION_RGBA_8888);
-//				bmp_modified = makeup.blendIris(bmp_step, bmp_iris_color, amount);
-/*
-				int iris_index = res_selected - R.drawable.thumb_iris_00;
-				Bitmap bmp_iris_color = BitmapFactory.decodeResource(getResources(), R.drawable.iris_00 + iris_index, BitmapUtils.OPTION_RGBA_8888);
-				Bitmap bmp_iris_mask = BitmapFactory.decodeResource(getResources(), R.drawable.iris_mask_00 + iris_index, BitmapUtils.OPTION_RGBA_8888);
-				bmp_iris_color = Effect.tone(bmp_iris_color, Color.BLUE);
-				SettingsActivity.saveImage(MakeupActivity.this, null, bmp_iris_color);
-				bmp_modified = detector.blendIris(bmp_step, bmp_iris_color, amount);
-				bmp_modified = detector.blendIris(bmp_step, bmp_iris_color, bmp_iris_mask, Color.BLUE, amount);
-				bmp_modified = detector.blendIris(bmp_step, bmp_iris, amount);
-*/
-				break;
-			case EYE_LASH:
-			{
-				int eye_lash_id = id_selected - R.drawable.thumb_eye_lash_00 + R.drawable.eye_lash_00;
-				Bitmap bmp_eye_lash = BitmapFactory.decodeResource(getResources(), eye_lash_id, BitmapUtils.OPTION_RGBA_8888);
-				makeup.applyEyeLash(bmp_eye_lash, Color.BLACK, amount);
-			}
-				break;
-
-			case EYE_SHADOW:
-			{
-				// eye shadow use 3 layers for color blending
-				int eye_shadow_id = (id_selected - R.drawable.thumb_eye_shadow_00) * 3 + R.drawable.eye_shadow_001;
-				Bitmap mask[] = new Bitmap[3];
-				final BitmapFactory.Options options = new BitmapFactory.Options();
-				options.inPreferredConfig = Bitmap.Config.ALPHA_8;
-				for(int i = 0; i < 3; ++i)
-					mask[i] = BitmapFactory.decodeResource(getResources(), eye_shadow_id + i, options);
-				
-				int color[] = new int[] { 0x00ffb5b5, 0x00ff7575, 0x00613030};
-
-				makeup.applyEyeShadow(mask, color, amount);
-			}
-				break;
-
-			}
+			applyCosmestic(MakeupActivity.this, makeup, region, textures, colors, amount);
+			
+			timings.addSplit("applyCosmestic");
+			timings.dumpToLog();
 			
 			iv_image.setImageBitmap(makeup.getIntermediateImage());
 		}
@@ -272,6 +225,26 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		}
 	};
 	
+	private final AdapterView.OnItemSelectedListener lsn_options = new AdapterView.OnItemSelectedListener()
+	{
+		@Override
+		public void onItemSelected(AdapterView<?> parent, View view, int position, long id)
+		{
+			// Lip has only one parameter--color, so do nothing for lip.
+			if(option == position || region == Region.LIP)
+				return;
+			
+			option = position;
+			updateCosmeticContent(region, position);
+		}
+
+		@Override
+		public void onNothingSelected(AdapterView<?> parent)
+		{
+			// do nothing
+		}
+	};
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -326,23 +299,28 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		
 		sb_weight = (SeekBar) findViewById(R.id.weight);
 		sb_weight.setOnSeekBarChangeListener(lsn_weight);
-//		sb_weight.setVisibility(View.INVISIBLE);
-		
-		sb_size = (SeekBar) findViewById(R.id.size);
 		
 		iv_image.setImageBitmap(image);
 //		tv_reset = (TextView) findViewById(R.id.reset);
 		findViewById(R.id.reset).setOnClickListener(this);
 		
 		ll_styles = (LinearLayout) findViewById(R.id.styles);
-		ll_regions = (LinearLayout) findViewById(R.id.regions);
 		
 		findViewById(R.id.blush)     .setOnClickListener(this);
 		findViewById(R.id.eye_lash)  .setOnClickListener(this);
 		findViewById(R.id.eye_shadow).setOnClickListener(this);
 		findViewById(R.id.eye_brow)  .setOnClickListener(this);
 		findViewById(R.id.iris)      .setOnClickListener(this);
-		findViewById(R.id.lip_color) .setOnClickListener(this);
+		findViewById(R.id.lip)       .setOnClickListener(this);
+		
+		initRegionColorArray();
+		
+		Spinner spinner = (Spinner) findViewById(R.id.spinner);
+		ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+		        R.array.cosmetic_option, android.R.layout.simple_spinner_item);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinner.setAdapter(adapter);
+		spinner.setOnItemSelectedListener(lsn_options);
 		
 		if(BuildConfig.DEBUG)  // only enable this CheckBox in debug mode
 		{
@@ -373,8 +351,8 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 			}
 		});
 
-		// default makeup option
-		findViewById(R.id.lip_color).performClick();
+		// the state of first time in: Region.LIP & color index 0
+		findViewById(R.id.lip).performClick();
 	}
 	
 	private static void randomProgress(final SeekBar slider)
@@ -382,13 +360,143 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		int max = slider.getMax();
 		final float low = 0.25F, high = 0.75F;
 		int progress = MathUtils.random((int)(max * low), (int)(max * high));
-		slider.setVisibility(View.VISIBLE);
 		slider.setProgress(progress);
+	}
+	
+	private void updateCosmeticContent(Region region, int option)
+	{
+		ll_styles.removeAllViews();
+		
+		if(region == Region.LIP)  // Special case, Region.LIP has only one option.
+		{
+			int COLORS[] = obtainRegionColorArray(Region.LIP);
+//			for(int i = 0; i < COLORS.length; ++i)
+			for(int i = id_start; i <= id_stop; ++i)
+			{
+				final int color = COLORS[i];
+				GradientDrawable shape = new GradientDrawable();
+				shape.setCornerRadius(12);
+				shape.setColor(color);
+				
+				final ImageView iv_color = new ImageView(this);
+				iv_color.setLayoutParams(LAYOUT_PARAMS);
+				iv_color.setImageDrawable(shape);
+				iv_color.setTag((Integer)(i));
+				ll_styles.addView(iv_color);
+				iv_color.setOnClickListener(lsn_color);
+			}
+		}
+		else if(option == OPTION_TEXTURE)
+		{
+			final LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+			
+			for(int i = id_start; i <= id_stop; ++i)
+			{
+				final ImageView iv_style = new ImageView(this);
+				
+				iv_style.setImageResource(i);
+				iv_style.setScaleType(ImageView.ScaleType.CENTER_CROP);
+				iv_style.setTag((Integer)(i));
+				ll_styles.addView(iv_style, params);
+				iv_style.setOnClickListener(lsn_texture);
+			}
+			
+			// default color parameter
+			if(colors == null)
+				selectColor(region, 0);
+		}
+		else if(option == OPTION_COLOR)
+		{
+			final Drawable circle = Compatibility.getDrawable(this, R.drawable.circle);
+			final int COLORS[] = obtainRegionColorArray(region);
+			
+			for(int i = 0; i < COLORS.length; ++i)
+			{
+				Drawable drawable = circle.mutate().getConstantState().newDrawable();
+				drawable.setColorFilter(COLORS[i], PorterDuff.Mode.SRC_ATOP);
+				
+				final ImageView iv_color = new ImageView(MakeupActivity.this);
+				iv_color.setLayoutParams(LAYOUT_PARAMS);
+				iv_color.setImageDrawable(drawable);
+				iv_color.setTag((Integer)(i));
+				ll_styles.addView(iv_color);
+				iv_color.setOnClickListener(lsn_color);
+			}
+			
+			// default texture parameter
+			if(textures == null);
+				selectTexture(region, 0);
+		}
+	}
+	
+	/**
+	 * All the makeup stuff in one go, with corresponding parameters.
+	 * 
+	 * @param context
+	 * @param makeup  #Makeup
+	 * @param region  #Region
+	 * @param indices <ul>
+	 *                	<li>For {@link Region#EYE_BROW} single drawable resource of the cosmetics.</li>
+	 *                	<li>For {@link Region#EYE_LASH} ditto.</li>
+	 *                	<li>For {@link Region#EYE_SHADOW} multiple drawable resources of the cosmetics.
+	 *                  Note that they are masks loaded with Bitmap.Config.ALPHA_8 parameter.
+	 *                  </li>
+	 *                	<li>For {@link Region#IRIS} multiple drawable resources of the cosmetics.</li>
+	 *                	<li>For {@link Region#BLUSH}, it's {@link Makeup.BlushShape} ordinal.</li>
+	 *                	<li>For {@link Region#NOSE} </li>
+	 *                	<li>For {@link Region#LIP}, unused, passing <code>null</code> value is OK.</li>
+	 *                <ul>
+	 * @param colors  Color of the cosmetics. {@link Region#EYE_SHADOW} use multiple colors probably,
+	 *                since they enhance the face's beauty.
+	 * @param amount  Blending amount in range [0, 1], 0 being no effect, 1 being fully applied.
+	 * 
+	 * @see {@link android.graphics.Bitmap.Config#ALPHA_8}
+	 */
+	public void applyCosmestic(Context context, Makeup makeup, Region region,
+			int indices[], @NonNull int colors[], @FloatRange(from=0.0D, to=1.0D) float amount)
+	{
+		switch(region)
+		{
+		case LIP:
+			makeup.applyLip(colors[0], amount);
+			break;
+		case BLUSH:
+			makeup.applyBlush(Makeup.BlushShape.values()[indices[0]], colors[0], amount);
+			break;
+		case EYE_BROW:
+		{
+			Bitmap bmp_eye_brow = BitmapFactory.decodeResource(context.getResources(), indices[0], BitmapUtils.OPTION_RGBA_8888);
+			makeup.applyBrow(bmp_eye_brow, amount);
+		}
+			break;
+		case IRIS:
+			break;
+		case EYE_LASH:
+		{
+			Bitmap bmp_eye_lash = BitmapFactory.decodeResource(context.getResources(), indices[0], BitmapUtils.OPTION_RGBA_8888);
+			makeup.applyEyeLash(bmp_eye_lash, colors[0], amount);
+		}
+			break;
+		case EYE_SHADOW:
+		{
+			final int length = indices.length;
+			Bitmap mask[] = new Bitmap[length];
+			BitmapFactory.Options options = new BitmapFactory.Options();
+			options.inPreferredConfig = Bitmap.Config.ALPHA_8;
+			for(int i = 0; i < 3; ++i)
+				mask[i] = BitmapFactory.decodeResource(context.getResources(), indices[i], options);
+			makeup.applyEyeShadow(mask, colors, amount);
+		}
+			break;
+		default:
+			throw new UnsupportedOperationException("not implemented yet");
+		}
 	}
 	
 	@Override
 	public void onClick(View view)
 	{
+		Region last_region = region;
 		switch(view.getId())
 		{
 		case R.id.reset:
@@ -399,7 +507,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 			region = Region.BLUSH;
 			region_id = R.id.blush;
 			id_start = R.drawable.blusher01;
-			id_stop  = R.drawable.blusher20;
+			id_stop  = R.drawable.blusher01 + BlushShape.values().length - 1;  // TODO resource
 			break;
 		case R.id.eye_lash:
 			region = Region.EYE_LASH;
@@ -410,8 +518,8 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		case R.id.eye_shadow:
 			region = Region.EYE_SHADOW;
 			region_id = R.id.eye_shadow;
-			id_start = R.drawable.thumb_eye_shadow_00;//eye_shadow01;
-			id_stop  = R.drawable.thumb_eye_shadow_09;//eye_shadow12;
+			id_start = R.drawable.thumb_eye_shadow_00;
+			id_stop  = R.drawable.thumb_eye_shadow_09;
 			break;
 		case R.id.eye_brow:
 			region = Region.EYE_BROW;
@@ -425,9 +533,9 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 			id_start = R.drawable.thumb_iris_00;
 			id_stop  = R.drawable.thumb_iris_08;
 			break;
-		case R.id.lip_color:
+		case R.id.lip:
 			region = Region.LIP;
-			region_id = R.id.lip_color;
+			region_id = R.id.lip;
 			id_start = 0;
 			id_stop  = obtainRegionColorArray(region).length - 1;
 			break;
@@ -436,55 +544,8 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 			return;
 		}
 
-		ll_styles.removeAllViews();
-		
-		if(region == Region.LIP)  // Special case, lips use pure color instead of images
-		{
-			for(int i = id_start; i <= id_stop; ++i)
-			{
-				final int color = obtainRegionColorArray(Region.LIP)[i];
-				GradientDrawable shape = new GradientDrawable();
-				shape.setCornerRadius(12);
-				shape.setColor(color);
-				
-				final ImageView iv_color = new ImageView(this);
-				iv_color.setLayoutParams(LAYOUT_PARAMS);
-				iv_color.setImageDrawable(shape);
-				iv_color.setTag((Integer)(i));
-				ll_styles.addView(iv_color);
-				iv_color.setOnClickListener(lsn_color);
-			}
-		}
-		else //if(pair_region != null)
-		{
-			final LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-			
-			for(int i = id_start; i <= id_stop; ++i)
-			{
-				final ImageView iv_style = new ImageView(this);
-				
-				iv_style.setImageResource(i);
-				iv_style.setScaleType(ImageView.ScaleType.CENTER_CROP);
-				iv_style.setTag((Integer)(i));
-				ll_styles.addView(iv_style, params);
-				iv_style.setOnClickListener(new View.OnClickListener()
-				{
-					@Override
-					public void onClick(View v)
-					{
-						id_selected = (Integer)v.getTag();
-						randomProgress(sb_weight);
-						
-//						Toast.makeText(MakeupActivity.this, "index: " + (res_selected - res_start), Toast.LENGTH_SHORT).show();
-						long startTime = System.currentTimeMillis();
-						iv_image.setImageBitmap(makeup.getFinalImage());
-						long endTime = System.currentTimeMillis();
-						String elapsed_time = "elapsed time: " + (endTime - startTime) + "ms";
-						Log.d(TAG, elapsed_time);
-					}
-				});
-				
-			}
-		}
+		if(last_region != region)
+			updateCosmeticContent(region, option);
 	}
+	
 }

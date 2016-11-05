@@ -14,7 +14,7 @@
 	http://stackoverflow.com/questions/5919663/how-does-photoshop-blend-two-images-together
 	http://www.deepskycolors.com/archive/2010/04/21/formulas-for-Photoshop-blending-modes.html
 	https://en.wikipedia.org/wiki/Blend_modes
-	https://helpx.adobe.com/photoshop/using/blending-modes.html#blending_mode_descriptions
+	https://helpx.adobe.com/photoshop/using/blending-modes.html
 	https://en.wikipedia.org/wiki/Alpha_compositing
 */
 
@@ -66,19 +66,19 @@ inline Integer color_divide(const Integer& x)
 // gimp/app/actions/layers-commands.c
 // int mode range [0, 255], float mode range [0.0, 1.0]
 
-template<typename T> inline T normal    (const T& src, const T& dst) { return src; }
-template<typename T> inline T lighten   (const T& src, const T& dst) { return std::max(src, dst); }
-template<typename T> inline T darken    (const T& src, const T& dst) { return std::min(src, dst); }
-template<typename T> inline T multiply	(const T& src, const T& dst) { return color_round(src * dst); }
-template<typename T> inline T average	(const T& src, const T& dst) { return (src + dst + std::is_integral<T>::value)/2; }
-template<typename T> inline T add		(const T& src, const T& dst) { return cv::saturate_cast<T>(src + dst); }
-template<typename T> inline T subtract	(const T& src, const T& dst) { constexpr T FULL = std::is_floating_point<T>::value ? static_cast<T>(1):std::numeric_limits<T>::max(); return cv::saturate_cast<T>(src + dst - FULL); }
-template<typename T> inline T difference(const T& src, const T& dst) { return std::abs(src - dst); }
-template<typename T> inline T screen	(const T& src, const T& dst) { return src + dst - color_round(src * dst); }  // 1 - (1-src) * (1-dst) 
-template<typename T> inline T exclusion	(const T& src, const T& dst) { return src + dst - color_round(src * dst * 2); }
+template<typename T> inline T normal    (const T& dst, const T& src) { return src; }
+template<typename T> inline T lighten   (const T& dst, const T& src) { return std::max(src, dst); }
+template<typename T> inline T darken    (const T& dst, const T& src) { return std::min(src, dst); }
+template<typename T> inline T multiply	(const T& dst, const T& src) { return color_round(src * dst); }
+template<typename T> inline T average	(const T& dst, const T& src) { return (src + dst + std::is_integral<T>::value)/2; }
+template<typename T> inline T add		(const T& dst, const T& src) { return cv::saturate_cast<T>(src + dst); }
+template<typename T> inline T subtract	(const T& dst, const T& src) { constexpr T FULL = std::is_floating_point<T>::value ? static_cast<T>(1):std::numeric_limits<T>::max(); return cv::saturate_cast<T>(src + dst - FULL); }
+template<typename T> inline T difference(const T& dst, const T& src) { return std::abs(src - dst); }
+template<typename T> inline T screen	(const T& dst, const T& src) { return src + dst - color_round(src * dst); }  // 1 - (1-src) * (1-dst) 
+template<typename T> inline T exclusion	(const T& dst, const T& src) { return src + dst - color_round(src * dst * 2); }
 
 template<typename T>
-inline T negation(const T& src, const T& dst)
+inline T negation(const T& dst, const T& src)
 {
 	auto sum = src + dst;
 	constexpr T FULL = std::is_floating_point<T>::value ? static_cast<T>(1):std::numeric_limits<T>::max();
@@ -87,7 +87,7 @@ inline T negation(const T& src, const T& dst)
 }
 
 template<typename T>
-inline T overlay(const T& src, const T& dst)
+inline T overlay(const T& dst, const T& src)
 {
 	constexpr T FULL = std::is_floating_point<T>::value ? static_cast<T>(1):std::numeric_limits<T>::max();
 	if(src < FULL/2)
@@ -103,7 +103,7 @@ inline float softDodge(float dst, float src)
 	else
 		return 1.0f - 0.5f*(1.0f - dst)/src;
 }
-// float version, [0.0, 1.0]
+
 
 
 // specialization for cv::Vec4f color with RGBA layout

@@ -29,8 +29,9 @@ VENUS_HEADER := $(wildcard venus/*.h)
 VENUS_SOURCE := $(wildcard venus/*.cpp)
 
 LOCAL_MODULE    := venus
+LOCAL_CPPFLAGS  := -DUSE_OPENCV_BGRA_LAYOUT=0
 LOCAL_SRC_FILES := $(PLATFORM_SOURCE) $(STASM_SOURCE) $(VENUS_SOURCE)
-	
+
 LOCAL_LDFLAGS := -fopenmp -llog -ljnigraphics -L$(OPENCV_LIBS_DIR)
 LOCAL_SHARED_LIBRARIES += opencv_java3_prebuilt
 #LOCAL_WHOLE_STATIC_LIBRARIES +=

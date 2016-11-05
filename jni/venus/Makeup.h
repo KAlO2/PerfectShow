@@ -28,7 +28,7 @@ public:
 private:
 	static cv::Mat pack(const cv::Mat& mask, uint32_t color);
 
-	static std::vector<cv::Point2f> createShape(const std::vector<cv::Point2f>& points, BlushShape shape, bool right);
+	static std::vector<cv::Point2f> createPolygon(const std::vector<cv::Point2f>& points, BlushShape shape, bool right);
 
 	static std::vector<cv::Point2f> createHeartShape(const cv::Point2f& center, float radius, float angle = 0.0F);
 
@@ -93,7 +93,7 @@ public:
 	 * @param[in] src     The source image
 	 * @param[in] points  Feature points detected from <code>src</code> image.
 	 * @param[in] shape   Shape of blush.
-	 * @param[in] color   0xAABBGGRR, RGB channel will be blush's primary color, and alpha will be premultiplied to <code>blush</code>.
+	 * @param[in] color   0xAABBGGRR, RGB channel will be blush's primary color, and alpha will be premultiplied to blush.
 	 * @param[in] amount  Blending amount in range [0, 1], 0 being no effect, 1 being fully applied.
 	 */
 	static void applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, BlushShape shape, uint32_t color, float amount);
@@ -108,7 +108,7 @@ public:
 	 * @param[in] origin  Lip position, (left, top)
 	 * @param[in] color   In RGBA memory layout
 	 */
-	static void applyLipColor(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, uint32_t color, float amount);
+	static void applyLip(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, uint32_t color, float amount);
 
 };
 

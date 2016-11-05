@@ -38,7 +38,7 @@ cv::Mat Makeup::pack(const cv::Mat& mask, uint32_t color)
 	return image;
 }
 
-std::vector<cv::Point2f> Makeup::createHeartShape(const Point2f& center, float radius, float angle/* = 0.0F*/)
+std::vector<cv::Point2f> Makeup::createHeartShape(const cv::Point2f& center, float radius, float angle/* = 0.0F*/)
 {
 	const int N = 32;  // can be tweaked!
 	std::vector<Point2f> heart(N);
@@ -73,7 +73,7 @@ std::vector<cv::Point2f> Makeup::createHeartShape(const Point2f& center, float r
 	return heart;
 }
 
-std::vector<cv::Point2f> Makeup::createShape(const std::vector<cv::Point2f>& points, BlushShape shape, bool right)
+std::vector<cv::Point2f> Makeup::createPolygon(const std::vector<cv::Point2f>& points, BlushShape shape, bool right)
 {
 	assert(points.size() == Feature::COUNT);
 	
@@ -527,7 +527,7 @@ void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::
 		// static_cast<bool>(i) emits warning "C4800: 'int' : forcing value to bool 'true' or 'false' (performance warning)".
 		// But why it says performance warning?
 		// http://stackoverflow.com/questions/206564/what-is-the-performance-implication-of-converting-to-bool-in-c
-		std::vector<Point2f> polygon = createShape(points, shape, i != 0);
+		std::vector<Point2f> polygon = createPolygon(points, shape, i != 0);
 
 		Rect rect = cv::boundingRect(polygon);
 		Mat  mask = Feature::maskPolygonSmooth(rect, polygon, 8);  // level (here 8) can be tuned.
@@ -537,7 +537,7 @@ void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::
 	}
 }
 
-void Makeup::applyLipColor(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, uint32_t color, float amount)
+void Makeup::applyLip(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, uint32_t color, float amount)
 {
 	assert(!src.empty() && src.channels() == 4);  // only handles RGBA image
 

@@ -63,7 +63,6 @@
 	        android:max="100"
 	        android:layout_weight="1.0"
 	        />
-
 		<CheckBox
             android:id="@+id/mark"
             style="@style/CheckBox"
@@ -72,6 +71,12 @@
             android:text="@string/mark"
             android:visibility="gone"
             />
+	    <Spinner
+	        android:id="@+id/spinner"
+			style="@style/Spinner"
+			android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+	        />
 	</LinearLayout>
 	
     <HorizontalScrollView
@@ -144,9 +149,9 @@
                 android:text="@string/blush" />
 
             <Button
-                android:id="@+id/lip_color"
+                android:id="@+id/lip"
                 style="@style/ImageWithTextBelowIt"
-                android:drawableTop="@drawable/lip_color"
+                android:drawableTop="@drawable/lip"
                 android:text="@string/lip_color" />
 
 
