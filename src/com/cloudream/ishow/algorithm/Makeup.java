@@ -78,7 +78,6 @@ public class Makeup extends BitmapWrapper
 	{
 		PointF points[] = feature.getFeaturePoints();
 		nativeApplyEyeLash(bmp_step, bmp_stop, points, mask, color, amount);
-		
 	}
 	
 	// tried to use #LayerDrawable

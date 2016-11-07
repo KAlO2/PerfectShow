@@ -86,7 +86,7 @@ public class Feature
 	
 	public static PointF[] detectFace(Context context, String image_name)
 	{
-		Bitmap image = BitmapFactory.decodeFile(image_name, BitmapUtils.OPTION_RGBA_8888);
+		Bitmap image = BitmapFactory.decodeFile(image_name, BitmapUtils.OPTION_RGBA8888);
 		return detectFace(context, image, image_name);
 	}
 	

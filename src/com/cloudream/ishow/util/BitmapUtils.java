@@ -69,14 +69,21 @@ public final class BitmapUtils
 	 */
 	static Pair<String, WeakReference<Bitmap>> mStateBitmap;
 
-	public static final BitmapFactory.Options OPTION_RGBA_8888 = new BitmapFactory.Options();
+	public static final BitmapFactory.Options OPTION_RGBA8888 = new BitmapFactory.Options();
+	public static final BitmapFactory.Options OPTION_A8 = new BitmapFactory.Options();
+	static
 	{
 		// Android's Bitmap.Config.ARGB_8888 is misleading, its memory layout is RGBA, as shown in
 		// JNI's macro ANDROID_BITMAP_FORMAT_RGBA_8888, and getPixel() returns ARGB format.
-		OPTION_RGBA_8888.inPreferredConfig = Bitmap.Config.ARGB_8888;
-		OPTION_RGBA_8888.inDither = false;
-		OPTION_RGBA_8888.inMutable = true;
-		OPTION_RGBA_8888.inPremultiplied = false;
+		OPTION_RGBA8888.inPreferredConfig = Bitmap.Config.ARGB_8888;
+		OPTION_RGBA8888.inDither = false;
+		OPTION_RGBA8888.inMutable = true;
+		OPTION_RGBA8888.inPremultiplied = false;
+		
+		OPTION_A8.inPreferredConfig = Bitmap.Config.ALPHA_8;
+		OPTION_A8.inDither = false;
+		OPTION_A8.inMutable = true;
+		OPTION_A8.inPremultiplied = false;
 	}
 	
 	/**

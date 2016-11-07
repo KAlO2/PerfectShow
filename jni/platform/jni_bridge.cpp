@@ -72,7 +72,6 @@ uint32_t* lockJavaBitmap(JNIEnv* env, jobject bitmap, AndroidBitmapInfo& info)
 	}
 
 //	LOGD("width:%d height:%d stride:%d", info.width, info.height, info.stride);
-	assert(info.format == ANDROID_BITMAP_FORMAT_RGBA_8888);
 
 	uint32_t* pixels;
 	ret = AndroidBitmap_lockPixels(env, bitmap, reinterpret_cast<void**>(&pixels));

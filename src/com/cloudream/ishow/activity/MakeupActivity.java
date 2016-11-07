@@ -109,21 +109,21 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		{
 		case EYE_SHADOW:
 			// eye shadow use 3 layers for color blending
-			int start = (index - R.drawable.thumb_eye_shadow_00) * 3 + R.drawable.eye_shadow_001;
-			textures = new int[]{ start, start+1, start+2 };
+			index = R.drawable.eye_shadow_001 + index * 3;
+			textures = new int[]{ index, index+1, index+2 };
 			break;
 		case IRIS:
 			// iris use 2 layers for color blending
-			start = (index - R.drawable.thumb_iris_00) * 2 + R.drawable.iris_000;
-			textures = new int[]{ start, start+1 };
+			index = R.drawable.iris_000 + index * 2;
+			textures = new int[]{ index, index+1 };
 			break;
-
 		case LIP:
 //			indices = null;  // dispensable, leave it alone.
 			break;
+		case EYE_LASH:
+			index = R.drawable.eye_lash_00 + index;
 //		case EYE_BROW:
-//		case EYE_LASH:
-//		case BLUSH:  // fall through intended
+//		case BLUSH:  // [[fallthrough]]
 		default:
 			if(textures != null && textures.length == 1)
 				textures[0] = index;
@@ -142,7 +142,6 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 			int index = (Integer)v.getTag();
 			selectTexture(region, index);
 		}
-
 	};
 	
 	private void selectColor(Region region, int index)
@@ -235,7 +234,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 				return;
 			
 			option = position;
-			updateCosmeticContent(region, position);
+			updateCosmeticContent(region, option);
 		}
 
 		@Override
@@ -259,7 +258,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		if(name != null)
 		{
 			Log.i(TAG, "image name: " + name);
-			image = BitmapUtils.decodeFile(name, BitmapUtils.OPTION_RGBA_8888);
+			image = BitmapUtils.decodeFile(name, BitmapUtils.OPTION_RGBA8888);
 			points = Feature.detectFace(this, image, name);
 			
 			boolean temporary = intent.getBooleanExtra(GalleryActivity.EXTRA_TEMPORARY, false);
@@ -396,7 +395,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 				
 				iv_style.setImageResource(i);
 				iv_style.setScaleType(ImageView.ScaleType.CENTER_CROP);
-				iv_style.setTag((Integer)(i));
+				iv_style.setTag((Integer)(i - id_start));
 				ll_styles.addView(iv_style, params);
 				iv_style.setOnClickListener(lsn_texture);
 			}
@@ -435,7 +434,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 	 * @param context
 	 * @param makeup  #Makeup
 	 * @param region  #Region
-	 * @param indices <ul>
+	 * @param textures <ul>
 	 *                	<li>For {@link Region#EYE_BROW} single drawable resource of the cosmetics.</li>
 	 *                	<li>For {@link Region#EYE_LASH} ditto.</li>
 	 *                	<li>For {@link Region#EYE_SHADOW} multiple drawable resources of the cosmetics.
@@ -452,8 +451,8 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 	 * 
 	 * @see {@link android.graphics.Bitmap.Config#ALPHA_8}
 	 */
-	public void applyCosmestic(Context context, Makeup makeup, Region region,
-			int indices[], @NonNull int colors[], @FloatRange(from=0.0D, to=1.0D) float amount)
+	public void applyCosmestic(Context context, @NonNull Makeup makeup, Region region,
+			int textures[], @NonNull int colors[], @FloatRange(from=0.0D, to=1.0D) float amount)
 	{
 		switch(region)
 		{
@@ -461,30 +460,29 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 			makeup.applyLip(colors[0], amount);
 			break;
 		case BLUSH:
-			makeup.applyBlush(Makeup.BlushShape.values()[indices[0]], colors[0], amount);
+			makeup.applyBlush(Makeup.BlushShape.values()[textures[0]], colors[0], amount);
 			break;
 		case EYE_BROW:
 		{
-			Bitmap bmp_eye_brow = BitmapFactory.decodeResource(context.getResources(), indices[0], BitmapUtils.OPTION_RGBA_8888);
-			makeup.applyBrow(bmp_eye_brow, amount);
+			Bitmap eye_brow = BitmapFactory.decodeResource(context.getResources(), textures[0], BitmapUtils.OPTION_RGBA8888);
+			makeup.applyBrow(eye_brow, amount);
 		}
 			break;
 		case IRIS:
 			break;
 		case EYE_LASH:
 		{
-			Bitmap bmp_eye_lash = BitmapFactory.decodeResource(context.getResources(), indices[0], BitmapUtils.OPTION_RGBA_8888);
-			makeup.applyEyeLash(bmp_eye_lash, colors[0], amount);
+			Bitmap eye_lash = BitmapFactory.decodeResource(context.getResources(), textures[0], BitmapUtils.OPTION_A8);
+			makeup.applyEyeLash(eye_lash, colors[0], amount);
 		}
 			break;
 		case EYE_SHADOW:
 		{
-			final int length = indices.length;
+			final int length = textures.length;
 			Bitmap mask[] = new Bitmap[length];
-			BitmapFactory.Options options = new BitmapFactory.Options();
-			options.inPreferredConfig = Bitmap.Config.ALPHA_8;
-			for(int i = 0; i < 3; ++i)
-				mask[i] = BitmapFactory.decodeResource(context.getResources(), indices[i], options);
+			for(int i = 0; i < length; ++i)
+				mask[i] = BitmapFactory.decodeResource(context.getResources(), textures[i], BitmapUtils.OPTION_A8);
+			
 			makeup.applyEyeShadow(mask, colors, amount);
 		}
 			break;
