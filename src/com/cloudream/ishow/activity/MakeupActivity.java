@@ -103,6 +103,14 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		return ROI_COLORS[region.ordinal()];
 	}
 	
+	private static void dodgeArrayAllocation(int array[], int value)
+	{
+		if(array != null && array.length == 1)
+			array[0] = value;
+		else
+			array = new int[]{ value };
+	}
+	
 	private void selectTexture(Region region, int index)
 	{
 		switch(region)
@@ -121,15 +129,15 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 //			indices = null;  // dispensable, leave it alone.
 			break;
 		case EYE_LASH:
-			index = R.drawable.eye_lash_00 + index;
-//		case EYE_BROW:
-//		case BLUSH:  // [[fallthrough]]
-		default:
-			if(textures != null && textures.length == 1)
-				textures[0] = index;
-			else
-				textures = new int[]{ index };
+			dodgeArrayAllocation(textures, R.drawable.eye_lash_00 + index);
 			break;
+		case EYE_BROW:
+			dodgeArrayAllocation(textures, R.drawable.eye_brow_00 + index);
+			break;
+		case BLUSH:
+			dodgeArrayAllocation(textures, index);
+		default:
+			throw new UnsupportedOperationException("not implemented yet");
 		}
 	}
 	
@@ -171,12 +179,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		}
 		
 		if(single)
-		{
-			if(colors != null && colors.length == 1)
-				colors[0] = color;
-			else
-				colors = new int[]{ color };
-		}
+			dodgeArrayAllocation(colors, color);
 	}
 	
 	// This listener controls variable colors[].
@@ -522,8 +525,8 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		case R.id.eye_brow:
 			region = Region.EYE_BROW;
 			region_id = R.id.eye_brow;
-			id_start = R.drawable.eye_brow_00;
-			id_stop  = R.drawable.eye_brow_15;
+			id_start = R.drawable.thumb_eye_brow_00;
+			id_stop  = R.drawable.thumb_eye_brow_27;
 			break;
 		case R.id.iris:
 			region = Region.IRIS;
