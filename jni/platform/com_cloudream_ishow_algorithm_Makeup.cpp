@@ -27,10 +27,19 @@ using namespace venus;
 
 
 void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyBrow(JNIEnv* env,
-		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jobject _brow, jfloat amount)
+		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jobject _mask, jint _color, jfloat amount)
 {
 	PROLOGUE_ENTER
 
+	AndroidBitmapInfo mask_info;
+	uint32_t* mask_pixels  = lockJavaBitmap(env, _mask, mask_info);
+	assert(mask_pixels != nullptr && mask_info.format == ANDROID_BITMAP_FORMAT_A_8);
+	Mat mask(mask_info.height, mask_info.width, CV_8UC1, mask_pixels);
+
+	uint32_t color = static_cast<uint32_t>(_color);
+	Makeup::applyBrow(dst, src, points, mask, color, amount);
+
+	unlockJavaBitmap(env, _mask);
 
 	PROLOGUE_EXIT
 }

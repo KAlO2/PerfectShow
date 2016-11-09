@@ -3,8 +3,6 @@ package com.cloudream.ishow.algorithm;
 import com.cloudream.ishow.util.ColorUtils;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapShader;
-import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -12,7 +10,6 @@ import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.Shader;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -42,10 +39,10 @@ public class Makeup extends BitmapWrapper
 		return feature.mark();
 	}
 	
-	public void applyBrow(final Bitmap eye_brow, float amount)
+	public void applyBrow(final Bitmap eye_brow, int color, float amount)
 	{
 		final PointF points[] = feature.getFeaturePoints();
-		
+/*
 		int tile_width = Math.round(points[25].x - points[20].x);
 		int tile_height = 8;
 		int tile_x = Math.round(points[20].x);
@@ -59,19 +56,19 @@ public class Makeup extends BitmapWrapper
 		// TODO not so good, need to come up with a method skin color
 		int x = Math.round((points[20].x + points[27].x)/2);
 		int y = Math.round((points[20].y + points[27].y)/2);
-		int color = bmp_stop.getPixel(x, y);
+		int reference_color = bmp_stop.getPixel(x, y);
 		float width = (points[23].y - points[21].y)/2;
 		Canvas canvas = new Canvas(bmp_step);
 		Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-		paint.setColor(color);
+		paint.setColor(reference_color);
 		paint.setStyle(Paint.Style.FILL_AND_STROKE);
 		paint.setStrokeWidth(width);
 		paint.setShader(shader);
 		paint.setMaskFilter(new BlurMaskFilter(tile_height*2, BlurMaskFilter.Blur.NORMAL));
 		canvas.drawPath(path_eye_brow_r, paint);
 		canvas.drawPath(path_eye_brow_l, paint);
-
-		nativeApplyBrow(bmp_step, eye_brow, points, null/*eye_brow_points*/, amount);
+*/
+		nativeApplyBrow(bmp_step, bmp_stop, points, eye_brow, color, amount);
 	}
 	
 	public void applyEyeLash(Bitmap mask, int color, float amount)
@@ -159,7 +156,7 @@ public class Makeup extends BitmapWrapper
 	}
 	
 	
-	private static native void nativeApplyBrow     (Bitmap dst, Bitmap src, final PointF points[], Bitmap brow, float amount);
+	private static native void nativeApplyBrow     (Bitmap dst, Bitmap src, final PointF points[], Bitmap mask, int color, float amount);
 	private static native void nativeApplyEye      (Bitmap dst, Bitmap src, final PointF points[], Bitmap cosmetic, float amount);
 	private static native void nativeApplyEyeLash  (Bitmap dst, Bitmap src, final PointF points[], Bitmap mask, int color, float amount);
 	private static native void nativeApplyEyeShadow(Bitmap dst, Bitmap src, final PointF points[], Bitmap mask[], int color[], float amount);

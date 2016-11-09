@@ -7,6 +7,7 @@
 #include "venus/Scalar.h"
 
 #include <opencv2/imgproc.hpp>
+#include <opencv2/photo.hpp>
 
 #include <omp.h>
 
@@ -207,6 +208,18 @@ void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, cons
 
 	switch(dst.type())
 	{
+#if 0  // currently unused case
+	case CV_8UC3:
+		for(int r = rect.y, r_end = rect.y + rect.height; r < r_end; ++r)
+		for(int c = rect.x, c_end = rect.x + rect.width;  c < c_end; ++c)
+		{
+			const cv::Vec3b& src_color = src.at<cv::Vec3b>(r - origin.y, c - origin.x);
+			cv::Vec3b& dst_color = result.at<cv::Vec3b>(r, c);
+
+			dst_color = venus::mix(dst_color, src_color, amount);
+		}
+		break;
+#endif
 	case CV_8UC4:
 		for(int r = rect.y, r_end = rect.y + rect.height; r < r_end; ++r)
 		for(int c = rect.x, c_end = rect.x + rect.width;  c < c_end; ++c)
@@ -302,9 +315,70 @@ void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, cons
 	}
 }
 
-void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& brow, float amount)
+void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, uint32_t color, float amount)
 {
+	assert(src.type() == CV_8UC4 && mask.type() == CV_8UC1);
+	src.copyTo(dst);
 
+	Feature feature(src, points);
+	Vec4f line = feature.getSymmetryAxis();
+	float angle = std::atan2(line[1], line[0]) - static_cast<float>(M_PI/2);
+//	std::cout << __FUNCTION__ << " angle: " << rad2deg(angle) << '\n';
+
+	Mat     makeup_mask = mask;
+	Rect2i  makeup_rect = Region::boundingRect(makeup_mask, 4);  // mask image is not so good, so allow some tolerance.
+
+	Moments makeup_moment = cv::moments(mask);
+	Point2f makeup_center(makeup_moment.m10/makeup_moment.m00 , makeup_moment.m01/makeup_moment.m00);
+
+	constexpr int offset = 8;
+	for(int i = 0; i <= 1; ++i)
+	{
+		const bool right = (i == 0);
+		std::vector<Point2f> polygon = Feature::calculateBrowPolygon(points, right);
+		Moments moment = cv::moments(polygon);
+		const Point2f center(moment.m10/moment.m00, moment.m01/moment.m00);
+
+		const Rect rect = cv::boundingRect(polygon);
+		Rect _rect = rect;
+		Region::inset(_rect, -offset);
+
+		Mat roi = dst(_rect);
+		if(roi.channels() == 4)
+			cv::cvtColor(roi, roi, CV_BGRA2BGR);  // CV_RGBA2RGB
+
+		Mat submask = Feature::createMask(polygon);  // TODO 4 seems fine.
+		Mat mask(_rect.height, _rect.width, CV_8UC1, Scalar::all(0));
+		submask.copyTo(mask(Rect(offset, offset, submask.cols, submask.rows)));
+
+		cv::inpaint(roi, mask, roi, 3/* inpait radius */, cv::INPAINT_TELEA);  // INPAINT_NS, INPAINT_TELEA
+		for(int r = rect.y, r_end = rect.y + rect.height; r < r_end; ++r)
+		for(int c = rect.x, c_end = rect.x + rect.width;  c < c_end; ++c)
+		{
+			const cv::Vec3b& src_color = roi.at<cv::Vec3b>(r - rect.y, c - rect.x);
+			cv::Vec4b& dst_color = dst.at<cv::Vec4b>(r, c);
+			*reinterpret_cast<cv::Vec3b*>(&dst_color) = src_color;
+		}
+
+		if(!right)
+		{
+			cv::flip(makeup_mask, makeup_mask, 1/* horizontal */);
+			makeup_center.x = makeup_rect.width - makeup_center.x;
+		}
+
+		Vec2f scale(static_cast<float>(rect.width) / makeup_rect.width,
+		            static_cast<float>(rect.height) / makeup_rect.height);
+		Size target_size = makeup_rect.size();
+		Point2f target_center = makeup_center;
+		Mat affine = Region::transform(target_size, target_center, angle, scale);
+		cv::Mat affined_mask;
+		cv::warpAffine(makeup_mask, affined_mask, affine, target_size, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
+
+		Mat affined_brow = Makeup::pack(affined_mask, 0xFF000000);
+
+		Point2f origin = center - target_center;
+		Makeup::blend(dst, dst, affined_brow, origin, 1.0F);
+	}
 }
 
 void Makeup::applyEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& cosmetic, float amount)
@@ -406,12 +480,6 @@ void Makeup::applyEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Po
 		}
 		Point2i origin = dst_pivot - pivot;
 
-		//std::vector<Point2f> polygon = Feature::calculateEyePolygon(points, right);
-		//Rect rect = cv::boundingRect(polygon);
-		//
-		//Point2f position(rect.x - (_cosmetic.cols - rect.width )/2.0F,
-		//	             rect.y - (_cosmetic.rows - rect.height)/2.0F);
-		
 		Makeup::blend(dst, dst, _cosmetic, origin, amount);
 	}
 #else

@@ -67,7 +67,7 @@ public:
 
 	void inset(float offset);
 
-	static cv::Rect2i  boundingRect(const cv::Mat& mask);
+	static cv::Rect2i boundingRect(const cv::Mat& mask, int tolerance = 0);
 
 	/**
 	 * <gegl>/gegl/buffer/gegl-region-generic.c

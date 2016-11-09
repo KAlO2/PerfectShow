@@ -103,12 +103,14 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		return ROI_COLORS[region.ordinal()];
 	}
 	
-	private static void dodgeArrayAllocation(int array[], int value)
+	private static int[] dodgeArrayAllocation(int array[], int value)
 	{
 		if(array != null && array.length == 1)
 			array[0] = value;
 		else
 			array = new int[]{ value };
+		
+		return array;
 	}
 	
 	private void selectTexture(Region region, int index)
@@ -129,13 +131,13 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 //			indices = null;  // dispensable, leave it alone.
 			break;
 		case EYE_LASH:
-			dodgeArrayAllocation(textures, R.drawable.eye_lash_00 + index);
+			textures = dodgeArrayAllocation(textures, R.drawable.eye_lash_00 + index);
 			break;
 		case EYE_BROW:
-			dodgeArrayAllocation(textures, R.drawable.eye_brow_00 + index);
+			textures = dodgeArrayAllocation(textures, R.drawable.eye_brow_00 + index);
 			break;
 		case BLUSH:
-			dodgeArrayAllocation(textures, index);
+			textures = dodgeArrayAllocation(textures, index);
 		default:
 			throw new UnsupportedOperationException("not implemented yet");
 		}
@@ -179,7 +181,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		}
 		
 		if(single)
-			dodgeArrayAllocation(colors, color);
+			colors = dodgeArrayAllocation(colors, color);
 	}
 	
 	// This listener controls variable colors[].
@@ -467,8 +469,8 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 			break;
 		case EYE_BROW:
 		{
-			Bitmap eye_brow = BitmapFactory.decodeResource(context.getResources(), textures[0], BitmapUtils.OPTION_RGBA8888);
-			makeup.applyBrow(eye_brow, amount);
+			Bitmap eye_brow = BitmapFactory.decodeResource(context.getResources(), textures[0], BitmapUtils.OPTION_A8);
+			makeup.applyBrow(eye_brow, colors[0], amount);
 		}
 			break;
 		case IRIS:

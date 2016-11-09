@@ -807,16 +807,17 @@ cv::Mat Feature::createMask(const std::vector<cv::Point2f>& points, float blur_r
 	Rect2f rect = box2Rect(box);
 	Region::inset(rect, blur_radius);
 
-	Rect2i rect_ = rect;
-	cv::Mat mask(rect_.size(), CV_8UC1, Scalar::all(0));
+	Rect2i _rect = rect;
+	cv::Mat mask(_rect.size(), CV_8UC1, Scalar::all(0));
 
+	cv::Point2i _position = _rect.tl();
 	if(position)
-		*position = rect_.tl();
+		*position = _position;
 
 	const size_t length = points.size();
 	std::vector<cv::Point2i> points_(length);
 	for(size_t i = 0; i < length; ++i)
-		points_[i] = static_cast<cv::Point2i>(points[i]) - *position;
+		points_[i] = static_cast<cv::Point2i>(points[i]) - _position;
 	
 	const Point2i* polygon_data[1] = { points_.data() };
 	const int       point_count[1] = { static_cast<int>(points_.size()) };

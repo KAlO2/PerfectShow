@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     com_cloudream_ishow_algorithm_Makeup
  * Method:    nativeApplyBrow
- * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;Landroid/graphics/Bitmap;F)V
+ * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;Landroid/graphics/Bitmap;IF)V
  */
 JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyBrow
-  (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobject, jfloat);
+  (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobject, jint, jfloat);
 
 /*
  * Class:     com_cloudream_ishow_algorithm_Makeup
@@ -57,7 +57,7 @@ JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyBlus
 
 /*
  * Class:     com_cloudream_ishow_algorithm_Makeup
- * Method:    nativeApplyLipColor
+ * Method:    nativeApplyLip
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;IF)V
  */
 JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyLip

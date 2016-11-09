@@ -26,7 +26,6 @@ public:
 	};
 
 private:
-	static cv::Mat pack(const cv::Mat& mask, uint32_t color);
 
 	static std::vector<cv::Point2f> createPolygon(const std::vector<cv::Point2f>& points, BlushShape shape, bool right);
 
@@ -35,6 +34,16 @@ private:
 	static cv::Mat createEyeShadow(cv::Mat mask[3], uint32_t color[3]/*, const int& COUNT = 3*/);
 
 public:
+
+	/**
+	 * composite mask and color (RGBA) into a colored bitmap
+	 *
+	 * @param[in] mask  A gray image, CV_8UC1
+	 * @param[in] color 0xAABBGGRR, alpha channel will be multiplied to <code>mask</code>, so if you want to keep mask
+	 *                  value, make sure that alpha = 255, namely 0xFFBBGGRR.
+	 * @return a colored bitmap.
+	 */
+	static cv::Mat pack(const cv::Mat& mask, uint32_t color);
 
 	/**
 	 * @param[out] dst    The destination image
@@ -52,10 +61,11 @@ public:
 	 * @param[out] dst
 	 * @param[in] src     The source image
 	 * @param[in] points  Feature points detected from <code>src</code> image.
-	 * @param[in] brow    The target makeup image, need to be RGBA format
+	 * @param[in] mask    Mask of eye brow image, a gray image.
+	 * @param[in] color   eye brow's color, 0xAABBGGRR or RGBA memory layout.
 	 * @param[in] amount  Blending amount in range [0, 1], The larger the value, the thicker/heavier the eyebrow will looks.
 	 */
-	static void applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& brow, float amount);
+	static void applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, uint32_t color, float amount);
 
 	/**
 	 * @param[in] cosmetic makeup about eyes
@@ -69,7 +79,8 @@ public:
 	 * @param[out] dst
 	 * @param[in] src     The source image
 	 * @param[in] points  Feature points detected from <code>src</code> image.
-	 * @param[in] mask    Mask of eye lash image, archived in gray image.
+	 * @param[in] mask    Mask of eye lash image, a gray image.
+	 * @param[in] color   eye lash's color, 0xAABBGGRR or RGBA memory layout.
 	 */
 	static void applyEyeLash(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, uint32_t color, float amount);
 

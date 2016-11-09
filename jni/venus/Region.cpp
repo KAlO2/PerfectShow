@@ -36,7 +36,6 @@ Region Region::merge(const Region& region1, const Region& region2)
 	Rect2f rect1(region1.pivot - Point2f(mask1.cols, mask1.rows)/2, mask1.size());
 	Rect2f rect2(region2.pivot - Point2f(mask2.cols, mask2.rows)/2, mask2.size());
 	Rect2f rect = rect1 | rect2;
-	Rect2i rect_ = rect;
 
 	rect1.x -= rect.x; rect1.y -= rect.y;
 	rect2.x -= rect.x; rect2.y -= rect.y;
@@ -106,9 +105,9 @@ void Region::inset(float offset)
 		mask = inset(mask, offset);
 }
 
-cv::Rect2i Region::boundingRect(const cv::Mat& mask)
+cv::Rect2i Region::boundingRect(const cv::Mat& mask, int tolerance/* = 0 */)
 {
-	assert(mask.depth() == CV_8U);
+	assert(!mask.empty() && mask.depth() == CV_8U);
 
 	std::vector<uint8_t> row(mask.cols, 0), col(mask.rows, 0);
 	const uint8_t* p = mask.ptr<uint8_t>();
@@ -119,6 +118,9 @@ cv::Rect2i Region::boundingRect(const cv::Mat& mask)
 		// single channel is alpha, multiple channels select the last channel as alpha.
 		uint8_t value = p[(r * mask.cols + c + 1) * channel - 1];
 //		uint8_t value = mask.at<uint8_t>(r, c);
+		if(value <= tolerance)
+			continue;
+
 		row[c] |= value;
 		col[r] |= value;
 	}
@@ -235,6 +237,7 @@ cv::Mat Region::transform(cv::Size& size, cv::Point2f& pivot, float angle, const
 	cv::transform(points, points, affine);
 	
 	Rect rect = cv::boundingRect(points);
+	pivot = points[0];
 
 	// make all the stuff relative to origin
 	m[2] -= rect.x;  pivot.x -= rect.x;
