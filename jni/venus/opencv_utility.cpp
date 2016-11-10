@@ -172,7 +172,7 @@ void line(Mat& image, const Point2f& pt0, const Point2f& pt1, const Scalar& colo
 {
 	assert(pt0.x != pt1.x || pt0.y != pt1.y);  // two points coincide!
 	Point2f delta = pt1 - pt0;
-	Point2f p0(0, 0), p1(image.cols - 1, image.rows - 1);
+	Point2f p0(0, 0), p1(static_cast<float>(image.cols - 1), static_cast<float>(image.rows - 1));
 	if(std::abs(delta.x) > std::abs(delta.y))
 	{
 		float k = delta.y / delta.x;
