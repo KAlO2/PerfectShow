@@ -465,11 +465,9 @@ void Makeup::applyEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Po
 
 		ImageWarp_Rigid warp;
 		warp.setMappingPoints(dst_points, affined_src_points);
-		warp.setSize(_cosmetic.cols, _cosmetic.rows);
+		warp.setSourceSize(_cosmetic.cols, _cosmetic.rows);
 		warp.setTargetSize(_cosmetic.cols, _cosmetic.rows);
-		warp.alpha = 1.0F;
-		warp.gridSize = 5;
-		warp.calcDelta();
+		warp.calculateDelta(1.0F);
 		_cosmetic = warp.genNewImage(_cosmetic, 1.0F);
 //		cv::imshow("test" + std::to_string(j), _cosmetic);
 
