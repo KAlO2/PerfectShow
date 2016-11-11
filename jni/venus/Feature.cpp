@@ -534,115 +534,90 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 	const float font_scale = 0.42f;
 	int offset = 2;
 
+	constexpr Scalar COLOR0 = CV_RGB(0, 255, 0);  // green
 	const size_t point_count = points.size();
 	for(size_t i = 0; i < point_count; ++i)
 	{
 		const Point2f& point = points[i];
 		Point2i pt(cvRound(point.x), cvRound(point.y));
 		cv::putText(image, to_string(i), Point2i(pt.x + offset, pt.y), font_face, font_scale, CV_RGB(0, 255, 0), 1, LINE_AA);
-		cv::circle(image, pt, 1,  CV_RGB(0, 255, 0), 1, LINE_AA);
+		cv::circle(image, pt, 1, COLOR0, 1, LINE_AA);
 	}
 
-#if 0  // enable it to draw triangles
+#if 1  // enable it to draw triangles
+	constexpr Scalar COLOR1 = CV_RGB(0, 0, 255);  // red
 	for(const Vec3i& tri: triangle_indices)
 	{
 		for(int k = 0; k < 3; ++k)
 			assert(0 <= tri[k] && tri[k] < static_cast<int>(point_count));
 
 		// non-realm triangles' edge will draw twice, but it doesn't matter.
-		cv::line(image, points[tri[0]], points[tri[1]], FOREGROUD_COLOR, 1, LINE_AA);
-		cv::line(image, points[tri[1]], points[tri[2]], FOREGROUD_COLOR, 1, LINE_AA);
-		cv::line(image, points[tri[2]], points[tri[0]], FOREGROUD_COLOR, 1, LINE_AA);
+		cv::line(image, points[tri[0]], points[tri[1]], COLOR1, 1, LINE_AA);
+		cv::line(image, points[tri[1]], points[tri[2]], COLOR1, 1, LINE_AA);
+		cv::line(image, points[tri[2]], points[tri[0]], COLOR1, 1, LINE_AA);
 	}
 #endif
+
+	Vec4f line = Feature::getSymmetryAxis(points);
+	Point2f center(line[2], line[3]), down(line[0], line[1]);
+	float k = down.y / down.x;  // dy/dx
+	k = -1 / k;  // two mutually perpendicular line has the relationship k1*k2 = -1
+
 #if 1  // enable it to draw horizontal/vertical lines
-	const Scalar LINE_COLOR(255, 0, 0);
+	constexpr Scalar COLOR2 = CV_RGB(255, 255, 255);  // white
 	Point2f pm1(points[22]), p0(points[21]), p1(points[20]), p2(points[25]);
 	Point2f eye_brow_top_r = catmullRomSpline(0.50f, pm1, p0, p1, p2);
-//	cv::circle(image, Point(cvRound(eye_brow_top_r.x), cvRound(eye_brow_top_r.y)), 1, LINE_COLOR, 1, LINE_AA);
+//	cv::circle(image, eye_brow_top_r, 1, COLOR2, 1, LINE_AA);
 
 	pm1 = points[29]; p0 = points[28]; p1 = points[27]; p2 = points[26];
 	Point2f eye_brow_top_l = catmullRomSpline(0.50f, pm1, p0, p1, p2);
-//	cv::circle(image, Point(cvRound(eye_brow_top_l.x), cvRound(eye_brow_top_l.y)), 1, LINE_COLOR, 1, LINE_AA);
+//	cv::circle(image, eye_brow_top_l, 1, COLOR2, 1, LINE_AA);
 
+	auto drawHorizontalLine = [](cv::Mat& image, const Point2f& point, float k, const Scalar& color)
+	{
+		Point2f right(0, 0), left(static_cast<float>(image.cols - 1), static_cast<float>(image.rows - 1));
+		right.y = k * (right.x - point.x) + point.y;
+		left.y = k * (left.x - point.x) + point.y;
+		venus::line(image, right, left, color, 1, LINE_AA);
+	};
+
+	// ¡°ÈýÍ¥ÎåÑÛ¡±ÖÐµÄ¡°ÈýÍ¥¡±£¬ËÄÌõË®Æ½Ïß¡£
 	Point2f eye_brow_top_m = (eye_brow_top_r + eye_brow_top_l)/2;
-	venus::line(image, eye_brow_top_r, eye_brow_top_l, LINE_COLOR, 1, LINE_AA);
+//	venus::line(image, eye_brow_top_r, eye_brow_top_l, COLOR2, 1, LINE_AA);
+	drawHorizontalLine(image, eye_brow_top_m, k, COLOR2);
+
+	// top forehead index 16
+	const Point2f& top_forehead = points[16];  // not to accurate
+	drawHorizontalLine(image, top_forehead, k, COLOR2);
 
 	// wing of the nose
 	const Point2f& nose_wing_r = points[55];
 	const Point2f& nose_wing_l = points[57];
-	venus::line(image, nose_wing_r, nose_wing_l, LINE_COLOR, 1, LINE_AA);
-
-	// top forehead index 16
-	const Point2f& top_forehead = points[16];  // not to accurate
-//	const Point2f top_forehead = (eye_brow_top_l + eye_brow_top_m) - (nose_wing_r + nose_wing_l)/2;
-	float k = (eye_brow_top_l.y - eye_brow_top_r.y)/(eye_brow_top_l.x - eye_brow_top_r.x);
-	Point2f right(0.0f, 0.0f), left(static_cast<float>(image.cols - 1), static_cast<float>(image.rows - 1));
-	right.y = k * (right.x - top_forehead.x) + top_forehead.y;
-	left.y = k * (left.x - top_forehead.x) + top_forehead.y;
-	venus::line(image, right, left, LINE_COLOR, 1, LINE_AA);
+	Point2f nose_wing_m = (nose_wing_r + nose_wing_l)/2;
+	drawHorizontalLine(image, nose_wing_m, k, COLOR2);
 
 	// chin
 	const Point2f& chin = points[6];
-	right.y = k * (right.x - chin.x) + chin.y;
-	left.y = k * (left.x - chin.x) + chin.y;
-	venus::line(image, right, left, LINE_COLOR, 1, LINE_AA);
+	drawHorizontalLine(image, chin, k, COLOR2);
 
-	// eyes
+#if 0
+	// ¡°ÈýÍ¥ÎåÑÛ¡±ÖÐµÄ¡°ÎåÑÛ¡±£¬ÁùÌõÊúÖ±Ïß¡£
 	const Point2f& eye_right_l = points[34];
 	const Point2f& eye_left_r = points[44];
-	k = (eye_left_r.y - eye_right_l.y)/(eye_left_r.x - eye_right_l.x);
-//	Point2f  top(0, 0), bottom(image.cols, image.rows);
-//	top.x = k * (top.y - eye_right_l.y) + eye_right_l.x;
-//	bottom.x = k * (bottom.y - eye_right_l.y) + eye_right_l.x;
-//	venus::line(image, top, bottom, CV_RGB(0, 255, 0), 1, LINE_AA);
+//	k = (eye_left_r.y - eye_right_l.y)/(eye_left_r.x - eye_right_l.x);
+	Point2f  top(0, 0), bottom(image.cols, image.rows);
+	top.x = k * (top.y - eye_right_l.y) + eye_right_l.x;
+	bottom.x = k * (bottom.y - eye_right_l.y) + eye_right_l.x;
+	venus::line(image, top, bottom, CV_RGB(0, 255, 0), 1, LINE_AA);
 
-//	top.x = k * (top.y - eye_left_r.y) + eye_left_r.x;
-//	bottom.x = k * (bottom.y - eye_left_r.y) + eye_left_r.x;
-//	venus::line(image, top, bottom, CV_RGB(0, 255, 0), 1, LINE_AA);
-
-#if 1 // equilibrium
-/*
-//	float eye_width = std::hyport(eye_left_r.x - eye_right_l.x, eye_left_r.y - eye_right_l.y);
-	float eye_width = std::sqrt((eye_left_r.x - eye_right_l.x)*(eye_left_r.x - eye_right_l.x) + (eye_left_r.y - eye_right_l.y)*(eye_left_r.y - eye_right_l.y));
-	// given slope value k, namely tan(t), solve the value cos(t)
-	// cos(t) = 1/sec(t) = 1/sqrt(1 + tan^2(t));
-	float eye_horizontal_offset = eye_width / std::sqrt(1 + k*k);
-	for(int i = -2; i <= 3; ++i)
-	{
-		Point2f top_offset(top.x + i * eye_horizontal_offset , 0);
-		Point2f bottom_offset(bottom.x + i * eye_horizontal_offset, image.rows);
-		venus::line(image, top_offset, bottom_offset, CV_RGB(0, 255, 0), 1, LINE_AA);
-	}
-*/
-#else
-/*
-	+---+---+---+---+---+
-	|   |eye| N |eye|   |
-
-	L5  L4  L3  L2  L1  L0
-*/
-	Point2f comb[6] = { points[10], points[48], points[44], points[34], points[38], points[0] };
-	if(comb[0].x < points[11].x) comb[0] = points[11];  // TODO spline
-	if(comb[0].x < points[12].x) comb[0] = points[12];
-	if(comb[5].x > points[ 1].x) comb[5] = points[ 1];  // TODO spline
-	if(comb[5].x > points[ 2].x) comb[5] = points[ 2];
-
-	for(int i = 0; i < 6; ++i)
-	{
-		// given k and a fixed point (x0, y0)
-		// y = k(x - x0) + y0
-		// let y = 0, x = -y0/k + x0
-		float h = /*k * comb[i].y +*/ comb[i].x;
-		Point2f top(h, 0.0f), bottom(h, static_cast<float>(image.rows));
-		venus::line(image, top, bottom, CV_RGB(0, 255, 0), 1, LINE_AA);
-	}
+	top.x = k * (top.y - eye_left_r.y) + eye_left_r.x;
+	bottom.x = k * (bottom.y - eye_left_r.y) + eye_left_r.x;
+	venus::line(image, top, bottom, CV_RGB(0, 255, 0), 1, LINE_AA);
 #endif
-
 /*
             36                    46
          37    35              45    47
-right  38   42   34 -------- 44   43   48   left
+right  38   42   34 -------- 44   43   48  left
          39    41              51    49
             40                    50
 */
@@ -660,46 +635,37 @@ right  38   42   34 -------- 44   43   48   left
 		distance(pupil_l, points[49]) +
 		distance(pupil_l, points[51]))/4;
 
-	cv::circle(image, pupil_r, static_cast<int>(pupil_r_radius), CV_RGB(0, 255, 0), 1, LINE_AA);
-	cv::circle(image, pupil_l, static_cast<int>(pupil_l_radius), CV_RGB(0, 255, 0), 1, LINE_AA);
+	constexpr Scalar COLOR3 = CV_RGB(255,165,0);  // orange
+	cv::circle(image, pupil_r, static_cast<int>(pupil_r_radius), COLOR3, 1, LINE_AA);
+	cv::circle(image, pupil_l, static_cast<int>(pupil_l_radius), COLOR3, 1, LINE_AA);
 
 	for(int i = 0; i <= 1; ++i)
 	{
-		bool is_right = i == 0;
+		bool is_right = (i == 0);
 		std::vector<cv::Point2f> polygon = Feature::calculateEyePolygon(points, is_right);
 		const size_t N = polygon.size();
 		for(size_t i = 0; i < N; ++i)
-			cv::line(image, polygon[i], polygon[(i+1)%N], CV_RGB(0, 255, 25), 1, LINE_AA);
+			cv::line(image, polygon[i], polygon[(i+1)%N], COLOR3, 1, LINE_AA);
 	}
-//	cv::circle(image, Point(cvRound(eye_brow_top_m.x), cvRound(eye_brow_top_m.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
 
-//	Point2f pm1(points[22]), p0(points[21]), p1(points[20]), p2(points[25]);
-//	std::vector<float> samples{-0.5, 0.25, 0.50, 0.75, 1.50};
-//	for(const float& t: samples)
-//	{
-//		Point2f extra = catmullRomSpline(t, pm1, p0, p1, p2);
-//		cv::circle(image, Point(cvRound(extra.x), cvRound(extra.y)), 1, CV_RGB(0, 255, 0), 1, LINE_AA);
-//		cv::putText(image, "81", Point2i(extra.x + offset, extra.y), font_face, font_scale, CV_RGB(0, 255, 0), 1, LINE_AA);
-//	}
 #endif
 
-	Vec4f line = Feature::getSymmetryAxis(points);
-	Point2f center(line[2], line[3]), up(line[0], line[1]);
-	venus::line(image, center, center + 10 * up, LINE_COLOR);
+	constexpr Scalar COLOR4 = CV_RGB(255, 0, 255);  // purple
+	venus::line(image, center, center + 10 * down, COLOR4);
 	
 	// from inner eye corner to lip point where it is close to center top point
-	cv::line(image, points[34], points[65], LINE_COLOR);
-	cv::line(image, points[44], points[67], LINE_COLOR);
+	cv::line(image, points[34], points[65], COLOR4);
+	cv::line(image, points[44], points[67], COLOR4);
 
 	// from outer eye corner to lip corner
-	cv::line(image, points[38], points[63], LINE_COLOR);
-	cv::line(image, points[48], points[69], LINE_COLOR);
+	cv::line(image, points[38], points[63], COLOR4);
+	cv::line(image, points[48], points[69], COLOR4);
 		
 	// from wing of nose to lip corner
-	Point2f end = points[63] * 2.0f - points[62];
-	cv::line(image, points[62], end, LINE_COLOR);
-	end = points[69] * 2.0f - points[58];
-	cv::line(image, points[58], end, LINE_COLOR);
+	Point2f end = points[63] * 2.0F - points[62];
+	cv::line(image, points[62], end, COLOR4);
+	end = points[69] * 2.0F - points[58];
+	cv::line(image, points[58], end, COLOR4);
 }
 
 cv::Vec4f Feature::getSymmetryAxis(const std::vector<cv::Point2f>& points)

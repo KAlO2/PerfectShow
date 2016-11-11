@@ -5,7 +5,8 @@
 
 int main()
 {
-	std::string image_name = PROJECT_DIR + "database/042.jpg";
+	// 000.jpg 001.jpg 044.jpg 110.jpg
+	std::string image_name = PROJECT_DIR + "doc/image/000.jpg";
 	
 	detectFace(image_name);
 //	mark(image_name);

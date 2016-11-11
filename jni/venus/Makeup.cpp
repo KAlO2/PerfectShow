@@ -329,15 +329,17 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 	Rect2i  makeup_rect = Region::boundingRect(makeup_mask, 4);  // mask image is not so good, so allow some tolerance.
 
 	Moments makeup_moment = cv::moments(mask);
-	Point2f makeup_center(makeup_moment.m10/makeup_moment.m00 , makeup_moment.m01/makeup_moment.m00);
+	Point2f makeup_center(static_cast<float>(makeup_moment.m10/makeup_moment.m00),
+	                      static_cast<float>(makeup_moment.m01/makeup_moment.m00));
 
 	constexpr int offset = 8;
-	for(int i = 0; i <= 1; ++i)
+	for(int i = 0; i < 2; ++i)
 	{
 		const bool right = (i == 0);
 		std::vector<Point2f> polygon = Feature::calculateBrowPolygon(points, right);
 		Moments moment = cv::moments(polygon);
-		const Point2f center(moment.m10/moment.m00, moment.m01/moment.m00);
+		const Point2f center(static_cast<float>(moment.m10/moment.m00),
+			                 static_cast<float>(moment.m01/moment.m00));
 
 		const Rect rect = cv::boundingRect(polygon);
 		Rect _rect = rect;
@@ -374,10 +376,10 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 		cv::Mat affined_mask;
 		cv::warpAffine(makeup_mask, affined_mask, affine, target_size, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
 
-		Mat affined_brow = Makeup::pack(affined_mask, 0xFF000000);
+		Mat affined_brow = Makeup::pack(affined_mask, color);
 
 		Point2f origin = center - target_center;
-		Makeup::blend(dst, dst, affined_brow, origin, 1.0F);
+		Makeup::blend(dst, dst, affined_brow, origin, amount);
 	}
 }
 
@@ -398,7 +400,7 @@ void Makeup::applyEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Po
 
 */
 #if 1
-	// 	I rearrange eye lashes into file doc/eye_lash.xcf
+	// I rearrange eye lashes into file doc/eye_lash.xcf
 	const std::vector<Point2f> src_points  // corresponding index 34~41
 	{
 		Point2f(633, 287), Point2f(534, 228), Point2f(458, 213), Point2f(386, 228),
@@ -473,7 +475,8 @@ void Makeup::applyEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Po
 
 		if(!right)
 		{
-			pivot = Point2f(_cosmetic.cols, _cosmetic.rows) - pivot;
+			// NOTICE the -1 here, since left(0) + right(cols - 1) == cols - 1.
+			pivot.x = static_cast<float>(_cosmetic.cols - 1) - pivot.x;
 			cv::flip(_cosmetic, _cosmetic, 1/* horizontally */);
 		}
 		Point2i origin = dst_pivot - pivot;
@@ -611,8 +614,8 @@ void Makeup::applyLip(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Po
 	Region region = feature.calculateLipshRegion();
 	const Mat& mask = region.mask;
 	const Point2f& pivot = region.pivot;
-	const int rows = mask.rows, cols = mask.cols;
-	const Point2i& origin = pivot - Point2f(mask.cols, mask.rows)/2;
+	const int& rows = mask.rows, &cols = mask.cols;
+	const Point2i& origin = pivot - static_cast<Point2f>(Point2i(mask.cols, mask.rows))/2;
 	
 /*
 	Rect all(0, 0, src.cols, src.rows);

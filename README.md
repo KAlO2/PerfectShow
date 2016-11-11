@@ -1,6 +1,6 @@
 # PerfectShow
 
-Welcome to PerfectShow, An image processing application for Android platform.
+Welcome to PerfectShow, an image processing application for Android platform.
 
 Up until now, I release functionalities about make-up.
 
@@ -18,11 +18,11 @@ $ ant debug
 ```
 
 
-# ScreenShot
-<img src="./doc/seamless-cloning.jpg" width="42%" height="42%">
+# Screenshot
+<img src="./doc/seamless-cloning.gif" width="42%" height="42%">
 <img src="./doc/ui-makeup.jpg"        width="42%" height="42%">
 
 # Contact
 If you like this project, share your appreciation by following me in [GitHub](https://github.com/KAlO2).
-If you have any problems about this project, you can fire an issue [here](https://github.com/KAlO2/PerfectShow/issues) or join QQ group 571444731 for contacting.
+If you have any problems about this project, you can file an issue [here](https://github.com/KAlO2/PerfectShow/issues) or join QQ group 571444731 for consulting.
 

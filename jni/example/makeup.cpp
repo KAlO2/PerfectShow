@@ -73,7 +73,7 @@ void detectFace(const std::string& image_name)
 	}
 }
 
-static void mark(const std::string& image_name)
+void mark(const std::string& image_name)
 {
 	cv::Mat image = cv::imread(image_name);
 	
@@ -498,8 +498,8 @@ void applyBrow(const std::string& image_name)
 	cv::cvtColor(image, gray, CV_BGR2GRAY);
 	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
 
-//	if(image.channels() == 3)
-//		cv::cvtColor(image, image, CV_BGR2BGRA);
+	if(image.channels() == 3)
+		cv::cvtColor(image, image, CV_BGR2BGRA);
 	
 	int index = 6;  // 0 ~ 15
 	std::ostringstream stream;
@@ -507,10 +507,11 @@ void applyBrow(const std::string& image_name)
 	std::string target_brow_filename = stream.str();
 
 	std::cout << target_brow_filename << std::endl;
-	Mat target_brow = cv::imread(target_brow_filename, cv::IMREAD_UNCHANGED);
+	Mat mask = cv::imread(target_brow_filename, cv::IMREAD_UNCHANGED);
 //	assert(!target_brow.empty() && target_brow.channels() == 4);
-	target_brow = Makeup::pack(target_brow, 0xFEEDF00D);
-//	cv::imwrite(PROJECT_DIR + "06.jpg", target_brow);
+	uint32_t color = 0xFEEDF00D;
+	Mat target_brow = Makeup::pack(mask, color);
+
 	Rect rect = Region::boundingRect(target_brow);
 	std::cout << "left: " << rect.x << ", right: " << (rect.x + rect.width)  << '\n'
 	          << "top: "  << rect.y << ", bottom: "<< (rect.y + rect.height) << '\n';
@@ -520,47 +521,8 @@ void applyBrow(const std::string& image_name)
 	float angle = std::atan2(line[1], line[0]) - static_cast<float>(M_PI/2);
 	std::cout << "skew angle: " << rad2deg(angle) << '\n';
 
-	for(int i = 0; i <= 0; ++i)
-	{
-		const bool right = (i == 0);
-//		std::vector<Point2f> polygon = Feature::calculateBrowPolygon(points, right);
-		Region region = feature.calculateBrowRegion(right);
-
-		Size2f& region_size = region.size;
-		Size target_size = rect.size();
-		Vec2f scale(region_size.width / target_size.width, region_size.height / target_size.height);
-		Point2f pivot(region_size.width/2.0F, region_size.height/2.0F);
-		Mat affine = Region::transform(target_size, pivot, angle, scale);
-
-		if(!right)
-			cv::flip(target_brow, target_brow, 1/* horizontally */);
-
-		cv::Mat affined_brow;
-		cv::warpAffine(target_brow, affined_brow, affine, target_size, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
-		Size2i affined_brow_size(affined_brow.cols, affined_brow.rows);
-		Point2i origin = region.pivot - Point2f(affined_brow_size)/2;
-		cv::imshow("affined_brow", affined_brow);
-
-		Mat bgra[4];
-		cv::split(affined_brow, bgra);
-		cv::merge(bgra, 3, affined_brow);
-
-		Mat mask;
-//		mask = bgra[3];  // mask element value must only be 0/255, in between values will cause seamlessClone throw exception.
-		cv::threshold(bgra[3], mask, 1.0F, 255.0F, cv::THRESH_BINARY);
-
-//		cv::imshow("mask", mask);
-		cv::imwrite(PROJECT_DIR + "affined_brow.png", affined_brow);
-		Mat result;
-//		origin = Point2i(image.cols/2, image.rows/2);
-		assert(affined_brow.type() == CV_8UC3 && image.type() == CV_8UC3 && mask.type() == CV_8UC1);
-		cv::seamlessClone(affined_brow, image, mask, region.pivot, result, cv::NORMAL_CLONE);
-		
-		cv::imshow("well done", result);
-	}
-//	cv::seamlessClone(src, dst, src_mask, center, result, cv::NORMAL_CLONE);
-
-//	cv::imshow("opencv-clone-example.jpg", result);
+	Mat result;
+	Makeup::applyBrow(result, image, points, mask, color, 0.81F);
 
 #if 0
 	for(int i = 0; i <= 1; ++i)
@@ -669,5 +631,5 @@ void applyBrow(const std::string& image_name)
 //	makeup_brow_r.copyTo(image(Region::getRect(pivot_r, size_r)), makeup_brow_r);
 //	makeup_brow_l.copyTo(image(Region::getRect(pivot_l, size_l)), makeup_brow_l);
 #endif
-	cv::imshow(__FUNCTION__, image);
+	cv::imshow(__FUNCTION__, result);
 }
