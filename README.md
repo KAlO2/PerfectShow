@@ -28,7 +28,7 @@ $ make -j4
 
 
 # Screenshot
-<img src="./doc/seamless-cloning.gif" alt="seamless cloning" width="84%" height="42%">
+<img src="./doc/seamless-cloning.gif" alt="seamless cloning" width="42%" height="42%">
 <img src="./doc/ui-makeup.jpg" alt="makeup UI" width="42%" height="42%">
 
 

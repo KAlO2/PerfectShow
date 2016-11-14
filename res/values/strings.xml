@@ -118,6 +118,7 @@
 	<string name="alpha_channel">Alpha channel</string>
 	<string name="alpha_channel_summary">Enable alpha channel to blending two colors</string>
 
+	<!-- MakeupActivity -->
 	<string name="eye_brow">Eye brow</string>
 	<string name="eye_lash">Eye lash</string>
 	<string name="eye_shadow">Eye shadow</string>
@@ -125,6 +126,8 @@
 	<string name="nose_shadow">Nose shadow</string>
 	<string name="blush">Blush</string>
 	<string name="lip_color">Lip color</string>
+	<string name="custom">Custom</string>
+	<string name="color_picker">Color Picker</string>
 
 	<!-- SettingsActivity -->
 	<string name="share_to">Share to</string>
