@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<declare-styleable name="ColorPicker">
+		<attr name="layout" format="reference" />
+		<attr name="mode" format="enum">
+			<enum name="circle_hs_v" value="0"/>
+			<enum name="circle_hs_l" value="1"/>
+			<enum name="square_sv_h" value="2"/>
+			<enum name="square_hs_v" value="3"/>
+			<enum name="square_hv_s" value="4"/>
+		</attr>
+		<attr name="color" format="color" />
+		<attr name="enableAlpha" format="boolean" />
+	</declare-styleable>
+    
+	<declare-styleable name="AppBaseTheme">
+	    <!-- The TimePicker style. -->
+        <attr name="colorPickerStyle" format="reference" />
+
+        <!-- The TimePicker dialog theme. -->
+        <attr name="colorPickerDialogTheme" format="reference" />
+        
+    </declare-styleable>
+</resources>

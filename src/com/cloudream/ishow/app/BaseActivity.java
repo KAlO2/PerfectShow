@@ -1,4 +1,4 @@
-package com.cloudream.ishow.activity;
+package com.cloudream.ishow.app;
 
 import com.cloudream.ishow.R;
 

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:layout_gravity="center"
+
+	android:orientation="vertical" >
+
+	<LinearLayout
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="center"
+		android:layout_margin="8dp"
+		android:clipToPadding="false"
+		android:orientation="horizontal" >
+
+		<FrameLayout
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			>
+
+			<com.cloudream.ishow.view.ColorPickerSquare
+				android:id="@+id/square"
+				android:layout_width="@dimen/color_picker_height"
+				android:layout_height="@dimen/color_picker_height"
+				android:layerType="software" />
+
+			<ImageView
+				android:id="@+id/square_target"
+				android:layout_width="16dp"
+				android:layout_height="16dp"
+				android:scaleType="matrix"
+				android:src="@drawable/color_picker_target" />
+		</FrameLayout>
+
+		<ImageView
+			android:id="@+id/band_cursor"
+			android:layout_width="@dimen/color_picker_cursor_size"
+			android:layout_height="@dimen/color_picker_cursor_size"
+			android:layout_gravity="right"
+			android:scaleType="matrix"
+			android:src="@drawable/color_picker_cursor" />
+
+		<ImageView
+			android:id="@+id/band"
+			android:layout_width="@dimen/color_picker_band_width"
+			android:layout_height="@dimen/color_picker_height"
+			android:layout_marginLeft="@dimen/color_picker_space"
+			android:scaleType="fitXY"
+			android:src="@drawable/color_picker_hue" />
+
+		<ImageView
+			android:id="@+id/alpha_cursor"
+			android:layout_width="@dimen/color_picker_cursor_size"
+			android:layout_height="@dimen/color_picker_cursor_size"
+			android:layout_gravity="right"
+			android:scaleType="matrix"
+			android:src="@drawable/color_picker_cursor" />
+
+		<FrameLayout
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="@dimen/color_picker_space" >
+
+			<ImageView
+				android:id="@+id/alpha"
+				android:layout_width="@dimen/color_picker_band_width"
+				android:layout_height="@dimen/color_picker_height"
+				android:scaleType="fitXY"
+				android:src="@drawable/transparent" />
+
+			<View
+				android:id="@+id/overlay"
+				android:layout_width="@dimen/color_picker_band_width"
+				android:layout_height="@dimen/color_picker_height"
+				android:scaleType="fitXY" />
+		</FrameLayout>
+	</LinearLayout>
+
+	<LinearLayout
+		android:id="@+id/state"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="center_horizontal"
+		android:layout_marginBottom="18dp"
+		android:layout_marginTop="18dp"
+		android:gravity="center"
+		android:orientation="horizontal" >
+
+		<View
+			android:id="@+id/old_color"
+			android:layout_width="@dimen/color_brick_width"
+			android:layout_height="@dimen/color_brick_height"
+			android:background="@drawable/transparent" />
+
+		<ImageView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:paddingLeft="@dimen/color_picker_space"
+			android:paddingRight="@dimen/color_picker_space"
+			android:src="@drawable/color_picker_arrow_right" />
+
+		<View
+			android:id="@+id/new_color"
+			android:layout_width="@dimen/color_brick_width"
+			android:layout_height="@dimen/color_brick_height"
+			android:background="@drawable/transparent" />
+	</LinearLayout>
+
+</LinearLayout>

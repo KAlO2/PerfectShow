@@ -1,23 +1,17 @@
 <resources>
 
-    <!--
-        Base application theme, dependent on API level. This theme is replaced
-        by AppBaseTheme from res/values-vXX/styles.xml on newer devices.
-    -->
-    <style name="AppBaseTheme" parent="android:Theme.Light">
-        <!--
-            Theme customizations available in newer API levels can go in
-            res/values-vXX/styles.xml, while customizations related to
-            backward-compatibility can go here.
-        -->
+    <style name="Widget" parent="@android:style/Widget">
+        <item name="android:textAppearance">?android:attr/textAppearance</item>
     </style>
-
-    <!-- Application theme. -->
-    <style name="AppTheme" parent="AppBaseTheme">
-        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+    
+    <style name="Widget.ColorPicker">
+        <item name="layout">@layout/color_picker_dialog</item>
+        <item name="mode">circle_hs_v</item>
+        <item name="color">#FFE1112B</item>
+        <item name="enableAlpha">false</item>
     </style>
-
-	<style name="TextView">
+    
+    <style name="Widget.TextView">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@color/primary_background</item>
@@ -25,7 +19,7 @@
         <item name="android:textSize">@dimen/text_size_normal</item>
     </style>
     
-	<style name="Button" parent="@style/TextView">
+	<style name="Widget.Button">
         <item name="android:maxLines">1</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:shadowColor">@android:color/black</item>
@@ -43,9 +37,9 @@
         <item name="android:gravity">center</item>
     </style>
     
-	<style name="CheckBox" parent="@style/TextView"></style>
+	<style name="Widget.CheckBox" parent="@style/Widget.TextView"></style>
 	
-	<style name="SeekBar">
+	<style name="Widget.SeekBar">
         <item name="android:paddingLeft">15.0dp</item>
         <item name="android:paddingRight">15.0dp</item>
         <item name="android:layout_width">fill_parent</item>
@@ -60,7 +54,7 @@
         <item name="android:fadeScrollbars">true</item>
     </style>
 	
-	<style name="ImageWithTextBelowIt">
+	<style name="Widget.ImageWithTextBelowIt">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">match_parent</item>
         <item name="android:layout_weight">1.0</item>
@@ -72,11 +66,11 @@
 -->
     </style>
     
-	<style name="CheckBox" parent="@style/TextView">
+	<style name="Widget.CheckBox" parent="@style/Widget.TextView">
 	
 	</style>
 	
-	<style name="Spinner">
+	<style name="Widget.Spinner">
 		<item name="android:layout_width">wrap_content</item>
 	   	<item name="android:layout_height">wrap_content</item>
 	    	<item name="android:spinnerMode">dropdown</item>
@@ -95,7 +89,7 @@
         <item name="android:textSize">@dimen/text_size_big</item>
     </style>
     
-	<style name="Button.MainActivity">
+	<style name="Widget.Button.MainActivity">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">64dp</item>
         <item name="android:layout_weight">0.5</item>

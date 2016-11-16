@@ -17,13 +17,13 @@
             android:weightSum="1.0" >
 
             <Button
-                style="@style/Button.MainActivity"
+                style="@style/Widget.Button.MainActivity"
                 android:id="@+id/collage"
                 android:text="Collage"
                 />
 
             <Button
-                style="@style/Button.MainActivity"
+                style="@style/Widget.Button.MainActivity"
                 android:id="@+id/crop"
                 android:text="Crop" />
         </TableRow>
@@ -35,12 +35,12 @@
             android:weightSum="1.0" >
 
             <Button
-                style="@style/Button.MainActivity"
+                style="@style/Widget.Button.MainActivity"
                 android:id="@+id/camera"
                 android:text="Camera" />
 
             <Button
-                style="@style/Button.MainActivity"
+                style="@style/Widget.Button.MainActivity"
                 android:id="@+id/color"
                 android:text="Color" />
         </TableRow>
@@ -51,12 +51,12 @@
             android:layout_margin="8dp" >
 
             <Button
-                style="@style/Button.MainActivity"
+                style="@style/Widget.Button.MainActivity"
                 android:id="@+id/makeup"
                 android:text="Makeup" />
             
 			<Button
-                style="@style/Button.MainActivity"
+                style="@style/Widget.Button.MainActivity"
                 android:id="@+id/effect"
                 android:text="Effect" />
         </TableRow>

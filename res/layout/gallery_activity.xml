@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@color/sky_blue"
     android:orientation="vertical"
-    tools:context="com.cloudream.ishow.activity.GalleryActivity" >
+    tools:context="com.cloudream.ishow.app.GalleryActivity" >
 
     <include
         android:layout_width="match_parent"
@@ -56,19 +56,19 @@
             android:orientation="horizontal" >
 
             <TextView
-                style="@style/TextView"
+                style="@style/Widget.TextView"
                 android:id="@+id/picture_selection_info"
                 android:layout_alignParentLeft="true" />
 
             <Button
-                style="@style/Button"
+                style="@style/Widget.Button"
                 android:id="@+id/start_collaging"
                 android:layout_alignParentRight="true"
                 android:background="@drawable/round_rect"
                 android:text="@string/start_collaging" />
             
             <Button
-                style="@style/Button"
+                style="@style/Widget.Button"
                 android:id="@+id/film_strip"
                 android:layout_toLeftOf="@id/start_collaging"
                 android:text="@string/film_strip" 

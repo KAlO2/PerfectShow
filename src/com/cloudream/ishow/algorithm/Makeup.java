@@ -99,10 +99,10 @@ public class Makeup extends BitmapWrapper
 		
 		if(true)  // merge layers in Java side
 		{
-			int count = mask.length;
-			
+			final int count = mask.length;
 			Bitmap layers[] = new Bitmap[count];
-			for(int i = 0; i < 3; ++i)
+			
+			for(int i = 0; i < count; ++i)
 				layers[i] = Effect.tone(mask[i], color[i]);
 	
 			Bitmap eye_shadow = mergeLayers(layers);

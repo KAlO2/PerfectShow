@@ -1,4 +1,4 @@
-package com.cloudream.ishow.activity;
+package com.cloudream.ishow.app;
 
 import android.Manifest;
 import android.app.Activity;

@@ -47,7 +47,7 @@
 	    >
 		<TextView
             android:id="@+id/reset"
-            style="@style/TextView"
+            style="@style/Widget.TextView"
             android:layout_alignParentStart="true"
             android:layout_alignParentLeft="true"
             android:paddingLeft="10dp"
@@ -65,7 +65,7 @@
 	        />
 		<CheckBox
             android:id="@+id/mark"
-            style="@style/CheckBox"
+            style="@style/Widget.CheckBox"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
             android:text="@string/mark"
@@ -73,7 +73,7 @@
             />
 	    <Spinner
 	        android:id="@+id/spinner"
-			style="@style/Spinner"
+			style="@style/Widget.Spinner"
 			android:paddingLeft="10dp"
             android:paddingRight="10dp"
 	        />
@@ -96,7 +96,7 @@
 <!--
             <ImageView
                 android:id="@+id/blusher"
-                style="@style/ImageWithTextBelowIt"
+                style="@style/Widget.ImageWithTextBelowIt"
                 android:src="@drawable/blusher"
                 />
 -->
@@ -120,37 +120,37 @@
 
             <Button
                 android:id="@+id/eye_lash"
-                style="@style/ImageWithTextBelowIt"
+                style="@style/Widget.ImageWithTextBelowIt"
                 android:drawableTop="@drawable/eye_lash"
                 android:text="@string/eye_lash" />
             
             <Button
-                style="@style/ImageWithTextBelowIt"
+                style="@style/Widget.ImageWithTextBelowIt"
                 android:id="@+id/eye_shadow"
                 android:drawableTop="@drawable/eye_shadow"
                 android:text="@string/eye_shadow" />
 
             <Button
                 android:id="@+id/iris"
-                style="@style/ImageWithTextBelowIt"
+                style="@style/Widget.ImageWithTextBelowIt"
                 android:drawableTop="@drawable/iris"
                 android:text="@string/iris" />
 
             <Button
-                style="@style/ImageWithTextBelowIt"
+                style="@style/Widget.ImageWithTextBelowIt"
                 android:id="@+id/eye_brow"
                 android:drawableTop="@drawable/eye_brow"
                 android:text="@string/eye_brow" />
             
             <Button
                 android:id="@+id/blush"
-                style="@style/ImageWithTextBelowIt"
+                style="@style/Widget.ImageWithTextBelowIt"
                 android:drawableTop="@drawable/blush"
                 android:text="@string/blush" />
 
             <Button
                 android:id="@+id/lip"
-                style="@style/ImageWithTextBelowIt"
+                style="@style/Widget.ImageWithTextBelowIt"
                 android:drawableTop="@drawable/lip"
                 android:text="@string/lip_color" />
 
