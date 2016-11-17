@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+	<!-- Theme.Light | Theme.Black | Theme.Translucent -->
+	<declare-styleable name="Theme" parent="@android:styleable/Theme">
+		
+		<!-- The ColorPicker style. -->
+		<attr name="colorPickerStyle" format="reference" />
+		
+		<!-- The ColorPicker dialog theme. -->
+		<attr name="colorPickerDialogTheme" format="reference" />
+		
+	</declare-styleable>
+	
 	<declare-styleable name="ColorPicker">
 		<attr name="layout" format="reference" />
 		<attr name="mode" format="enum">
@@ -12,13 +24,4 @@
 		<attr name="color" format="color" />
 		<attr name="enableAlpha" format="boolean" />
 	</declare-styleable>
-    
-	<declare-styleable name="AppBaseTheme">
-	    <!-- The TimePicker style. -->
-        <attr name="colorPickerStyle" format="reference" />
-
-        <!-- The TimePicker dialog theme. -->
-        <attr name="colorPickerDialogTheme" format="reference" />
-        
-    </declare-styleable>
 </resources>

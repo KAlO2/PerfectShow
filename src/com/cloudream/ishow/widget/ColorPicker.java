@@ -2,16 +2,12 @@ package com.cloudream.ishow.widget;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Color;
-import android.os.Build;
 import android.support.annotation.IntRange;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.DebugUtils;
 import android.view.LayoutInflater;
 import android.widget.FrameLayout;
 
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidParameterException;
 
 import com.cloudream.ishow.BuildConfig;

@@ -138,6 +138,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 			break;
 		case BLUSH:
 			textures = dodgeArrayAllocation(textures, index);
+			break;
 		default:
 			throw new UnsupportedOperationException("not implemented yet");
 		}

@@ -1,65 +1,65 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context="com.cloudream.camera.activity.MainActivity" >
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical"
+	tools:context="com.cloudream.camera.activity.MainActivity" >
 
-    <TableLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="4dp" >
+	<TableLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:padding="4dp" >
 
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:weightSum="1.0" >
+		<TableRow
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="8dp"
+			android:weightSum="1.0" >
 
-            <Button
-                style="@style/Widget.Button.MainActivity"
-                android:id="@+id/collage"
-                android:text="Collage"
-                />
-
-            <Button
-                style="@style/Widget.Button.MainActivity"
-                android:id="@+id/crop"
-                android:text="Crop" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:weightSum="1.0" >
-
-            <Button
-                style="@style/Widget.Button.MainActivity"
-                android:id="@+id/camera"
-                android:text="Camera" />
-
-            <Button
-                style="@style/Widget.Button.MainActivity"
-                android:id="@+id/color"
-                android:text="Color" />
-        </TableRow>
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp" >
-
-            <Button
-                style="@style/Widget.Button.MainActivity"
-                android:id="@+id/makeup"
-                android:text="Makeup" />
-            
 			<Button
-                style="@style/Widget.Button.MainActivity"
-                android:id="@+id/effect"
-                android:text="Effect" />
-        </TableRow>
-    </TableLayout>
+				style="@style/Widget.Button.MainActivity"
+				android:id="@+id/collage"
+				android:text="Collage"
+				/>
+
+			<Button
+				style="@style/Widget.Button.MainActivity"
+				android:id="@+id/crop"
+				android:text="Crop" />
+		</TableRow>
+
+		<TableRow
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="8dp"
+			android:weightSum="1.0" >
+
+			<Button
+				style="@style/Widget.Button.MainActivity"
+				android:id="@+id/camera"
+				android:text="Camera" />
+
+			<Button
+				style="@style/Widget.Button.MainActivity"
+				android:id="@+id/color"
+				android:text="Color" />
+		</TableRow>
+
+		<TableRow
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_margin="8dp" >
+
+		<Button
+				style="@style/Widget.Button.MainActivity"
+				android:id="@+id/makeup"
+				android:text="Makeup" />
+			
+		<Button
+				style="@style/Widget.Button.MainActivity"
+				android:id="@+id/effect"
+				android:text="Effect" />
+		</TableRow>
+	</TableLayout>
 
 </LinearLayout>
