@@ -39,9 +39,9 @@ public class ColorUtils
 				(byte)(Color.blue (color)&0xff));
 	}
 	
-	public static int[] obtainColorArray(Context context, @ArrayRes int resId)
+	public static int[] obtainColorArray(Resources res, @ArrayRes int resId)
 	{
-		TypedArray array = context.getResources().obtainTypedArray(resId);
+		TypedArray array = res.obtainTypedArray(resId);
 		final int length = array.length();
 		
 		int[] resIds = new int[length];

@@ -17,6 +17,7 @@ import com.cloudream.ishow.view.ImageViewTouch;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -85,20 +86,23 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 	
 	// These arrays are stored in R.array.color_arrays.xml
 	// They can be final static since it need context to load resources.
-	private final int ROI_COLORS[][] = new int [Region.values().length][];
+	private static final int ROI_COLORS[][] = new int [Region.values().length][];
 	
-	private final void initRegionColorArray()
+	private static final void initRegionColorArray(Resources res)
 	{
-		ROI_COLORS[Region.EYE_BROW  .ordinal()] = ColorUtils.obtainColorArray(this, R.array.eye_brow_colors);
-		ROI_COLORS[Region.EYE_LASH  .ordinal()] = ColorUtils.obtainColorArray(this, R.array.eye_lash_colors);
-		ROI_COLORS[Region.EYE_SHADOW.ordinal()] = ColorUtils.obtainColorArray(this, R.array.eye_shadow_colors);
-		ROI_COLORS[Region.IRIS      .ordinal()] = ColorUtils.obtainColorArray(this, R.array.iris_colors);
-		ROI_COLORS[Region.BLUSH     .ordinal()] = ColorUtils.obtainColorArray(this, R.array.blush_colors);
-		ROI_COLORS[Region.LIP       .ordinal()] = ColorUtils.obtainColorArray(this, R.array.lip_colors);
+		if(ROI_COLORS[0] != null)
+			return;  // in case initialized once
+		
+		ROI_COLORS[Region.EYE_BROW  .ordinal()] = ColorUtils.obtainColorArray(res, R.array.eye_brow_colors);
+		ROI_COLORS[Region.EYE_LASH  .ordinal()] = ColorUtils.obtainColorArray(res, R.array.eye_lash_colors);
+		ROI_COLORS[Region.EYE_SHADOW.ordinal()] = ColorUtils.obtainColorArray(res, R.array.eye_shadow_colors);
+		ROI_COLORS[Region.IRIS      .ordinal()] = ColorUtils.obtainColorArray(res, R.array.iris_colors);
+		ROI_COLORS[Region.BLUSH     .ordinal()] = ColorUtils.obtainColorArray(res, R.array.blush_colors);
+		ROI_COLORS[Region.LIP       .ordinal()] = ColorUtils.obtainColorArray(res, R.array.lip_colors);
 //		ROI_COLORS[Region.SKIN      .ordinal()] = N/A;
 	}
 	
-	private final int[] obtainRegionColorArray(Region region)
+	private static final int[] obtainRegionColorArray(Region region)
 	{
 		return ROI_COLORS[region.ordinal()];
 	}
@@ -318,7 +322,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		findViewById(R.id.iris)      .setOnClickListener(this);
 		findViewById(R.id.lip)       .setOnClickListener(this);
 		
-		initRegionColorArray();
+		initRegionColorArray(this.getResources());
 		
 		Spinner spinner = (Spinner) findViewById(R.id.spinner);
 		ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
