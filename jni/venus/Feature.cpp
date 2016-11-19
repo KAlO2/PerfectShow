@@ -534,7 +534,7 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 	const float font_scale = 0.42f;
 	int offset = 2;
 
-	constexpr Scalar COLOR0 = CV_RGB(0, 255, 0);  // green
+	const Scalar COLOR0 = CV_RGB(0, 255, 0);  // green
 	const size_t point_count = points.size();
 	for(size_t i = 0; i < point_count; ++i)
 	{
@@ -545,7 +545,7 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 	}
 
 #if 1  // enable it to draw triangles
-	constexpr Scalar COLOR1 = CV_RGB(0, 0, 255);  // red
+	const Scalar COLOR1 = CV_RGB(0, 0, 255);  // red
 	for(const Vec3i& tri: triangle_indices)
 	{
 		for(int k = 0; k < 3; ++k)
@@ -564,7 +564,7 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 	k = -1 / k;  // two mutually perpendicular line has the relationship k1*k2 = -1
 
 #if 1  // enable it to draw horizontal/vertical lines
-	constexpr Scalar COLOR2 = CV_RGB(255, 255, 255);  // white
+	const Scalar COLOR2 = CV_RGB(255, 255, 255);  // white
 	Point2f pm1(points[22]), p0(points[21]), p1(points[20]), p2(points[25]);
 	Point2f eye_brow_top_r = catmullRomSpline(0.50f, pm1, p0, p1, p2);
 //	cv::circle(image, eye_brow_top_r, 1, COLOR2, 1, LINE_AA);
@@ -581,7 +581,7 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 		venus::line(image, right, left, color, 1, LINE_AA);
 	};
 
-	// ¡°ÈýÍ¥ÎåÑÛ¡±ÖÐµÄ¡°ÈýÍ¥¡±£¬ËÄÌõË®Æ½Ïß¡£
+	// “三庭五眼”中的“三庭”，四条水平线。
 	Point2f eye_brow_top_m = (eye_brow_top_r + eye_brow_top_l)/2;
 //	venus::line(image, eye_brow_top_r, eye_brow_top_l, COLOR2, 1, LINE_AA);
 	drawHorizontalLine(image, eye_brow_top_m, k, COLOR2);
@@ -601,7 +601,7 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 	drawHorizontalLine(image, chin, k, COLOR2);
 
 #if 0
-	// ¡°ÈýÍ¥ÎåÑÛ¡±ÖÐµÄ¡°ÎåÑÛ¡±£¬ÁùÌõÊúÖ±Ïß¡£
+	// “三庭五眼”中的“五眼”，六条竖直线。
 	const Point2f& eye_right_l = points[34];
 	const Point2f& eye_left_r = points[44];
 //	k = (eye_left_r.y - eye_right_l.y)/(eye_left_r.x - eye_right_l.x);
@@ -635,7 +635,7 @@ right  38   42   34 -------- 44   43   48  left
 		distance(pupil_l, points[49]) +
 		distance(pupil_l, points[51]))/4;
 
-	constexpr Scalar COLOR3 = CV_RGB(255,165,0);  // orange
+	const Scalar COLOR3 = CV_RGB(255,165,0);  // orange
 	cv::circle(image, pupil_r, static_cast<int>(pupil_r_radius), COLOR3, 1, LINE_AA);
 	cv::circle(image, pupil_l, static_cast<int>(pupil_l_radius), COLOR3, 1, LINE_AA);
 
@@ -650,7 +650,7 @@ right  38   42   34 -------- 44   43   48  left
 
 #endif
 
-	constexpr Scalar COLOR4 = CV_RGB(255, 0, 255);  // purple
+	const Scalar COLOR4 = CV_RGB(255, 0, 255);  // purple
 	venus::line(image, center, center + 10 * down, COLOR4);
 	
 	// from inner eye corner to lip point where it is close to center top point

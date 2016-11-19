@@ -2,7 +2,7 @@
 #define JNI_BRIDGE_H_
 
 #include <jni.h>
-
+#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -62,7 +62,7 @@
 
 
 // **************** Java to C++ **************** //
-
+uint32_t                 getNativeColor(jint _color);
 std::string              getNativeString(JNIEnv *env, jstring _str);
 cv::Mat*                 getNativeMat(JNIEnv *env, jobject _mat);
 

@@ -4,6 +4,22 @@
 #include <assert.h>
 
 // **************** Java to C++ **************** //
+uint32_t getNativeColor(jint _color)
+{
+	// @see http://stackoverflow.com/questions/1751346/interpret-signed-as-unsigned
+	// Should one use static_cast or reinterpret_cast between signed and unsigned integers?
+	uint32_t color = static_cast<uint32_t>(_color);
+
+	// Android/Java #Color use #AARRGGBB, namely BGRA in memory layout, while native
+	// layer use #AABBGGRR, namely RGBA memory layout, need a swap(R, B) here.
+	uint8_t* bytes = reinterpret_cast<uint8_t*>(&color);
+	uint8_t tmp = bytes[0];
+	bytes[0] = bytes[2];
+	bytes[2] = tmp;
+
+	return color;
+}
+
 std::string getNativeString(JNIEnv *env, jstring _str)
 {
 	const char *str = env->GetStringUTFChars(_str, nullptr);

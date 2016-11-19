@@ -93,23 +93,23 @@ public class Makeup extends BitmapWrapper
 		return bitmap;
 	}
 	
-	public void applyEyeShadow(@NonNull final Bitmap mask[], @NonNull final int color[], float amount)
+	public void applyEyeShadow(@NonNull final Bitmap masks[], @NonNull final int colors[], float amount)
 	{
 		PointF points[] = feature.getFeaturePoints();
 		
 		if(true)  // merge layers in Java side
 		{
-			final int count = mask.length;
+			final int count = masks.length;
 			Bitmap layers[] = new Bitmap[count];
 			
 			for(int i = 0; i < count; ++i)
-				layers[i] = Effect.tone(mask[i], color[i]);
+				layers[i] = Effect.tone(masks[i], colors[i]);
 	
 			Bitmap eye_shadow = mergeLayers(layers);
 			nativeApplyEye(bmp_step, bmp_stop, points, eye_shadow, amount);
 		}
 		else
-			nativeApplyEyeShadow(bmp_step, bmp_stop, points, mask, color, amount);
+			nativeApplyEyeShadow(bmp_step, bmp_stop, points, masks, colors, amount);
 	}
 	
 	public void applyIris(Bitmap iris, Bitmap mask, float amount)
@@ -121,9 +121,7 @@ public class Makeup extends BitmapWrapper
 	public void applyBlush(BlushShape shape, int color, float amount)
 	{
 		PointF points[] = feature.getFeaturePoints();
-		int _color = ColorUtils.bgra2rgba(color);
-		Log.i("Makeup", String.format("AABBGGRR  %#08x", _color));
-		nativeApplyBlush(bmp_step, bmp_stop, points, shape.ordinal(), _color, amount);
+		nativeApplyBlush(bmp_step, bmp_stop, points, shape.ordinal(), color, amount);
 	}
 	
 	/**
@@ -159,7 +157,7 @@ public class Makeup extends BitmapWrapper
 	private static native void nativeApplyBrow     (Bitmap dst, Bitmap src, final PointF points[], Bitmap mask, int color, float amount);
 	private static native void nativeApplyEye      (Bitmap dst, Bitmap src, final PointF points[], Bitmap cosmetic, float amount);
 	private static native void nativeApplyEyeLash  (Bitmap dst, Bitmap src, final PointF points[], Bitmap mask, int color, float amount);
-	private static native void nativeApplyEyeShadow(Bitmap dst, Bitmap src, final PointF points[], Bitmap mask[], int color[], float amount);
+	private static native void nativeApplyEyeShadow(Bitmap dst, Bitmap src, final PointF points[], Bitmap masks[], int colors[], float amount);
 	private static native void nativeApplyIris     (Bitmap dst, Bitmap src, final PointF points[], Bitmap iris, Bitmap mask, float amount);
 	private static native void nativeApplyBlush    (Bitmap dst, Bitmap src, final PointF points[], int shape, int color, float amount);
 	private static native void nativeApplyLip      (Bitmap dst, Bitmap src, final PointF points[], int color, float amount);

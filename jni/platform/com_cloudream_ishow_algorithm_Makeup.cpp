@@ -36,7 +36,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyBrow(JNIEnv* e
 	assert(mask_pixels != nullptr && mask_info.format == ANDROID_BITMAP_FORMAT_A_8);
 	Mat mask(mask_info.height, mask_info.width, CV_8UC1, mask_pixels);
 
-	uint32_t color = static_cast<uint32_t>(_color);
+	uint32_t color = getNativeColor(_color);
 	Makeup::applyBrow(dst, src, points, mask, color, amount);
 
 	unlockJavaBitmap(env, _mask);
@@ -69,7 +69,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyEyeLash(JNIEnv
 	assert(mask_pixels != nullptr && mask_info.format == ANDROID_BITMAP_FORMAT_A_8);
 	Mat mask(mask_info.height, mask_info.width, CV_8UC1, mask_pixels);
 
-	uint32_t color = static_cast<uint32_t>(_color);
+	uint32_t color = getNativeColor(_color);
 	Makeup::applyEyeLash(dst, src, points, mask, color, amount);
 
 	unlockJavaBitmap(env, _mask);
@@ -78,7 +78,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyEyeLash(JNIEnv
 }
 
 void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyEyeShadow(JNIEnv* env,
-		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jobjectArray _mask, jintArray _color, jfloat amount)
+		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jobjectArray _masks, jintArray _colors, jfloat amount)
 {
 	PROLOGUE_ENTER
 
@@ -86,27 +86,35 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyEyeShadow(JNIE
 	jmethodID method_Bitmap = env->GetMethodID(class_Bitmap, "<init>", "()V");
 	assert(class_Bitmap != nullptr && method_Bitmap != nullptr);
 
-	const jsize count = env->GetArrayLength(_mask);
-	std::vector<cv::Mat> mask(count);
+	const jsize count = env->GetArrayLength(_masks);
+	constexpr jsize N = 3;  // currently we use 3 layers
+	assert(count >= N);
 
-	AndroidBitmapInfo mask_info;
-	for(jsize i = 0; i < count; ++i)
+	jobject element_masks[N];
+	cv::Mat masks[N];
+	uint32_t colors[N];
+
+	jint* color_array = env->GetIntArrayElements(_colors, nullptr/* isCopy */);
+	for(jsize i = 0; i < N; ++i)
 	{
-		jobject element_mask  = env->GetObjectArrayElement(_mask, i);
+		element_masks[i] = env->GetObjectArrayElement(_masks, i);
 
-		uint8_t* mask_pixels  = reinterpret_cast<uint8_t*>(lockJavaBitmap(env, element_mask, mask_info));
+		AndroidBitmapInfo mask_info;
+		uint8_t* mask_pixels  = reinterpret_cast<uint8_t*>(lockJavaBitmap(env, element_masks[i], mask_info));
 		assert(mask_info.format == ANDROID_BITMAP_FORMAT_A_8);
-		mask[i] = Mat(mask_info.height, mask_info.width, CV_8UC1, mask_pixels);
+		masks[i] = Mat(mask_info.height, mask_info.width, CV_8UC1, mask_pixels);
 
-		unlockJavaBitmap(env, element_mask);
-		env->DeleteLocalRef(element_mask);
+		colors[i] = getNativeColor(color_array[i]);
 	}
 
-	std::vector<uint32_t> color(count);
-	int32_t* color_data = reinterpret_cast<int32_t*>(color.data());
-	env->GetIntArrayRegion(_color, 0, color.size(), color_data);
-
-	Makeup::applyEyeShadow(dst, src, points, mask.data(), color.data(), amount);
+	Makeup::applyEyeShadow(dst, src, points, masks, colors, amount);
+	constexpr jint mode = 0;  // copy back the content and free the color_array buffer
+	env->ReleaseIntArrayElements(_colors, color_array, mode);
+	for(jsize i = 0; i < N; ++i)
+	{
+		unlockJavaBitmap(env, element_masks[i]);
+		env->DeleteLocalRef(element_masks[i]);
+	}
 
 	PROLOGUE_EXIT
 }
@@ -128,7 +136,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyBlush(JNIEnv* 
 	using BlushShape = Makeup::BlushShape;
 	assert(0 <= _shape && _shape < static_cast<int>(BlushShape::SHAPE_COUNT));
 	BlushShape shape = static_cast<BlushShape>(_shape);
-	uint32_t   color = static_cast<uint32_t>(_color);
+	uint32_t   color = getNativeColor(_color);
 
 	Makeup::applyBlush(dst, src, points, shape, color, amount);
 
@@ -160,7 +168,7 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyLip(JNIEnv* en
 
 	Unlike static_cast, but like const_cast, the reinterpret_cast expression does not compile to any CPU instructions.
 */
-	uint32_t color = static_cast<uint32_t>(_color);
+	uint32_t color = getNativeColor(_color);
 
 	Makeup::applyLip(dst, src, points, color, amount);
 

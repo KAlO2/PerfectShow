@@ -162,22 +162,17 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeColorToAlpha
 	unlockJavaBitmap(env, _dst_bitmap);
 	unlockJavaBitmap(env, _src_bitmap);
 }
-
-cv::Vec4f getNativeColor(jint color)
+/*
+cv::Vec4f getNativeColor(uint32_t color)
 {
-	// @see http://stackoverflow.com/questions/1751346/interpret-signed-as-unsigned
-	// Should one use static_cast or reinterpret_cast between signed and unsigned integers?
-	int _color = static_cast<uint32_t>(color);
-
+	uint8_t* bytes = reinterpret_cast<uint8_t*>(&color);
 	cv::Vec4f rgba;  // RGBA format
-	rgba[0] = ((_color >> 16) & 0xff) / 255.0f;
-	rgba[1] = ((_color >> 8) & 0xff) / 255.0f;
-	rgba[2] = ((_color >> 0) & 0xff) / 255.0f;
-	rgba[3] = ((_color >> 24) & 0xff) / 255.0f;
+	for(int i = 0; i < 4; ++i)
+		rgba[i] = bytes[i] / 255.0F;
 
 	return rgba;
 }
-
+*/
 void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeSelectContiguousRegionByColor(JNIEnv* env,
 		jclass clazz, jobject _mask, jobject _image, jint _color, jint _select_criterion, jfloat threshold, jboolean antialias, jboolean select_transparent)
 {
