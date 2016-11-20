@@ -67,6 +67,15 @@ public:
 //	static void adjustColorBalance(uint8_t* const dst, const uint8_t* const src, int width, int height, const cv::Vec3f config[3], bool preserve_luminosity);
 //	static void adjustColorBalance(cv::Mat& dst, const cv::Mat& src, const cv::Vec3f config[3], bool preserve_luminosity);
 	
+	/**
+	 * https://en.wikipedia.org/wiki/Gamma_correction,  In NTSC television recording, γ = 2.2
+	 *
+	 * @param[out] dst       The resulting image, can be the same as input image.
+	 * @param[in] src        The input image to operate on.
+	 * @param[in] gamma      A positive value, with value 1 being unchanged, γ < 1 for encoding (gamma compression),
+	 *                       γ > 1 for decoding (gamma expansion).
+	 */
+	static void adjustGamma(cv::Mat& dst, const cv::Mat& src, float gamma);
 };
 
 } /* namespace venus */
