@@ -167,4 +167,64 @@ void Effect::adjustColorBalance(float* const dst, const float* const src, int wi
 			assert(0 <= dst[b] && dst[b] <= 1);
 	}
 }
+
+void Effect::adjustGamma(cv::Mat& dst, const cv::Mat& src, float gamma)
+{
+	assert(gamma > 0);
+	gamma = 1/gamma;
+
+	dst.create(src.rows, src.cols, src.type());
+	int depth = src.depth(), channel = src.channels();
+	if(depth == CV_8U)
+	{
+		// build a lookup table mapping the pixel values [0, 255] to their adjusted gamma values
+		uint8_t table[256];
+		for(int i = 0; i < 256; ++i)
+			table[i] = cvRound(std::pow(i/255.0, gamma) * 255.0);
+
+		if(channel == 4)
+		{
+			const cv::Vec4b* src_data = reinterpret_cast<const cv::Vec4b*>(src.data);
+			cv::Vec4b* const dst_data = reinterpret_cast<cv::Vec4b* const>(dst.data);
+			const int length = src.rows * src.cols;
+
+			#pragma omp parallel for
+			for(int i = 0; i < length; ++i)
+			{
+				const cv::Vec4b& s = src_data[i];
+				cv::Vec4b& d = dst_data[i];
+				for(int i = 0; i < 3; ++i)  // loop unrolling
+					d[i] = table[s[i]];
+			}
+		}
+		else
+		{
+			const uint8_t* src_data = src.data;
+			uint8_t* const dst_data = dst.data;
+			const int length = src.rows * src.cols * channel;
+
+			#pragma omp parallel for
+			for(int i = 0; i < length; ++i)
+				dst_data[i] = table[src_data[i]];
+		}
+	}
+	else if(depth == CV_32F && channel == 4)
+	{
+		const float* src_data = reinterpret_cast<const float*>(src.data);
+		float* const dst_data = reinterpret_cast<float* const>(dst.data);
+		const int length = src.rows * src.cols * 4;
+
+		#pragma omp parallel for
+		for(int i = 0; i < length; i += 4)
+		{
+			dst_data[i+0] = std::pow(src_data[i+0], gamma);
+			dst_data[i+1] = std::pow(src_data[i+1], gamma);
+			dst_data[i+2] = std::pow(src_data[i+2], gamma);
+			dst_data[i+3] = src_data[i+3];  // keep alpha untouched
+		}
+	}
+	else
+		assert(false);  // unimplemented branch goes here.
+}
+
 } /* namespace venus */
