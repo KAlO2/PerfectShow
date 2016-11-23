@@ -348,15 +348,31 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		
 		iv_image.setOnTouchListener(new View.OnTouchListener()
 		{
+			private float x, y;
+			
 			@Override
 			public boolean onTouch(View v, MotionEvent event)
 			{
 				final int action = event.getAction();
-				if(action != MotionEvent.ACTION_UP)
-					iv_image.setImageBitmap(makeup.getRawImage());
-				else
-					iv_image.setImageBitmap(makeup.getIntermediateImage());
-				return true;
+				switch(action)
+				{
+				case MotionEvent.ACTION_DOWN:
+					x = event.getX();
+					y = event.getY();
+					return false;
+				default:
+					if(x == event.getX() && y == event.getY())
+					{
+						if(action != MotionEvent.ACTION_UP)
+							iv_image.setImageBitmap(makeup.getRawImage());
+						else
+							iv_image.setImageBitmap(makeup.getIntermediateImage());
+						
+						return true;
+					}
+					else
+						return iv_image.onTouchEvent(event);
+				}
 			}
 		});
 
