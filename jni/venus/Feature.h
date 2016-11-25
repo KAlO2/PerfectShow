@@ -98,6 +98,14 @@ public:
 
 	cv::Vec4f calcuateEyeRadius(bool right) const { return calcuateEyeRadius(points, line, right); }
 
+	/**
+	 * Mask skin region through the feature points detected.
+	 *
+	 * @param[in] width  The source image width.
+	 * @param[in] height The source image height.
+	 * @param[in] points feature points detected from the source image.
+	 * @return skin mask with the specified size(width x height), and type is CV_8UC1.
+	 */
 	static cv::Mat maskSkinRegion(int width, int height, const std::vector<cv::Point2f>& points);
 
 };

@@ -1258,4 +1258,72 @@ cv::Vec4f Feature::calcuateEyeRadius(const std::vector<cv::Point2f>& points, con
 	Vec4f distance = calcuateDistance(pivot, eye_left, eye_top, eye_right, eye_bottom);
 	return distance;
 }
+
+cv::Mat Feature::maskSkinRegion(int width, int height, const std::vector<cv::Point2f>& points)
+{
+	assert(width > 0 && height > 0);
+
+	const Scalar TRANSPARENT(0), OPAQUE(255);
+	Mat mask(height, width, CV_8UC1, TRANSPARENT);
+
+	const int N = 20;
+	Point polygon[3*N];
+	for(int i = 0; i < N; ++i)
+	{
+		int _0 = (i + (N-1))%N, _1 = i, _2 = (i + 1)%N, _3 = (i + 2)%N;
+		polygon[3*i + 0] = catmullRomSpline(0.25f, points[_0], points[_1], points[_2], points[_3]);
+		polygon[3*i + 1] = catmullRomSpline(0.50f, points[_0], points[_1], points[_2], points[_3]);
+		polygon[3*i + 2] = catmullRomSpline(0.75f, points[_0], points[_1], points[_2], points[_3]);
+	}
+	cv::fillConvexPoly(mask, polygon, 3*N, OPAQUE);
+
+#if 0 // less accurate branch
+	auto fillConvex = [&mask, &points, &polygon, &TRANSPARENT](int start, int stop/* exclude */)
+	{
+		for(int i = start; i < stop; ++i)
+			polygon[i - start] = Point(cvRound(points[i].x), cvRound(points[i].y));
+		cv::fillConvexPoly(mask, polygon, stop - start, TRANSPARENT);
+	};
+
+	fillConvex(20, 26);  // right eye brow
+	fillConvex(26, 32);  // left eye brow
+	fillConvex(34, 42);  // right eye region
+	fillConvex(44, 52);  // left eye region
+#else
+	for(int i = 0; i <= 1; ++i)
+	{
+		const bool is_right = (i == 0);
+		std::vector<Point2f> poly = Feature::calculateBrowPolygon(points, is_right);
+		cv::fillConvexPoly(mask, cast(poly).data(), poly.size(), TRANSPARENT);
+
+		poly = Feature::calculateEyePolygon(points, is_right);
+		cv::fillConvexPoly(mask, cast(poly).data(), poly.size(), TRANSPARENT);
+	}
+#endif
+
+	int radius = cvRound(venus::distance(points[57], points[59]));
+	circle(mask, points[55], radius, Scalar(0), CV_FILLED, LINE_AA);
+	circle(mask, points[57], radius, Scalar(0), CV_FILLED, LINE_AA);
+
+	// mouth region
+	int j = 0;
+	for(int i = 63; i <= 69; ++i, ++j)
+		polygon[j] = Point(cvRound(points[i].x), cvRound(points[i].y));
+	for(int i = 76; i <= 80; ++i, ++j)
+		polygon[j] = Point(cvRound(points[i].x), cvRound(points[i].y));
+	cv::fillConvexPoly(mask, polygon, j, TRANSPARENT);
+
+	Rect rect = cv::boundingRect(points);
+	int size = static_cast<int>(std::max(width, height) * 0.02f);
+	if((size&1) == 0)
+		size += 1;
+	cv::GaussianBlur(mask, mask, Size(size, size), 0, 0, cv::BorderTypes::BORDER_CONSTANT);
+
+	// TODO kick out hair region
+
+	// TODO kick out glasses if found.
+
+	return mask;
+}
+
 } /* namespace venus */
