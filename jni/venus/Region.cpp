@@ -4,6 +4,8 @@
 
 #include <opencv2/imgproc.hpp>
 
+#include "venus/compiler.h"
+
 using namespace cv;
 
 namespace venus {
@@ -160,6 +162,164 @@ cv::Rect2i Region::boundingRect(const cv::Mat& mask, int tolerance/* = 0 */)
 	int width = right - left + 1, height = bottom - top + 1;
 	return cv::Rect2i(left, top, width, height);
 #endif
+}
+
+template <typename T>
+T colorDifference(const T* color, const T* reference_color, int channel, bool has_alpha,
+		T threshold, SelectCriterion criterion, bool antialias,  bool select_transparent)
+{
+	// std::is_unsigned also returns true for bool type, so kick it out.
+	static_assert(std::is_floating_point<T>::value ||
+			(std::is_unsigned<T>::value && !std::is_same<T, bool>::value), "limit to integral/floating primitive type");
+
+	constexpr T ZERO(0), FULL(std::is_floating_point<T>::value?T(1):std::numeric_limits<T>::max());
+	assert(0 < channel && channel <= 4);
+	assert(ZERO <= threshold && threshold <= FULL);
+
+	// if there is an alpha channel, never select transparent regions
+	if(!select_transparent && has_alpha && color[channel - 1] == ZERO)
+		return ZERO;
+	
+	T max = ZERO;
+	if(select_transparent && has_alpha)
+	{
+		int channel_a = channel - 1;
+		max = std::abs(color[channel_a] - reference_color[channel_a]);
+	}
+	else
+	{
+		if(has_alpha)
+			--channel;
+		
+		switch(criterion)
+		{
+		case SelectCriterion::COMPOSITE:
+			for(int c = 0; c < channel; ++c)
+			{
+				T diff = std::abs(color[c] - reference_color[c]);
+				if(diff > max)
+					max = diff;
+			}
+			break;
+		
+		case SelectCriterion::RED:
+			max = std::abs(color[0] - reference_color[0]);
+			break;
+		
+		case SelectCriterion::HUE:
+			max = std::abs(color[0] - reference_color[0]);
+
+			// Note that for uint8_t RGBA type, need to use CV_RGB2HSV_FULL instead of CV_RGB2HSV.
+			max = std::min<T>(max, FULL - max);
+			break;
+		
+		case SelectCriterion::GREEN:
+		case SelectCriterion::SATURATION:
+			max = std::abs(color[1] - reference_color[1]);
+			break;
+		
+		case SelectCriterion::BLUE:
+		case SelectCriterion::VALUE:
+			max = std::abs(color[2] - reference_color[2]);
+			break;
+		
+		case SelectCriterion::ALPHA:
+			max = std::abs(color[3] - reference_color[3]);
+			break;
+		
+		default:
+			assert(false);
+		}
+	}
+
+	if(antialias && threshold > ZERO)
+	{
+		float x = 1.5F - max / static_cast<float>(threshold);
+//		return clamp(x, ZERO, FULL/2) * 2;
+		if(x <= ZERO)
+			return ZERO;
+		else if(x < 0.5F)
+			return static_cast<T>(x * (2 * FULL));
+		else
+			return FULL;
+	}
+	else
+		return (max > threshold) ? ZERO : FULL;
+}
+
+void Region::selectContiguousRegionByColor(cv::Mat& mask, const cv::Mat& image, const cv::Vec4b& color, uint8_t threshold, 
+		SelectCriterion criterion, bool select_transparent, bool antialias)
+{
+	assert(image.depth() == CV_8U);
+	mask.create(image.rows, image.cols, CV_8UC1);
+
+	int nb_channel = image.channels();
+	bool has_alpha = nb_channel >= 4;  // TODO: cope with G8A8 format
+
+	if(has_alpha)
+	{
+		if(select_transparent)
+		{
+			// don't select transparancy if "color" isn't fully transparent
+			if(color[nb_channel - 1] > 0)
+				select_transparent = false;
+		}
+	}
+	else
+		select_transparent = false;
+
+	uint8_t* _image_color = reinterpret_cast<uint8_t*>(image.data);
+	uint8_t*   mask_color = reinterpret_cast<uint8_t*>(mask.data);
+	const uint8_t* reference_color = &color[0];
+	const int length = image.rows * image.cols;
+
+	#pragma omp parallel for
+	for(int i = 0; i < length; ++i)
+	{
+		*mask_color = colorDifference(_image_color, reference_color, nb_channel, has_alpha,
+				threshold, criterion, antialias,  select_transparent);
+		
+		_image_color += nb_channel;
+		++mask_color;
+	}
+}
+
+void Region::selectContiguousRegionByColor(cv::Mat& mask, const cv::Mat& image, const cv::Vec4f& color, float threshold, 
+		SelectCriterion criterion, bool select_transparent, bool antialias)
+{
+	assert(image.depth() == CV_32F);
+	assert(0.0F <= threshold && threshold <= 1.0F);
+	mask.create(image.rows, image.cols, CV_32FC1);
+
+	int nb_channel = image.channels();
+	bool has_alpha = nb_channel >= 4;  // TODO: cope with G8A8 format
+
+	if(has_alpha)
+	{
+		if(select_transparent)
+		{
+			// don't select transparancy if "color" isn't fully transparent
+			if(color[nb_channel - 1] > 0.0F)
+				select_transparent = false;
+		}
+	}
+	else
+		select_transparent = false;
+	
+	float* _image_color = reinterpret_cast<float*>(image.data);
+	float*   mask_color = reinterpret_cast<float*>(mask.data);
+	const float* reference_color = &color[0];
+	const int length = image.rows * image.cols;
+
+	#pragma omp parallel for
+	for(int i = 0; i < length; ++i)
+	{
+		*mask_color = colorDifference(_image_color, reference_color, nb_channel, has_alpha,
+				threshold, criterion, antialias,  select_transparent);
+		
+		_image_color += nb_channel;
+		++mask_color;
+	}
 }
 
 void Region::shrink(cv::Mat& dst, const cv::Mat& mask, int offset)

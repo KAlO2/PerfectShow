@@ -60,12 +60,22 @@ public class App extends android.app.Application
 
 	public static boolean checkAppSignature(Context context)
 	{
+		MessageDigest md;
+		try
+		{
+			md = MessageDigest.getInstance("SHA");
+		}
+		catch(NoSuchAlgorithmException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		
 		try
 		{
 			PackageManager pm = context.getPackageManager();
 			PackageInfo packageInfo = pm.getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNATURES);
-
-			MessageDigest md = MessageDigest.getInstance("SHA");
+			
 			for(Signature signature : packageInfo.signatures)
 			{
 				md.update(signature.toByteArray());
@@ -77,7 +87,7 @@ public class App extends android.app.Application
 					return true;
 			}
 		}
-		catch(NameNotFoundException | NoSuchAlgorithmException e)
+		catch(NameNotFoundException e)
 		{
 			e.printStackTrace();
 		}

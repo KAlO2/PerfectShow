@@ -1,17 +1,33 @@
 #ifndef VENUS_REGION_H_
 #define VENUS_REGION_H_
 
+#include <stdint.h>
+
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 
 namespace venus {
 
+enum class SelectCriterion
+{
+	COMPOSITE,
+
+	RED,
+	GREEN,
+	BLUE,
+	ALPHA,
+
+	HUE,
+	SATURATION,
+	VALUE,
+};
+
 class Region
 {
 public:
-	cv::Point2f pivot;  //< pin point, relative to source image.
-	cv::Size2f  size;   //< ROI's raw size, namely neither scaled nor rotated image size.
-	cv::Mat     mask;   //< mask of ROI(Region Of Interest).
+	cv::Point2f pivot;  ///< pin point, relative to source image.
+	cv::Size2f  size;   ///< ROI's raw size, namely neither scaled nor rotated image size.
+	cv::Mat     mask;   ///< mask of ROI(Region Of Interest).
 
 public:
 	Region() = default;
@@ -49,25 +65,31 @@ public:
 	 * @param offset The amount to add(subtract) from the rectangle's left(right), top(bottom).
 	 */
 	template<typename T>
-	static void inset(cv::Rect_<T>& rect, T offset)
-	{
-		assert(rect.width >= 0 && rect.height >= 0);
-//		assert(width >= 0 || (rect.width > -width && rect.height > -width));
-
-		rect.x      += offset;
-		rect.y      += offset;
-		rect.width  -= offset * 2;
-		rect.height -= offset * 2;
-
-		if(rect.width  < 0)  rect.width = 0;
-		if(rect.height < 0)  rect.height = 0;
-	}
+	static void inset(cv::Rect_<T>& rect, T offset);
 
 	static cv::Mat inset(const cv::Mat& mat, int offset);
 
 	void inset(float offset);
 
 	static cv::Rect2i boundingRect(const cv::Mat& mask, int tolerance = 0);
+
+	/**
+	 * Finding pixels within the specified threshold from the given RGBA values. If antialiasing is on, You got smooth result.
+	 *
+	 * @param[out] mask       Mask of the source <code>image</code>, with the same type (Mat#depth in OpenCV).
+	 * @param[in]  image      The source image.
+	 * @param[in]  color      RGBA format, need to be same type as image.
+	 * @param[in]  threshold  range [0.0, 1.0] for floating point type, or range [0, 255] for integer type.
+	 * @param[in]  criterion  #SelectCriterion
+	 * @param[in]  select_transparent  Take alpha channel into consideration or not?
+	 * @param[in]  antialias  enable it if you want smooth edge.
+	 */
+	/**@{*/
+	static void selectContiguousRegionByColor(cv::Mat& mask, const cv::Mat& image, const cv::Vec4b& color, uint8_t threshold,
+			SelectCriterion criterion, bool select_transparent, bool antialias);
+	static void selectContiguousRegionByColor(cv::Mat& mask, const cv::Mat& image, const cv::Vec4f& color, float threshold,
+			SelectCriterion criterion, bool select_transparent, bool antialias);
+	/**@}*/
 
 	/**
 	 * <gegl>/gegl/buffer/gegl-region-generic.c
@@ -108,6 +130,22 @@ public:
 	static cv::Mat invert(const cv::Mat& mat);
 
 };
+
+
+template<typename T>
+void Region::inset(cv::Rect_<T>& rect, T offset)
+{
+	assert(rect.width >= 0 && rect.height >= 0);
+//	assert(width >= 0 || (rect.width > -width && rect.height > -width));
+
+	rect.x      += offset;
+	rect.y      += offset;
+	rect.width  -= offset * 2;
+	rect.height -= offset * 2;
+
+	if(rect.width  < 0)  rect.width = 0;
+	if(rect.height < 0)  rect.height = 0;
+}
 
 } /* namespace venus */
 #endif /* VENUS_REGION_H_ */
