@@ -8,18 +8,29 @@
 
 namespace venus {
 
+/**
+ * color selecting criterion
+ */
 enum class SelectCriterion
 {
-	COMPOSITE,
+	COMPOSITE,  ///< weight of all the channels
 
+	/**@{
+	 * The red, green, blue, alpha channel of an RGB/RGBA color.
+	 */
 	RED,
 	GREEN,
 	BLUE,
 	ALPHA,
+	/**@}*/
 
+	/**@{
+	 * The hue, saturation, blue, value channel of an HSV color.
+	 */
 	HUE,
 	SATURATION,
 	VALUE,
+	/**@}*/
 };
 
 class Region
@@ -38,13 +49,15 @@ public:
 
 	static Region merge(const Region& region1, const Region& region2);
 
-	/**_________________
+	/**
+	 * <pre>
+	 * _________________
 	 * |  LT |    LR    |    top
 	 * |-----p----------|
 	 * |  LB |    RB    |    bottom
 	 * |_____|__________|
 	 *  left  right
-	 *
+	 * </pre>
 	 * Scale the four parts separately, then assembly them together.
 	 * Makeup image like eye lash can use this function to tune image for proper size.
 	 */
@@ -62,7 +75,8 @@ public:
 	 * the rectangle narrower. If offset is negative, then the sides are moved outwards, making the 
 	 * rectangle wider.
 	 *
-	 * @param offset The amount to add(subtract) from the rectangle's left(right), top(bottom).
+	 * @param[in,out] rect
+	 * @param[in]     offset  The amount to add/subtract from the rectangle's left/right, top/bottom.
 	 */
 	template<typename T>
 	static void inset(cv::Rect_<T>& rect, T offset);
@@ -73,31 +87,41 @@ public:
 
 	static cv::Rect2i boundingRect(const cv::Mat& mask, int tolerance = 0);
 
-	/**
-	 * Finding pixels within the specified threshold from the given RGBA values. If antialiasing is on, You got smooth result.
+	/**@{
+	 * Finding pixels within the specified threshold from the given RGBA values. If antialiasing is on, You got smooth result. 
 	 *
-	 * @param[out] mask       Mask of the source <code>image</code>, with the same type (Mat#depth in OpenCV).
+	 * @param[out] mask       Mask of the source @a image, with the same type (as called depth in OpenCV).
 	 * @param[in]  image      The source image.
 	 * @param[in]  color      RGBA format, need to be same type as image.
 	 * @param[in]  threshold  range [0.0, 1.0] for floating point type, or range [0, 255] for integer type.
-	 * @param[in]  criterion  #SelectCriterion
+	 * @param[in]  criterion  @enum SelectCriterion
 	 * @param[in]  select_transparent  Take alpha channel into consideration or not?
 	 * @param[in]  antialias  enable it if you want smooth edge.
 	 */
-	/**@{*/
 	static void selectContiguousRegionByColor(cv::Mat& mask, const cv::Mat& image, const cv::Vec4b& color, uint8_t threshold,
 			SelectCriterion criterion, bool select_transparent, bool antialias);
+
 	static void selectContiguousRegionByColor(cv::Mat& mask, const cv::Mat& image, const cv::Vec4f& color, float threshold,
 			SelectCriterion criterion, bool select_transparent, bool antialias);
 	/**@}*/
 
 	/**
-	 * <gegl>/gegl/buffer/gegl-region-generic.c
-	 * gegl_region_shrink(GeglRegion *region, int dx, int dy);
+	 * Contract the selection, the opposite operation of @a grow.
 	 *
+	 * @param[out] dst    The resulting mask.
+	 * @param[in]  src    The mask image to be operate.
+	 * @param[in]  offset 
 	 */
-	static void shrink(cv::Mat& dst, const cv::Mat& mask, int offset);
-	static void grow(cv::Mat& dst, const cv::Mat& mask, int offset);
+	static void shrink(cv::Mat& dst, const cv::Mat& src, int offset);
+
+	/**
+	 * Enlarge the selection, the opposite operation of @a shrink.
+	 *
+	 * @param[out] dst    The resulting mask.
+	 * @param[in]  src    The mask image to be operate.
+	 * @param[in]  offset 
+	 */
+	static void grow(cv::Mat& dst, const cv::Mat& src, int offset);
 	
 	static void overlay(cv::Mat& dst, const cv::Mat& patch, const cv::Point2i& position, const cv::Mat& mask);
 	void overlay(cv::Mat& mat, const cv::Mat& patch) const;
@@ -106,12 +130,12 @@ public:
 	 * first translating, then rotating, last scaling.
 	 * matrix = scale * rotation * translation * position;
 	 *
-	 * @param[in,out] size Source image size.
-	 * @param[in,out] pivot Center of the rotation in the source image, and transformed image pivot after transformed.
-	 * @param[in] rotation Angle in radians. Positive value means clockwise rotation.
-	 * @param[in] scale Scaling factor in X/Y directions, default to no scaling.
+	 * @param[in,out] size      Source image size.
+	 * @param[in,out] pivot     Center of the rotation in the source image, and transformed image pivot after transformed.
+	 * @param[in]     rotation  Angle in radians. Positive value means clockwise rotation.
+	 * @param[in]     scale     Scaling factor in X/Y directions, default to no scaling.
 	 */
-	static cv::Mat transform(cv::Size& size, cv::Point2f& pivot, float angle, const cv::Vec2f& scale = cv::Vec2f(1.0f, 1.0f));
+	static cv::Mat transform(cv::Size& size, cv::Point2f& pivot, float angle, const cv::Vec2f& scale = cv::Vec2f(1.0F, 1.0F));
 
 	/**
 	 * Like void cv::transform(InputArray src, OutputArray dst, InputArray m);, but operate on cv::Point2f,
@@ -143,7 +167,7 @@ void Region::inset(cv::Rect_<T>& rect, T offset)
 	rect.width  -= offset * 2;
 	rect.height -= offset * 2;
 
-	if(rect.width  < 0)  rect.width = 0;
+	if(rect.width  < 0)  rect.width  = 0;
 	if(rect.height < 0)  rect.height = 0;
 }
 

@@ -175,7 +175,7 @@ inline bool overlap(const T& l1min, const T& l1max,
  * @return The clamped value
  */
 template <typename T>
-inline T clamp(const T& value, const T& min, const T& max)
+const T& clamp(const T& value, const T& min, const T& max)
 {
 	assert(min <= max && "invalid clamp range");
 #if 0
@@ -234,18 +234,22 @@ inline T smoothStep(const T& from, const T& to, const float& amount)
 
 /**
  * Normal distribution, also known as Gaussian distribution.
- *	            1             (x - μ)^2
- *	f(x) = ------------ exp(- ---------)
- *	       sqrt(2*pi)*σ         2*σ^2
- *
- * P(μ-σ<X≤μ+σ) = 68.3%, P(μ-2σ<X≤μ+2σ) = 95.4%, P(μ-3σ<X≤μ+3σ) = 99.7%.
+ * <pre>
+ *                1                (x - μ)^2
+ *  f(x) = -------------- * exp(- -----------)
+ *          sqrt(2*pi)*σ             2*σ^2
+ * 
+ * P(μ- σ < X ≤ μ+ σ) = 68.3%,
+ * P(μ-2σ < X ≤ μ+2σ) = 95.4%,
+ * P(μ-3σ < X ≤ μ+3σ) = 99.7%.
+ * </pre>
  */
 template <typename T>
 inline T gaussian(const T& x, const T& miu = T(0), const T& sigma = T(1))
 {
 	T tmp = (x - miu)/sigma;
 	constexpr T two_pi = 2*M_PI;
-	return std::exp<T>(tmp*tmp/T(-2)) / std::sqrt(two_pi) / sigma;
+	return std::exp(tmp*tmp/T(-2)) / std::sqrt(two_pi) / sigma;
 }
 
 } /* namespace venus */

@@ -39,7 +39,7 @@ public:
 	/**
 	 * Detect feature points from an image if there are face(s) in the image.
 	 *
-	 * @param[in] image          The <em>gray</em> image to be detected.
+	 * @param[in] image          The @p gray image to be detected.
 	 * @param[in] tag            Nullable, for debugging usage, usually the image name.
 	 * @param[in] classifier_dir The classifiers (haarcascade_frontalface_alt2.xml and so on) directory.
 	 * @return                   Feature points.
@@ -92,7 +92,7 @@ public:
 
 	/**
 	 * Given four points, calculate the intersection point of the two lines (left-right and top-bottom).
-	 * @see https://en.wikipedia.org/wiki/Line–line_intersection
+	 * @see <a href="https://en.wikipedia.org/wiki/Line–line_intersection">Line–line intersection</a>
 	 */
 	static cv::Vec4f calcuateDistance(cv::Point2f& pivot, const cv::Point2f& left, const cv::Point2f& top, const cv::Point2f& right, const cv::Point2f& bottom);
 
