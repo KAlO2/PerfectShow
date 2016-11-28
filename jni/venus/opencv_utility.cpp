@@ -19,7 +19,7 @@ std::vector<cv::Point2i> cast(const std::vector<cv::Point2f>& points)
 cv::Vec4f cast(uint32_t color)
 {
 	uint8_t r = color, g = color >> 8, b = color >> 16, a = color >> 24;
-#if USE_OPENCV_BGRA_LAYOUT
+#if USE_BGRA_LAYOUT
 	return Vec4f(b, g, r ,a) / 255;
 #else
 	return Vec4f(r, g, b ,a) / 255;

@@ -69,7 +69,7 @@ cv::Vec<T, 4> boundingBox(const std::vector<cv::Point_<T>>& points, int start, i
 }
 
 /**
- * like cv::boundingRect but return float version
+ * like cv::boundingRect but return float type
  * @return Vec4f(left, top, right, bottom)
  */
 // for int version use cv::boundingRect(points);
@@ -81,6 +81,14 @@ inline cv::Vec<T, 4> boundingBox(const std::vector<cv::Point_<T>>& points)
 
 
 std::vector<cv::Point2i> cast(const std::vector<cv::Point2f>& points);
+
+/**
+ * For android.graphics.Color, it use BGRA memory layout as OpenCV does,
+ * But native side use RGBA memory layout as shader does.
+ * getNativeColor() in jni_bridge.h return RGBA memory layout,
+ * this cast() casts RGBA color to OpenCV's color if @p USE_BGRA_LAYOUT
+ * is defined as 1.
+ */
 cv::Vec4f cast(uint32_t color);
 
 cv::Rect2i box2Rect(const cv::Vec4f& box);
@@ -135,7 +143,7 @@ void drawCross(cv::Mat& image, const cv::Point2f& position, int radius, const cv
  * @param p1 ditto 
  * @param p2 ditto 
  * @param p3 ditto 
- * @param t 0 returns p1, 1 returns p2, (0, 1) interval return smooth interpolation point
+ * @param t  0 returns p1, 1 returns p2, (0, 1) interval returns a smooth interpolating point.
  * @return point between p1 and p2
  */
 cv::Point2f catmullRomSpline(float t, const cv::Point2f& p0, const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3);

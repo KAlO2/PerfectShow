@@ -33,8 +33,8 @@ cv::Vec<T, N> interpolate(const Mat& image,
 	const Vector& c11 = image.at<Vector>(y1, x1);
 
 	Vector color;
-	const float l_wx = 1.0f - wx;
-	const float l_wy = 1.0f - wy;
+	const float l_wx = 1.0F - wx;
+	const float l_wy = 1.0F - wy;
 	for(int i = 0; i < N; ++i)
 	{
 		float c0 = c00[i] * wx + c01[i] * l_wx;
@@ -43,7 +43,7 @@ cv::Vec<T, N> interpolate(const Mat& image,
 
 		// round off to the nearest for integer types
 		if(std::is_integral<T>::value)
-			c += T(0.5);
+			c += T(0.5F);
 
 		color[i] = static_cast<T>(c);
 	}
@@ -103,8 +103,99 @@ void Effect::gaussianBlur(cv::Mat& dst, const cv::Mat& src, float radius)
 	int width = (r << 1) + 1;
 	double std_dev = radius * 3;  // 3-sigma rule https://en.wikipedia.org/wiki/68–95–99.7_rule
 
-	cv::Mat result;
-	cv::GaussianBlur(src, dst, Size(width, width), std_dev);
+	cv::GaussianBlur(src, dst, Size(width, width), std_dev, std_dev, cv::BorderTypes::BORDER_CONSTANT);
+}
+
+void Effect::selectiveGaussianBlur(cv::Mat& dst, const cv::Mat& src, float radius, float tolerance)
+{
+	assert(radius >= 0 && tolerance >= 0);
+
+	int R = cvRound(radius);
+	if(R <= 1)
+	{
+		src.copyTo(dst);
+		return;
+	}
+	
+	int width = (R << 1) + 1;
+
+	std::vector<cv::Mat> src_channels;
+	cv::split(src, src_channels);
+
+#if 1
+	const size_t N = src_channels.size();
+	#pragma omp parallel for
+//	for(cv::Mat& channel: src_channels)  // It seems that OpenMP doesn't support range based for in C++11.
+	for(size_t i = 0; i < N; ++i)
+	{
+		cv::Mat& channel = src_channels[i];
+		cv::Mat tmp;  // Bilateral filter does not work inplace.
+		cv::bilateralFilter(channel, tmp, width, width*2.0, width/2.0);
+		channel = tmp;
+	}
+
+	cv::merge(src_channels.data(), src_channels.size(), dst);
+#else
+	Mat kernel(width, width, CV_32FC1, Scalar(0));
+	#pragma omp parallel for collapse(2)
+	for(int r = -R; r <= R; ++r)
+	for(int c = -R; c <= R; ++c)
+		kernel.at<float>(R + r, R + c) = std::exp(-0.5F * (r*r + c*c)) / radius;
+
+	const size_t N = src_channels.size();
+	std::vector<cv::Mat> dst_channels(N);
+
+	#pragma omp parallel for
+	for(size_t i = 0; i < N; ++i)
+	{
+		const cv::Mat& src_channel = src_channels[i];
+
+		cv::Mat dst_channel;
+		dst_channel.create(src_channel.rows, src_channel.cols, src_channel.type());
+
+		for(int r = 0; r < src.rows; ++r)
+		for(int c = 0; c < src.cols; ++c)
+		{
+			const uint8_t& center = src_channel.at<uint8_t>(r, c);
+			float accumulated = 0.0F, weight_sum = 0.0F;
+
+			for(int y = -R; y <= R; ++y)
+			{
+				int j = r + R + y;
+				if(j < 0 || j >= src.rows)
+					continue;
+
+				for(int x = -R; x <= R; ++x)
+				{
+					int i = c + R + x;
+					if(i < 0 || i >= src.cols)
+						continue;
+					
+					float weight = kernel.at<float>(R + y, R + x);
+					if(weight <= 0)//(x*x + y*y > R*R)
+						continue;
+
+					const uint8_t& around = src_channel.at<uint8_t>(j, i);  // Point(i, j)
+					weight *= around;
+
+					float diff = center - around;
+					if(diff <= tolerance)
+					{
+						accumulated += weight * around;
+						weight_sum  += weight;
+					}
+				}
+			}
+
+			// weight_sum can not be ZERO, since center point is counted.
+			dst_channel.at<uint8_t>(r, c) = cvRound(accumulated / weight_sum);
+		}
+
+		dst_channels[i] = dst_channel;
+	}
+
+	cv::merge(dst_channels.data(), N, dst);
+#endif
 }
 
 float Effect::mapColorBalance(float value, float lightness, float shadows, float midtones, float highlights)
@@ -119,14 +210,14 @@ float Effect::mapColorBalance(float value, float lightness, float shadows, float
 	 * The sum of these masks equals 1 for x in 0..1, so applying the same correction in the shadows and in the midtones 
 	 * is equivalent to applying this correction on a virtual shadows_and_midtones range.
 	 */
-	const float a = 0.25f, b = 1.00f/3, scale = 0.70f;
+	const float a = 0.25F, b = 1.00F/3, scale = 0.70F;
 	
 	constexpr auto clamp_01 = [](float x) -> float { return clamp<float>(x, 0, 1); };
 
-	shadows = shadows * clamp_01((lightness - b) / -a + 0.5f) * scale;
-	midtones = midtones * clamp_01((lightness - b) /  a + 0.5f) *
-			clamp_01((lightness + b - 1) / -a + 0.5f) * scale;
-	highlights = highlights * clamp_01((lightness + b - 1) / a + 0.5f) * scale;
+	shadows = shadows * clamp_01((lightness - b) / -a + 0.5F) * scale;
+	midtones = midtones * clamp_01((lightness - b) /  a + 0.5F) *
+			clamp_01((lightness + b - 1) / -a + 0.5F) * scale;
+	highlights = highlights * clamp_01((lightness + b - 1) / a + 0.5F) * scale;
 	
 	value += shadows;
 	value += midtones;
@@ -150,9 +241,8 @@ void Effect::adjustColorBalance(float* const dst, const float* const src, int wi
 
 		float& lightness = hsl[2];
 		cv::Vec3f rgb2 = dst[i];
-		rgb2[0] = mapColorBalance(rgb[0], lightness, config[SHADOWS][0], config[MIDTONES][0], config[HIGHLIGHTS][0]);
-		rgb2[1] = mapColorBalance(rgb[1], lightness, config[SHADOWS][1], config[MIDTONES][1], config[HIGHLIGHTS][1]);
-		rgb2[2] = mapColorBalance(rgb[2], lightness, config[SHADOWS][2], config[MIDTONES][2], config[HIGHLIGHTS][2]);
+		for(int k = 0; k < 3; ++k)
+			rgb2[k] = mapColorBalance(rgb[k], lightness, config[SHADOWS][k], config[MIDTONES][k], config[HIGHLIGHTS][k]);
 
 		if(preserve_luminosity)
 		{
@@ -163,8 +253,8 @@ void Effect::adjustColorBalance(float* const dst, const float* const src, int wi
 
 		dst[i+3] = src[i+3];  // keep alpha
 
-		for(int b = 0; b < 3; ++b)
-			assert(0 <= dst[b] && dst[b] <= 1);
+		for(int k = 0; k < 3; ++k)
+			assert(0 <= dst[k] && dst[k] <= 1);
 	}
 }
 
@@ -212,19 +302,38 @@ void Effect::adjustGamma(cv::Mat& dst, const cv::Mat& src, float gamma)
 	{
 		const float* src_data = reinterpret_cast<const float*>(src.data);
 		float* const dst_data = reinterpret_cast<float* const>(dst.data);
-		const int length = src.rows * src.cols * 4;
+		const int channels = src.channels();
+		const int length = src.rows * src.cols * channels;
 
-		#pragma omp parallel for
-		for(int i = 0; i < length; i += 4)
+		if(channels == 4)  // has alpha
 		{
-			dst_data[i+0] = std::pow(src_data[i+0], gamma);
-			dst_data[i+1] = std::pow(src_data[i+1], gamma);
-			dst_data[i+2] = std::pow(src_data[i+2], gamma);
-			dst_data[i+3] = src_data[i+3];  // keep alpha untouched
+			#pragma omp parallel for
+			for(int i = 0; i < length; i += 4)
+			{
+				for(int k = 0; i < 3; ++k)
+					dst_data[i+k] = std::pow(src_data[i+k], gamma);
+				dst_data[i+3] = src_data[i+3];  // keep alpha untouched
+			}
 		}
+		else
+			#pragma omp parallel for
+			for(int i = 0; i < length; ++i)
+				dst_data[i] = std::pow(src_data[i], gamma);
 	}
 	else
 		assert(false);  // unimplemented branch goes here.
 }
 
+void Effect::adjustGamma(cv::Mat& dst, const cv::Mat& src, const cv::Vec3f& gamma)
+{
+	assert(src.channels() >= 3);
+
+	std::vector<cv::Mat> channels;
+	cv::split(src, channels);
+
+	for(int i = 0; i < 3; ++i)  // skip alpha channel if it has.
+		adjustGamma(channels[i], channels[i], gamma[i]);
+
+	cv::merge(channels, dst);
+}
 } /* namespace venus */

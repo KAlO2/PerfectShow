@@ -28,7 +28,7 @@ cv::Mat Makeup::pack(const cv::Mat& mask, uint32_t color)
 	for(int i = 0; i < length; ++i)
 	{
 		uint8_t alpha = ((color >> 24) * mask_data[i] + 127) / 255;
-#if USE_OPENCV_BGRA_LAYOUT
+#if USE_BGRA_LAYOUT
 		// Swap R and B channel, then assembly it to BGRA format.
 		image_data[i] = ((color >> 16) & 0xff) | (color &0x00ff00) | ((color & 0xff) << 16) | (alpha << 24);
 #else
@@ -567,7 +567,7 @@ cv::Mat Makeup::createEyeShadow(cv::Mat mask[3], uint32_t color[3]/*, const int&
 			assert(0 <= rgb[i] && rgb[i] <= 255);
 
 		bitmap.at<Vec4b>(r, c) = Vec4b(
-#if USE_OPENCV_BGRA_LAYOUT
+#if USE_BGRA_LAYOUT
 			rgb[2], rgb[1], rgb[0],
 #else
 			rgb[0], rgb[1], rgb[2],

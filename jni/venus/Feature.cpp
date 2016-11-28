@@ -1184,7 +1184,7 @@ Region Feature::calculateTeethRegion() const
 	{
 	case 1:  gray = image(rect).clone(); break;
 	
-#if USE_OPENCV_BGRA_LAYOUT
+#if USE_BGRA_LAYOUT
 	case 3:  cv::cvtColor(image(rect), gray, cv::COLOR_BGR2GRAY);  break;
 	case 4:  cv::cvtColor(image(rect), gray, cv::COLOR_BGRA2GRAY); break;
 #else
@@ -1314,11 +1314,10 @@ cv::Mat Feature::maskSkinRegion(int width, int height, const std::vector<cv::Poi
 	cv::fillConvexPoly(mask, polygon, j, TRANSPARENT);
 
 	Rect rect = cv::boundingRect(points);
-	int size = static_cast<int>(std::max(width, height) * 0.02f);
-	if((size&1) == 0)
-		size += 1;
-	cv::GaussianBlur(mask, mask, Size(size, size), 0, 0, cv::BorderTypes::BORDER_CONSTANT);
-
+#if 0
+	float radius = std::max(width, height) * 0.01F;
+	Effect::gaussianBlur(mask, mask, radius);
+#endif
 	// TODO kick out hair region
 
 	// TODO kick out glasses if found.

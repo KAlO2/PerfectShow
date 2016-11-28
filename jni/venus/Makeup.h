@@ -103,7 +103,7 @@ public:
 	 * @param[out] dst
 	 * @param[in] src     The source image
 	 * @param[in] points  Feature points detected from <code>src</code> image.
-	 * @param[in] shape   Shape of blush.
+	 * @param[in] shape    @enum BlushShape, shape of a blush.
 	 * @param[in] color   0xAABBGGRR, RGB channel will be blush's primary color, and alpha will be premultiplied to blush.
 	 * @param[in] amount  Blending amount in range [0, 1], 0 being no effect, 1 being fully applied.
 	 */

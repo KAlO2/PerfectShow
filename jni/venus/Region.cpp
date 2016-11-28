@@ -322,9 +322,9 @@ void Region::selectContiguousRegionByColor(cv::Mat& mask, const cv::Mat& image, 
 	}
 }
 
-void Region::shrink(cv::Mat& dst, const cv::Mat& mask, int offset)
+void Region::shrink(cv::Mat& dst, const cv::Mat& src, int offset)
 {
-	mask.copyTo(dst);  // self copy will be skipped
+	src.copyTo(dst);  // self copy will be skipped
 	if(offset == 0)  // shortcut
 		return;
 
@@ -336,14 +336,14 @@ void Region::shrink(cv::Mat& dst, const cv::Mat& mask, int offset)
 	const Point anchor(-1, -1);  // default value (-1, -1) means that the anchor is at the element center.
 	int iterations = 1;
 	if(offset > 0)
-		cv::erode(mask, dst, element, anchor, iterations);
+		cv::erode(src, dst, element, anchor, iterations);
 	else
-		cv::dilate(mask, dst, element, anchor, iterations);
+		cv::dilate(src, dst, element, anchor, iterations);
 }
 
-void Region::grow(cv::Mat& dst, const cv::Mat& mask, int offset)
+void Region::grow(cv::Mat& dst, const cv::Mat& src, int offset)
 {
-	shrink(dst, mask, -offset);
+	shrink(dst, src, -offset);
 }
 
 void Region::overlay(cv::Mat& dst, const cv::Mat& patch, const cv::Point2i& position, const cv::Mat& mask)

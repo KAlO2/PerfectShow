@@ -9,11 +9,11 @@
 
 #define NELEM(array) (sizeof(array)/sizeof(array[0]))
 
-// OpenCV use BGRA instead of common RGBA memory layout.
+// OpenCV and android.graphics.Color use BGRA instead of common RGBA memory layout.
 #ifdef ANDROID
-#  define USE_OPENCV_BGRA_LAYOUT 0
+#  define USE_BGRA_LAYOUT 0
 #else
-#  define USE_OPENCV_BGRA_LAYOUT 1
+#  define USE_BGRA_LAYOUT 1
 #endif
 
 namespace venus {

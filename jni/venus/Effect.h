@@ -44,7 +44,7 @@ public:
 	static inline void tone (cv::Mat& dst, const cv::Mat& src, uint32_t color) { tone(dst, src, color, (color>>24)/255.0F);     }
 
 	/**
-	 * Note that <code>dst</code> can be same as <code>src</code> image.
+	 * Note that @p dst can be same as @p src image.
 	 *
 	 * @param[out] dst    The output image.
 	 * @param[in]  src    The input image.
@@ -52,6 +52,12 @@ public:
 	 */
 	static void gaussianBlur(cv::Mat& dst, const cv::Mat& src, float radius);
 	inline static void gaussianBlur(cv::Mat& image, float radius) { gaussianBlur(image, image, radius); }
+
+	/**
+	 *  Large filters (radius > 5) are very slow, so it is recommended to use radius = 3 for real-time applications,
+	 */
+	static void selectiveGaussianBlur(cv::Mat& dst, const cv::Mat& src, float radius, float tolerance);
+	inline static void selectiveGaussianBlur(cv::Mat& image, float radius, float tolerance) { selectiveGaussianBlur(image, image, radius, tolerance); }
 
 	/**
 	 * color balance is the global adjustment of the intensities of the colors (typically red, green, and blue primary colors).
@@ -70,12 +76,20 @@ public:
 	/**
 	 * https://en.wikipedia.org/wiki/Gamma_correction,  In NTSC television recording, γ = 2.2
 	 *
-	 * @param[out] dst       The resulting image, can be the same as input image.
-	 * @param[in] src        The input image to operate on.
-	 * @param[in] gamma      A positive value, with value 1 being unchanged, γ < 1 for encoding (gamma compression),
-	 *                       γ > 1 for decoding (gamma expansion).
+	 * @param[out] dst    The resulting image, can be the same as input image.
+	 * @param[in]  src    The input image to operate on.
+	 * @param[in]  gamma  A positive value, with value 1 being unchanged, γ < 1 for encoding (gamma compression),
+	 *                    γ > 1 for decoding (gamma expansion).
 	 */
 	static void adjustGamma(cv::Mat& dst, const cv::Mat& src, float gamma);
+
+	/**
+	 * It's the same as @ref adjustGamma(cv::Mat&, const cv::Mat&, float) except that this works on different gamma values for RGB channels.
+	 * It gives a fine-grain control on seperate channels.
+	 *
+	 * @copydoc adjustGamma(cv::Mat&, const cv::Mat&, float)
+	 */
+	static void adjustGamma(cv::Mat& dst, const cv::Mat& src, const cv::Vec3f& gamma);
 };
 
 } /* namespace venus */
