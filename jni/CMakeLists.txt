@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.10)
 
 project(venus)
 
-# refere to ${OPENCV_DIR}/OpenCVConfig.cmake
+# refer to ${OPENCV_DIR}/OpenCVConfig.cmake
 if(CMAKE_CL_64)
 	message(STATUS "64 bit compiler detected.")
 	set(OpenCV_ARCH x64)
@@ -54,6 +54,12 @@ elseif()
 endif()
 
 find_package(Java)
+
+find_package(OpenMP)
+if(OPENMP_FOUND)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
 
 # if cmake cannot find OpenCV, comment this line and configure OPENCV_DIR above manually.
 #find_package(OpenCV REQUIRED)

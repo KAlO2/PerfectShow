@@ -61,7 +61,7 @@ void Effect::tone(cv::Mat& dst, const cv::Mat& src, uint32_t color, float amount
 		amount /= 255;
 
 	uint8_t r = color, g = color >> 8, b = color >> 16;
-#if USE_OPENCV_BGRA_LAYOUT
+#if USE_BGRA_LAYOUT
 	const Vec3f target(b * amount, g * amount, r * amount);
 #else
 	const Vec3f target(r * amount, g * amount, b * amount);
@@ -76,7 +76,7 @@ void Effect::tone(cv::Mat& dst, const cv::Mat& src, uint32_t color, float amount
 			const Vec4b& src_color = src.at<Vec4b>(r, c);
 			Vec4b& dst_color = dst.at<Vec4b>(r, c);
 			for(int i = 0; i < 3; ++i)  // loop unrolling
-				dst_color[i] = src_color[i] * l_amount + target[i];
+				dst_color[i] = static_cast<uint8_t>(src_color[i] * l_amount + target[i]);
 		}
 		break;
 	case CV_32FC4:
@@ -123,10 +123,13 @@ void Effect::selectiveGaussianBlur(cv::Mat& dst, const cv::Mat& src, float radiu
 	cv::split(src, src_channels);
 
 #if 1
-	const size_t N = src_channels.size();
+	const int N = static_cast<int>(src_channels.size());
 	#pragma omp parallel for
 //	for(cv::Mat& channel: src_channels)  // It seems that OpenMP doesn't support range based for in C++11.
-	for(size_t i = 0; i < N; ++i)
+	// error C3016: 'i' : index variable in OpenMP 'for' statement must have signed integral type
+	// The Microsoft C/C++ Compiler 12.0 integrated with Visual Studio 2013 still only support OpenMP 2.5 and doesn't allow unsigned int for the loop counter.
+	// GCC support OpenMP 3.0 since its version 4.4 and allows unsigned int for the loop counter.
+	for(int i = 0; i < N; ++i)
 	{
 		cv::Mat& channel = src_channels[i];
 		cv::Mat tmp;  // Bilateral filter does not work inplace.
