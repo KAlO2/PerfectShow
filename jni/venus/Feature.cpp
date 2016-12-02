@@ -302,7 +302,7 @@ Feature::Feature(const cv::Mat& image, const std::vector<cv::Point2f>& points):
 }
 
 /*
-	here are some useful links about hypot, I tried to use std::hypot(x, y), later changed to std::sqrt(a*a + b*b);
+	Here are some useful links about hypot, I tried to use std::hypot(x, y), later changed to std::sqrt(a*a + b*b);
 	http://stackoverflow.com/questions/3764978/why-hypot-function-is-so-slow
 	also STL Bugs Fixed In Visual Studio 2012
 	718865	STL: hypot not hoisted into the std namespace by cmath
@@ -973,8 +973,8 @@ std::vector<cv::Point2f> Feature::calculateEyePolygon(const std::vector<cv::Poin
 		const Point2f& _2 = points[start + (i+length+1)%length];
 		const Point2f& _3 = points[start + (i+length+2)%length];
 		polygon.push_back(_1);
-		polygon.push_back(catmullRomSpline(1.0f/3, _0, _1, _2, _3));
-		polygon.push_back(catmullRomSpline(2.0f/3, _0, _1, _2, _3));
+		polygon.push_back(catmullRomSpline(1.0F/3, _0, _1, _2, _3));
+		polygon.push_back(catmullRomSpline(2.0F/3, _0, _1, _2, _3));
 	}
 #endif
 	return polygon;
@@ -1271,9 +1271,9 @@ cv::Mat Feature::maskSkinRegion(int width, int height, const std::vector<cv::Poi
 	for(int i = 0; i < N; ++i)
 	{
 		int _0 = (i + (N-1))%N, _1 = i, _2 = (i + 1)%N, _3 = (i + 2)%N;
-		polygon[3*i + 0] = catmullRomSpline(0.25f, points[_0], points[_1], points[_2], points[_3]);
-		polygon[3*i + 1] = catmullRomSpline(0.50f, points[_0], points[_1], points[_2], points[_3]);
-		polygon[3*i + 2] = catmullRomSpline(0.75f, points[_0], points[_1], points[_2], points[_3]);
+		polygon[3*i + 0] = catmullRomSpline(0.25F, points[_0], points[_1], points[_2], points[_3]);
+		polygon[3*i + 1] = catmullRomSpline(0.50F, points[_0], points[_1], points[_2], points[_3]);
+		polygon[3*i + 2] = catmullRomSpline(0.75F, points[_0], points[_1], points[_2], points[_3]);
 	}
 	cv::fillConvexPoly(mask, polygon, 3*N, OPAQUE);
 

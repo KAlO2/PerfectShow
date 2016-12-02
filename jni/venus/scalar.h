@@ -209,7 +209,18 @@ inline T clamp(const T& value)
 template <typename T>
 inline T lerp(const T& from, const T& to, const float& amount)
 {
-	return from + static_cast<T>((to - from) * amount);
+	float x = (to - from) * amount;
+	if(std::is_integral<T>::value)
+		return from + static_cast<T>(x + 0.5F);  // round for integers
+	else
+		return from + static_cast<T>(x);
+}
+
+template <typename T>
+inline T lerp(const T& from, const T& to, const uint8_t& amount)
+{
+//	return from + ((to - from) * amount + 127) / 255;
+	return (from * (255 - amount) + to * amount + 127) / 255;
 }
 
 /**

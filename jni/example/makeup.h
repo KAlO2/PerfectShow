@@ -3,17 +3,19 @@
 
 #include <string>
 
-void detectFace(const std::string& image_name);
+#include <opencv2/core/mat.hpp>
+
+void detectFace(const cv::Mat& image, const std::string& image_name = std::string());
 void mark(const std::string& image_name);
 
-void detectSkin(const std::string& image_name);
+void detectFaceSkin(const std::string& image_name);
 void judgeFaceShape(const std::string& image_name);
 
 void createShape();
-void transform(const std::string& image_name);
+void transform(const cv::Mat& image);
 void imageWarp();
 
-void morphology(const std::string& image_name);
+void morphology(const cv::Mat& image);
 
 void applyLip(const std::string& image_name);
 void applyBlush(const std::string& image_name);

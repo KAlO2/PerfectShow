@@ -16,7 +16,7 @@ class ImageWarp
 private:
 
 protected:
-    int grid_size; //< Parameter for MLS.
+    int grid_size; ///< Parameter for MLS.
 
     std::vector<cv::Point2f> src_points;
 	std::vector<cv::Point2f> dst_points;
@@ -82,7 +82,7 @@ public:
 class ImageWarp_Rigid : public ImageWarp
 {
 private:
-	bool prescale;  //< Whether unify scaling the points before deformation
+	bool prescale;  ///< Whether unify scaling the points before deformation
 
 public:    
     ImageWarp_Rigid();
@@ -107,9 +107,9 @@ public:
 	 */
 	enum class BackgroundFillMode
 	{
-		NONE,      //< No background is reserved.
-		MLS,       //< Use MLS to deal with the background.
-		PIECEWISE, //< Use the same scheme for the background.
+		NONE,      ///< No background is reserved.
+		MLS,       ///< Use MLS to deal with the background.
+		PIECEWISE, ///< Use the same scheme for the background.
 	};
 
 private:

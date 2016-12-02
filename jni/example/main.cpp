@@ -6,18 +6,19 @@
 int main()
 {
 	// 000.jpg 001.jpg 044.jpg 110.jpg
-	std::string image_name = PROJECT_DIR + "doc/image/000.jpg";
-	
-	detectFace(image_name);
+	std::string dir = PROJECT_DIR + "doc/image/";
+	std::string image_name = dir + "110.jpg";
+	Mat image = cv::imread(image_name);
+//	detectFace(image_name);
 //	mark(image_name);
 	
-//	detectSkin(image_name);
+	testSamples(dir, detectSkin);
 //	judgeFaceShape(image_name);
 	
 //	createShape();
-//	transform(image_name);
+//	transform(image);
 //	imageWarp();
-//	morphology(image_name);
+//	morphology(image);
 	
 //	applyLip(image_name);
 //	applyBlush(image_name);

@@ -1,4 +1,4 @@
-#define _USE_MATH_DEFINES
+ï»¿#define _USE_MATH_DEFINES
 
 #include <cmath>
 #include <iomanip>
@@ -23,11 +23,10 @@
 using namespace cv;
 using namespace venus;
 
-void detectFace(const std::string& image_name)
+void detectFace(const cv::Mat& image, const std::string& image_name/* = std::string()*/)
 {
-	// EXIF orientation is taken into consideration since OpenCV 3.1+, sighs!
-	// 090.jpg no face detected, and rotating some angle get wrong result!
-	Mat image = cv::imread(image_name);
+	assert(image.type() == CV_8UC3);
+
 	Mat gray;
 	cvtColor(image, gray, CV_BGR2GRAY);
 
@@ -55,7 +54,13 @@ void detectFace(const std::string& image_name)
 		cv::Mat gray2;
 		cv::warpAffine(gray, gray2, affine, size, cv::INTER_LANCZOS4, cv::BORDER_CONSTANT);  // INTER_CUBIC
 
-		points = Feature::detectFace(gray2, image_name, CLASSIFIER_DIR);
+		std::string tag;
+		if(image_name.empty())
+			tag = __FUNCTION__;
+		else
+			tag = image_name;
+
+		points = Feature::detectFace(gray2, tag, CLASSIFIER_DIR);
 		if(!points.empty())
 		{
 			cv::Mat inverse = Region::invert(affine);
@@ -75,7 +80,8 @@ void detectFace(const std::string& image_name)
 
 void mark(const std::string& image_name)
 {
-	cv::Mat image = cv::imread(image_name);
+	Mat image = cv::imread(image_name);
+	assert(image.type() == CV_8UC3);
 	
 	cv::Mat gray;
 	cvtColor(image, gray, CV_BGR2GRAY);
@@ -155,9 +161,10 @@ void mark(const std::string& image_name)
 	cv::imshow(__FUNCTION__, image);
 }
 
-void detectSkin(const std::string& image_name)
+void detectFaceSkin(const std::string& image_name)
 {
 	Mat image = imread(image_name);
+	cv::imshow("image", image);
 
 	if(image.channels() == 3)
 		cvtColor(image, image, CV_BGR2RGBA);
@@ -166,7 +173,7 @@ void detectSkin(const std::string& image_name)
 	// CV_RGB2GRAY for Android Bitmap, CV_BG42GRAY for OpenCV Mat
 	Mat gray;
 	int channel = image.channels();
-#if USE_OPENCV_BGRA_LAYOUT
+#if USE_BGRA_LAYOUT
 	if(channel == 3)      cvtColor(image, gray, CV_BGR2GRAY);
 	else if(channel == 4) cvtColor(image, gray, CV_BGRA2GRAY);
 #else
@@ -188,32 +195,32 @@ void detectSkin(const std::string& image_name)
 }
 
 /*
-	L Ô½½Ó½ü rect_length ÔòÔ½¿ÉÄÜÊÇ·½Á³
-	face_size.x /face_size.y -> 4/6 £¬ÈıÍ¥ÎåÑÛµÄ·Ö¸î¾àÀë¾ùµÈ£¬ ±ê×¼Á³
-	Ô²ĞÎÁ³£¨ÍŞÍŞÁ³£© 1:1 Á³²¿ÓĞÈâ£¬Á½Èù·áÂú£¬¸øÈËµ¥´¿¿É°®µÄ¸Ğ¾õ
-	·½ĞÎÁ³£¨¹ú×ÖÁ³£© 1:1 Õı·½ĞÎ£¬¶îÍ·¿í´ó£¬Àâ½ÇÍ»³ö¡£¶îÍ·¡¢È§¹Ç¡¢ÏÂò¢µÄ¿í¶È»ù±¾ÏàÍ¬
-	³¤·½ĞÎÁ³£¨ÂíÁ³£© ·¢¼ÊÏß½Ó½üË®Æ½£¬¶îÍ·¸ß£¬Ãæ¼ÕÏßÌõ½ÏÖ±
-	µ¹Èı½Ç£¨ĞÄĞÍÁ³£© ¶î²¿½Ï¿í£¬ÏÂ°ÍÕ­¶ø¼â£¬ÉÏ´óÏÂĞ¡µÄ±ÈÀı¡£
-	ÕıÈı½Ç£¨ÀæĞÍÁ³£©¶îÍ·Õ­£¬Á½Èù¿í´ó
-	ÁâĞÎÁ³£¨Éê×ÓÁ³£©ÇåÊİ£¬È§¹ÇÍ»³ö£¬¼âÏÂ¶î£¬·¢¼ÊÏß½ÏÕ­
+	L è¶Šæ¥è¿‘ rect_length åˆ™è¶Šå¯èƒ½æ˜¯æ–¹è„¸
+	face_size.x /face_size.y -> 4/6 ï¼Œä¸‰åº­äº”çœ¼çš„åˆ†å‰²è·ç¦»å‡ç­‰ï¼Œ æ ‡å‡†è„¸
+	åœ†å½¢è„¸ï¼ˆå¨ƒå¨ƒè„¸ï¼‰ 1:1 è„¸éƒ¨æœ‰è‚‰ï¼Œä¸¤è…®ä¸°æ»¡ï¼Œç»™äººå•çº¯å¯çˆ±çš„æ„Ÿè§‰
+	æ–¹å½¢è„¸ï¼ˆå›½å­—è„¸ï¼‰ 1:1 æ­£æ–¹å½¢ï¼Œé¢å¤´å®½å¤§ï¼Œæ£±è§’çªå‡ºã€‚é¢å¤´ã€é¢§éª¨ã€ä¸‹é¢Œçš„å®½åº¦åŸºæœ¬ç›¸åŒ
+	é•¿æ–¹å½¢è„¸ï¼ˆé©¬è„¸ï¼‰ å‘é™…çº¿æ¥è¿‘æ°´å¹³ï¼Œé¢å¤´é«˜ï¼Œé¢é¢Šçº¿æ¡è¾ƒç›´
+	å€’ä¸‰è§’ï¼ˆå¿ƒå‹è„¸ï¼‰ é¢éƒ¨è¾ƒå®½ï¼Œä¸‹å·´çª„è€Œå°–ï¼Œä¸Šå¤§ä¸‹å°çš„æ¯”ä¾‹ã€‚
+	æ­£ä¸‰è§’ï¼ˆæ¢¨å‹è„¸ï¼‰é¢å¤´çª„ï¼Œä¸¤è…®å®½å¤§
+	è±å½¢è„¸ï¼ˆç”³å­è„¸ï¼‰æ¸…ç˜¦ï¼Œé¢§éª¨çªå‡ºï¼Œå°–ä¸‹é¢ï¼Œå‘é™…çº¿è¾ƒçª„
 
-	Ãæ»ıÒ»¶¨£¬ÖÜ³¤Ô½Ğ¡ÔòÔ½¹â»¬£¬Ô½½Ó½üÔ²ĞÎ¡£
+	é¢ç§¯ä¸€å®šï¼Œå‘¨é•¿è¶Šå°åˆ™è¶Šå…‰æ»‘ï¼Œè¶Šæ¥è¿‘åœ†å½¢ã€‚
 	S = pi*r*r, L = 2*pi*r, rho = L^2 / (4*pi*S)
-	Ô²ĞÎ£º rho = 1.0
-	Õı·½ĞÎ£ºrho = pi/4 = 0.79
-	ÕıÈı½ÇĞÎ rho = pi*sqrt(3)/9 = 0.60
+	åœ†å½¢ï¼š rho = 1.0
+	æ­£æ–¹å½¢ï¼šrho = pi/4 = 0.79
+	æ­£ä¸‰è§’å½¢ rho = pi*sqrt(3)/9 = 0.60
 
 	rho = S/S_circle
-	S ÎªÇøÓòÃæ»ı£¬S_inner ÎªÇøÓò×îĞ¡Íâ½ÓÔ²Ãæ»ı
+	S ä¸ºåŒºåŸŸé¢ç§¯ï¼ŒS_inner ä¸ºåŒºåŸŸæœ€å°å¤–æ¥åœ†é¢ç§¯
 
 	rho = S/(width*width)
-	S ÎªÇøÓòÃæ»ı£¬width Îª³¤Öá³¤¶È
+	S ä¸ºåŒºåŸŸé¢ç§¯ï¼Œwidth ä¸ºé•¿è½´é•¿åº¦
 
-	¾ØÌØÕ÷ÊÇ½¨Á¢ÔÚ¶ÔÒ»¸öÇøÓòÄÚ²¿»á¶ÔÖµ·Ö²¼µÄÍ³¼Æ·ÖÎö»ù´¡ÉÏµÄ£¬ÊÇÒ»ÖÖÍ³¼ÆÆ½¾ùµÄÃèÊö£¬
-	¿ÉÒÔ´ÓÈ«¾Ö¹ÛµãÃèÊö¶ÔÏóµÄÕûÌåÌØÕ÷¡£¾ØÊÇÒ»ÖÖÏßĞÔÌØÕ÷£¬¶ÔÍ¼ÏñµÄĞı×ª¡¢Ëõ·Å¡¢Æ½ÒÆ¾ßÓĞ²»±äĞÔ¡£
+	çŸ©ç‰¹å¾æ˜¯å»ºç«‹åœ¨å¯¹ä¸€ä¸ªåŒºåŸŸå†…éƒ¨ä¼šå¯¹å€¼åˆ†å¸ƒçš„ç»Ÿè®¡åˆ†æåŸºç¡€ä¸Šçš„ï¼Œæ˜¯ä¸€ç§ç»Ÿè®¡å¹³å‡çš„æè¿°ï¼Œ
+	å¯ä»¥ä»å…¨å±€è§‚ç‚¹æè¿°å¯¹è±¡çš„æ•´ä½“ç‰¹å¾ã€‚çŸ©æ˜¯ä¸€ç§çº¿æ€§ç‰¹å¾ï¼Œå¯¹å›¾åƒçš„æ—‹è½¬ã€ç¼©æ”¾ã€å¹³ç§»å…·æœ‰ä¸å˜æ€§ã€‚
 
-	shape factor ÓĞ¹ØĞÎ×´¶¨Á¿²â¶È£¨¾Ø£¬Ãæ»ı£¬ÖÜ³¤£©
-	Ô²¶È Æ«ĞÄÂÊ
+	shape factor æœ‰å…³å½¢çŠ¶å®šé‡æµ‹åº¦ï¼ˆçŸ©ï¼Œé¢ç§¯ï¼Œå‘¨é•¿ï¼‰
+	åœ†åº¦ åå¿ƒç‡
 */
 void judgeFaceShape(const std::string& image_name)
 {
@@ -251,7 +258,7 @@ void createShape()
 	const int N = 10;
 	std::vector<Point2f> star(N);
 
-	// sine law, sin(180¡ã - 108¡ã/2)/R = sin(36¡ã/2)/r
+	// sine law, sin(180Â° - 108Â°/2)/R = sin(36Â°/2)/r
 	// sin(pi - theta) = sin(theta)
 	float r = R * std::sin(M_PI/10) / std::sin(3*M_PI/10);
 	for(int i = 0; i < N; ++i)
@@ -271,30 +278,30 @@ void createShape()
 	Rect rect_heart = cv::boundingRect(heart);
 	Mat mask_heart = Feature::maskPolygonSmooth(rect_heart, heart, 8);
 
-	uint32_t color = 0xff0000ff;  // red
+	uint32_t color = 0xFF0000FF;  // red
 //	cv::imwrite(PROJECT_DIR + "star.png", mask_star);
 	cv::imshow("star", mask_star);
 	cv::imshow("heart", mask_heart);
 }
 
-void transform(const std::string& image_name)
+void transform(const cv::Mat& image)
 {
-	Mat image = cv::imread(image_name);
-	cvtColor(image, image, CV_BGR2BGRA);
+	Mat image2;
+	cvtColor(image, image2, CV_BGR2BGRA);
 
 	constexpr int radius = 8;
-	Point2f pivot(image.cols/2.0f, image.rows/2.0f);
-	drawCross(image, pivot, radius, CV_RGB(0, 255, 0));
+	Point2f pivot(image.cols/2.0F, image.rows/2.0F);
+	drawCross(image2, pivot, radius, CV_RGB(0, 255, 0));
 	Size size = image.size();
 	float angle = static_cast<float>(M_PI/3);
-	Mat affine = Region::transform(size, pivot, angle, Vec2f(0.5f, 0.32f));
+	Mat affine = Region::transform(size, pivot, angle, Vec2f(0.5F, 0.32F));
 
 	cv::Mat target;
 	cv::warpAffine(image, target, affine, size, cv::INTER_CUBIC, cv::BORDER_REFLECT101);
 
 	drawCross(target, pivot, radius, CV_RGB(0, 255, 0));
 //	cv::imwrite(PROJECT_DIR + "transformed.png", target);
-	cv::imshow("source", image);
+	cv::imshow("source", image2);
 	cv::imshow("target", target);
 }
 
@@ -350,11 +357,8 @@ void imageWarp()
 }
 
 // http://docs.opencv.org/2.4/doc/tutorials/imgproc/opening_closing_hats/opening_closing_hats.html
-void morphology(const std::string& image_name)
+void morphology(const cv::Mat& image)
 {
-	using namespace cv;
-	Mat image = imread(image_name);
-
 	int morph_radius = 1;
 	int morph_size = morph_radius * 2 + 1;
 	Mat element = getStructuringElement(cv::MORPH_RECT, Size(morph_size, morph_size), Point(morph_radius, morph_radius));

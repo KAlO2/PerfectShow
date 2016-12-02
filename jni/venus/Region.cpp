@@ -330,15 +330,15 @@ void Region::shrink(cv::Mat& dst, const cv::Mat& src, int offset)
 
 	int radius  = std::abs(offset);
 	int size    = radius * 2 + 1;
-	Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE, Size(size, size), Point(radius, radius));
+	Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, Size(size, size), Point(radius, radius));
 
 	// Apply the specified morphology operation
 	const Point anchor(-1, -1);  // default value (-1, -1) means that the anchor is at the element center.
 	int iterations = 1;
 	if(offset > 0)
-		cv::erode(src, dst, element, anchor, iterations);
+		cv::erode(src, dst, kernel, anchor, iterations);
 	else
-		cv::dilate(src, dst, element, anchor, iterations);
+		cv::dilate(src, dst, kernel, anchor, iterations);
 }
 
 void Region::grow(cv::Mat& dst, const cv::Mat& src, int offset)

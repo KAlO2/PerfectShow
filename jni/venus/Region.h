@@ -15,22 +15,14 @@ enum class SelectCriterion
 {
 	COMPOSITE,  ///< weight of all the channels
 
-	/**@{
-	 * The red, green, blue, alpha channel of an RGB/RGBA color.
-	 */
-	RED,
-	GREEN,
-	BLUE,
-	ALPHA,
-	/**@}*/
+	RED,        ///< The red channel of an RGB/RGBA color.
+	GREEN,      ///< The green channel of an RGB/RGBA color.
+	BLUE,       ///< The blue channel of an RGB/RGBA color.
+	ALPHA,      ///< The alpha channel of an RGBA color.
 
-	/**@{
-	 * The hue, saturation, blue, value channel of an HSV color.
-	 */
-	HUE,
-	SATURATION,
-	VALUE,
-	/**@}*/
+	HUE,        ///< The hue channel of an HSV color.
+	SATURATION, ///< The saturation channel of an HSV color.
+	VALUE,      ///< The value channel of an HSV color.
 };
 
 class Region

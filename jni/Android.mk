@@ -1,4 +1,5 @@
 LOCAL_PATH := $(call my-dir)
+THIS_PATH  := $(LOCAL_PATH)
 include $(CLEAR_VARS)
 
 # http://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/dev_with_OCV_on_Android.html#application-development-with-static-initialization
@@ -29,7 +30,7 @@ VENUS_HEADER := $(wildcard venus/*.h)
 VENUS_SOURCE := $(wildcard venus/*.cpp)
 
 LOCAL_MODULE    := venus
-LOCAL_CPPFLAGS  := -DUSE_OPENCV_BGRA_LAYOUT=0
+LOCAL_CPPFLAGS  := -DUSE_BGRA_LAYOUT=0
 LOCAL_SRC_FILES := $(PLATFORM_SOURCE) $(STASM_SOURCE) $(VENUS_SOURCE)
 
 LOCAL_LDFLAGS := -fopenmp -llog -ljnigraphics -L$(OPENCV_LIBS_DIR)
@@ -46,6 +47,12 @@ LOCAL_SHARED_LIBRARIES += opencv_java3_prebuilt
 include $(BUILD_SHARED_LIBRARY)
 
 
+LOCAL_PATH := $(call my-dir)
+include $(CLEAR_VARS)
+LOCAL_MODULE    := gpuimage
+LOCAL_SRC_FILES += $(THIS_PATH)/platform/com_cloudream_ishow_gpuimage_GPUImageNativeLibrary.c
+LOCAL_LDLIBS    += -llog
+include $(BUILD_SHARED_LIBRARY)
 
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)

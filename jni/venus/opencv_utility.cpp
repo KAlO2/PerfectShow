@@ -242,7 +242,7 @@ cv::Point2f catmullRomSpline(float t, const cv::Point2f& p0, const cv::Point2f& 
 	float b2 = -3*ttt + 4*tt + t;
 	float b3 = ttt - tt;
 	
-	return 0.5f * (b0*p0 + b1*p1 + b2*p2 + b3*p3);
+	return 0.5F * (b0*p0 + b1*p1 + b2*p2 + b3*p3);
 }
 
 cv::Point2f bezier1(float t, const cv::Point2f& p0, const cv::Point2f& p1)

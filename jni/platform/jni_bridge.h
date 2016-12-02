@@ -71,7 +71,7 @@ cv::Point2f              getNativePoint(JNIEnv *env, jobject _point);
 std::vector<cv::Point2f> getNativePointArray(JNIEnv *env, jobjectArray _points);
 
 /**
- * we use Bitmap RGBA8888 format
+ * we use Bitmap RGBA8888 or A8 format
  */
 #ifdef ANDROID
 uint32_t* lockJavaBitmap(JNIEnv* env, jobject bitmap, AndroidBitmapInfo& info);
