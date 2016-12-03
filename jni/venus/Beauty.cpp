@@ -3,6 +3,8 @@
 #include <opencv2/imgproc.hpp>
 #include "venus/colorspace.h"
 #include "venus/Beauty.h"
+#include "venus/Feature.h"
+#include "venus/scalar.h"
 
 using namespace cv;
 
@@ -220,4 +222,63 @@ cv::Mat Beauty::calculateSkinRegion_HSV(const cv::Mat& image)
 	return mask;
 }
 
+// <gegl>/operations/common/red-eye-removal.c
+void redEyeReduction(float* color, const float& threshold)
+{
+#if USE_BGRA_LAYOUT
+	float &b = color[0], &g = color[1], &r = color[2];
+#else
+	float &r = color[0], &g = color[1], &b = color[2];
+#endif
+
+	constexpr float RED_FACTOR   = 0.5133333F;
+	constexpr float GREEN_FACTOR = 1.0000000F;
+	constexpr float BLUE_FACTOR  = 0.1933333F;
+
+	float adjusted_r = r * RED_FACTOR;
+	float adjusted_g = g * GREEN_FACTOR;
+	float adjusted_b = b * BLUE_FACTOR;
+	float adjusted_t = threshold * 1.6F - 0.8F;
+
+	if(adjusted_r >= adjusted_g - adjusted_t &&
+	   adjusted_r >= adjusted_b - adjusted_t)
+	{
+		float tmp = (adjusted_g + adjusted_b) / (2 * RED_FACTOR);
+		r = venus::clamp(tmp, 0.0F, 1.0F);
+	}
+	// Otherwise, leave the red channel alone
+}
+
+void Beauty::removeRedEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& polygon, float threshold/* = 0.5F */)
+{
+	assert(src.channels() >= 3 && src.depth() != CV_64F);
+	assert(0 <= threshold && threshold <= 1.0F);
+
+	if(dst.data != src.data)
+		src.copyTo(dst);
+
+	Point2i position;
+	const Mat mask = Feature::createMask(polygon, 0.0F, &position);
+	
+	Rect rect(position.x, position.y, mask.cols, mask.rows);
+	Mat roi = dst(rect).clone();
+	bool is_float_type = src.depth() == CV_32F;
+	if(!is_float_type)
+		roi.convertTo(roi, CV_32F, 1/255.0F);
+
+	float* roi_data = roi.ptr<float>();
+	const uint8_t* mask_data = roi.ptr<uint8_t>();
+	const int channel = roi.channels();
+	const int length = mask.rows * mask.cols;
+
+	#pragma omp parallel for
+	for(int i = 0; i < length; ++i)
+		if(mask_data[i] == 255)
+			redEyeReduction(roi_data + i * channel, threshold);
+
+	if(!is_float_type)
+		roi.convertTo(roi, src.depth(), 255.0F);
+
+	roi.copyTo(dst(rect));
+}
 } /* namespace venus */

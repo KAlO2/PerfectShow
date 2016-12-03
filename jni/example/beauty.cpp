@@ -1,0 +1,135 @@
+#include <opencv2/highgui.hpp>
+
+#include "example/beauty.h"
+#include "example/utility.h"
+#include "platform/jni_bridge.h"
+
+#include "venus/Beauty.h"
+#include "venus/Effect.h"
+#include "venus/Feature.h"
+
+using namespace cv;
+using namespace venus;
+
+static const std::string TAG("Beauty");
+
+void detectSkin(const cv::Mat& image)
+{
+	TIME_START;
+
+	Mat mask_rgb = Beauty::calculateSkinRegion_RGB(image);
+	TIME_STOP("calculateSkinRegion_RGB");
+
+	Mat mask_ycbcr = Beauty::calculateSkinRegion_YCbCr(image);
+	TIME_STOP("calculateSkinRegion_YCbCr");
+
+	Mat mask_hsv = Beauty::calculateSkinRegion_HSV(image);
+	TIME_STOP("calculateSkinRegion_HSV");
+
+	// How about combining two methods?
+	Mat mask_combined;
+	double weight = 0.72;
+	cv::addWeighted(mask_rgb, weight, mask_hsv, 1.0 - weight, 0.0, mask_combined);
+
+	cv::imshow("original", image);
+
+	cv::imshow("mask_rgb",      mask_rgb);
+	cv::imshow("mask_ycbcr",    mask_ycbcr);
+	cv::imshow("mask_hsv",      mask_hsv);
+	cv::imshow("mask_combined", mask_combined);
+	cv::waitKey();
+}
+
+void redEyeRemoval_CLI(const cv::Mat& image, float threshold)
+{
+	Mat gray = Effect::grayscale(image);
+	std::vector<Point2f> points = Feature::detectFace(gray, __FUNCTION__, CLASSIFIER_DIR);
+	// TODO detectFace only detect one face, multiple faces support will be added later.
+
+	Mat processed = image.clone();
+	if(points.empty())
+	{
+		// Here supposing the whole image need to be processed, outline the red eye region is better.
+		const float x0 = 0, x1 = image.cols - 1;
+		const float y0 = 0, y1 = image.rows - 1;
+		std::vector<Point2f> whole{Point2f(x0, x0), Point2f(x1, x0), Point2f(x1, y1), Point2f(x0, y1)};
+		Beauty::removeRedEye(processed, processed, whole, threshold);
+	}
+	else
+	{
+		Feature feature(image, points);
+		for(int i = 0; i < 2; ++i)
+		{
+			std::vector<Point2f> polygon = feature.calculateEyePolygon(points, i == 0);
+			Beauty::removeRedEye(processed, processed, polygon, threshold);
+		}
+	}
+
+	cv::imshow("original", image);
+	cv::imshow("processed", processed);
+	cv::waitKey();
+}
+
+struct UserData
+{
+	const std::string title;            ///< window title
+	const int max;                      ///< progress max
+	const std::vector<Point2f> points;  ///< feature points
+
+	Mat original;  ///< original image
+	Mat processed; ///< processed image
+};
+
+void redEyeRemoval_GUI(const cv::Mat& image)
+{
+	Mat gray = Effect::grayscale(image);
+	std::vector<Point2f> points = Feature::detectFace(gray, __FUNCTION__, CLASSIFIER_DIR);
+	assert(!points.empty());  // ensure an face is found.
+
+	const std::string title("Red Eye Removal");
+	const int max = 512;
+
+	Mat processed = image.clone();
+	UserData user_data = {title, max, points, image, processed};
+
+	auto onProgressChanged = [](int progress, void* user_data)
+	{
+		UserData& data = *reinterpret_cast<UserData*>(user_data);
+		float threshold = progress / static_cast<float>(data.max);
+		
+		data.original.copyTo(data.processed);
+		Feature feature(data.original, data.points);
+		for(int i = 0; i < 2; ++i)
+		{
+			std::vector<Point2f> polygon = feature.calculateEyePolygon(data.points, i == 0);
+			Beauty::removeRedEye(data.processed, data.processed, polygon, threshold);
+		}
+
+		cv::imshow(data.title, data.processed);
+	};
+
+	auto onClick = [](int event, int x, int y, int flags, void* user_data)
+	{
+		UserData& data = *reinterpret_cast<UserData*>(user_data);
+
+		switch(event)
+		{
+		case EVENT_LBUTTONDOWN:
+			cv::imshow(data.title, data.original);
+			break;
+		default:
+			cv::imshow(data.title, data.processed);
+			break;
+		}
+	};
+
+	int progress = max / 2;
+
+	cv::namedWindow(title);
+	cv::setMouseCallback(title, onClick, &user_data);
+	cv::createTrackbar("amount", title, &progress, max, onProgressChanged, &user_data);
+
+	onProgressChanged(progress, &user_data);
+
+	cv::waitKey();
+}

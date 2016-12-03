@@ -1,7 +1,8 @@
-﻿#include "example/makeup.h"
+﻿#include "example/beauty.h"
+#include "example/makeup.h"
 #include "example/utility.h"
 
-#include <opencv2/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 int main()
 {
@@ -13,6 +14,11 @@ int main()
 //	mark(image_name);
 	
 	testSamples(dir, detectSkin);
+	
+//	Mat red_eye_sample = cv::imread(PROJECT_DIR + "red_eye.jpg");
+//	redEyeRemoval_CLI(red_eye_sample, 0.72F);
+//	redEyeRemoval_GUI(red_eye_sample);
+	
 //	judgeFaceShape(image_name);
 	
 //	createShape();
@@ -25,8 +31,6 @@ int main()
 //	applyEyeShadow(image_name);
 //	applyEyeLash(image_name);
 //	applyBrow(image_name);
-
-	cv::waitKey();
 
 	return 0;
 }
