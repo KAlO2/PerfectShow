@@ -3,6 +3,7 @@
 #include <opencv2/imgproc.hpp>
 #include "venus/colorspace.h"
 #include "venus/Beauty.h"
+#include "venus/Effect.h"
 #include "venus/Feature.h"
 #include "venus/opencv_utility.h"
 #include "venus/scalar.h"
@@ -282,6 +283,48 @@ void Beauty::removeRedEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv
 		roi.convertTo(roi, src.depth(), 255.0F);
 
 	roi.copyTo(dst(rect));
+}
+
+void Beauty::whitenSkinByLogCurve(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, float level)
+{
+	assert(src.channels() == 4);
+	assert(2 <= level && level <= 10);
+
+	const int depth = src.depth();
+	const int channels = src.channels();
+	src.copyTo(dst);  // copy alpha channel if the source image has.
+
+	if(depth == CV_8U)
+	{
+		// formular:  y = log(x*(amount - 1) + 1) / log(amount)
+		const float denorm = std::log(level) / 255.0F;
+
+		uint8_t table[256];
+		for(int i = 0; i < 256; ++i)
+			table[i] = static_cast<uint8_t>(log(i/255.0F *(level - 1) + 1) / denorm);
+
+		assert(mask.type() == CV_8UC1);
+		Effect::mapColor(dst, dst, mask.data, table);
+	}
+	else if(depth == CV_32F)
+	{
+		assert(mask.type() == CV_32FC1);
+		float* dst_data = dst.ptr<float>();
+		const float* mask_data = mask.ptr<float>();
+		const int length = src.rows * src.cols;
+
+		// formular:  y = log(x*(amount - 1) + 1) / log(amount)
+		const float log_amount = std::log(level);
+
+		#pragma omp parallel for
+		for(int i = 0; i < length; ++i)
+		{
+			assert(0 <= mask_data[i] && mask_data[i] <= 1.0F);
+			const int index = i * channels;
+			for(int k = 0; k < 3; ++k)  // force compiler loop unrolling
+				dst_data[index + k] = lerp(dst_data[index + k], std::log(dst_data[index + k] * (level - 1) + 1) / log_amount, mask_data[i]);
+		}
+	}
 }
 
 // Refer to paper "Digital Image Enhancement and Noise Filtering by Use of Local Statistics" by Jong-sen Lee, 1979

@@ -124,13 +124,39 @@ void redEyeRemoval_GUI(const cv::Mat& image)
 		cv::imshow(data.title, data.processed);
 	};
 
-
-
 	int progress = max / 2;
 
 	cv::namedWindow(title);
 	cv::setMouseCallback(title, onClick, &user_data);
 	cv::createTrackbar("amount", title, &progress, max, onProgressChanged, &user_data);
+
+	onProgressChanged(progress, &user_data);
+
+	cv::waitKey();
+}
+
+void skinWhiten(const cv::Mat& image)
+{
+	const std::string title("Skin Whiten");
+	const int max = 100;
+
+	Mat processed = image.clone();
+	Mat mask(image.rows, image.cols, CV_8UC1, Scalar(255));  // whole
+	UserData user_data = {title, max, {}, image, mask, processed};
+
+	auto onProgressChanged = [](int progress, void* user_data)
+	{
+		UserData& data = *reinterpret_cast<UserData*>(user_data);
+		float amount = progress / static_cast<float>(data.max);
+		float level = amount * 8 + 2;
+		Beauty::whitenSkinByLogCurve(data.processed, data.original, level);
+		cv::imshow(data.title, data.processed);
+	};
+
+	int progress = max / 2;
+	cv::namedWindow(title);
+	cv::setMouseCallback(title, onClick, &user_data);
+	cv::createTrackbar("level", title, &progress, max, onProgressChanged, &user_data);
 
 	onProgressChanged(progress, &user_data);
 

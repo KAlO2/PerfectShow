@@ -51,6 +51,79 @@ cv::Vec<T, N> interpolate(const Mat& image,
 	return color;
 }
 
+void Effect::mapColor(cv::Mat& dst, const cv::Mat&src, const uint8_t table[256])
+{
+	assert(src.depth() == CV_8U);
+	dst.create(src.rows, src.cols, src.type());
+
+	const int channels = src.channels();
+	const int length = src.rows * src.cols * channels;
+
+	if(channels == 4)
+	{
+		uint8_t* dst_data = dst.data;
+		const uint8_t* src_data = src.data;
+
+		#pragma omp parallel for
+		for(int i = 0; i < length; i += 4)
+		{
+			dst_data[i+0] = table[src_data[i+0]];
+			dst_data[i+1] = table[src_data[i+1]];
+			dst_data[i+2] = table[src_data[i+2]];
+			dst_data[i+3] = src_data[i+3];  // keep alpha untouched
+		}
+	}
+	else
+	{
+		uint8_t* dst_data = dst.data;
+		const uint8_t* src_data = src.data;
+
+		#pragma omp parallel for
+		for(int i = 0; i < length; ++i)
+			dst_data[i] = table[src_data[i]];
+	}
+}
+
+void Effect::mapColor(cv::Mat& dst, const cv::Mat&src, const uint8_t* mask, const uint8_t table[256])
+{
+	assert(src.depth() == CV_8U && mask != nullptr);
+	dst.create(src.rows, src.cols, src.type());
+
+	const int channels = src.channels();
+	const int length = src.rows * src.cols * channels;
+
+	if(channels == 4)
+	{
+		uint8_t* dst_data = dst.data;
+		const uint8_t* src_data = src.data;
+
+		#pragma omp parallel for
+		for(int i = 0; i < length; i += 4)
+		{
+			int _0 = i, _1 = i + 1, _2 = i + 2, _3 = i + 3;
+			dst_data[_0] = lerp(src_data[_0], table[src_data[_0]], mask[i]);
+			dst_data[_1] = lerp(src_data[_1], table[src_data[_1]], mask[i]);
+			dst_data[_2] = lerp(src_data[_2], table[src_data[_2]], mask[i]);
+			dst_data[_3] =      src_data[_3];  // keep alpha untouched
+		}
+	}
+	else
+	{
+		uint8_t* dst_data = dst.data;
+		const uint8_t* src_data = src.data;
+
+		#pragma omp parallel for
+		for(int i = 0; i < length; ++i)
+		{
+			if(mask[i] == 0)
+				dst_data[i] = src_data[i];  // copy transparent region
+			else
+//				dst_data[i] = lerp(src_data[i], table[src_data[i]], mask[i]/255.0F);
+				dst_data[i] = lerp(src_data[i], table[src_data[i]], mask[i]);
+		}
+	}
+}
+
 void Effect::tone(cv::Mat& dst, const cv::Mat& src, uint32_t color, float amount)
 {
 	assert(src.type() == CV_8UC4 || src.type() == CV_32FC4);
@@ -93,6 +166,27 @@ void Effect::tone(cv::Mat& dst, const cv::Mat& src, uint32_t color, float amount
 		assert(false);
 		break;
 	}
+}
+
+cv::Mat Effect::grayscale(const cv::Mat& image)
+{
+	Mat gray;
+	switch(image.channels())
+	{
+#if USE_BGRA_LAYOUT
+	case 4: cvtColor(image, gray, CV_BGRA2GRAY); break;
+	case 3: cvtColor(image, gray, CV_BGR2GRAY);  break;
+#else
+	case 4: cvtColor(image, gray, CV_RGBA2GRAY); break;
+	case 3: cvtColor(image, gray, CV_RGB2GRAY);  break;
+#endif
+	case 1: image.copyTo(gray);                  break;
+	default:
+		assert(false);
+		break;
+	}
+
+	return gray;
 }
 
 void Effect::gaussianBlur(cv::Mat& dst, const cv::Mat& src, float radius)

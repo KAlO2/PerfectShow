@@ -17,6 +17,8 @@ private:
 	static float mapColorBalance(float value, float lightness, float shadows, float midtones, float highlights);
 
 public:
+	static void mapColor(cv::Mat& dst, const cv::Mat&src, const uint8_t table[256]);
+	static void mapColor(cv::Mat& dst, const cv::Mat&src, const uint8_t* mask, const uint8_t table[256]);
 	/**
 	 * Tone is a color term commonly used by painters. Toning a bitmap with specified color, it's 
 	 * like mixing the color pixel by pixel, the color resulting in layering a color 
@@ -42,6 +44,14 @@ public:
 	static inline void shade(cv::Mat& dst, const cv::Mat& src, float amount)   { tone(dst, src, 0x00000000/* black */, amount); }
 	static inline void tint (cv::Mat& dst, const cv::Mat& src, float amount)   { tone(dst, src, 0x00FFFFFF/* white */, amount); }
 	static inline void tone (cv::Mat& dst, const cv::Mat& src, uint32_t color) { tone(dst, src, color, (color>>24)/255.0F);     }
+
+	/**
+	 * Convert a color image into grayscale image.
+	 *
+	 * @param[in] image The color image.
+	 * @return a grayscale image.
+	 */
+	static cv::Mat grayscale(const cv::Mat& image);
 
 	/**
 	 * Note that @p dst can be same as @p src image.

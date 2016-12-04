@@ -52,6 +52,18 @@ public:
 	 * @param[in]  threshold  Range [0, 1], default to 0.5
 	 */
 	static void removeRedEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& polygon, float threshold = 0.5F);
+
+	/**
+	 * Whiten skin by logarithmic Curve: v(x, y) = log(w(x, y)*(beta - 1) + 1) / log(beta),
+	 * It refers to paper "A Two-Stage Contrast Enhancement Algorithm for Digital Images".
+	 *
+	 * @param[out] dst
+	 * @param[in]  src
+	 * @param[in] mask  Skin mask, it should be the same size as the source image. If mask is nullptr, operates on whole image.
+	 * @param[in] level The bigger, the more bright it looks. range[2, 10]
+	 */
+	static void whitenSkinByLogCurve(cv::Mat& dst, const cv::Mat& src, float level);
+	static void whitenSkinByLogCurve(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, float level);
 	
 	static void beautifySkin(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, float radius, float level);
 };
