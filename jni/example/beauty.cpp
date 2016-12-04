@@ -77,7 +77,23 @@ struct UserData
 	const std::vector<Point2f> points;  ///< feature points
 
 	Mat original;  ///< original image
+	Mat mask;      ///< mask of orignal image
 	Mat processed; ///< processed image
+};
+
+static void onClick(int event, int x, int y, int flags, void* user_data)
+{
+	UserData& data = *reinterpret_cast<UserData*>(user_data);
+
+	switch(event)
+	{
+	case EVENT_LBUTTONDOWN:
+		cv::imshow(data.title, data.original);
+		break;
+	default:
+		cv::imshow(data.title, data.processed);
+		break;
+	}
 };
 
 void redEyeRemoval_GUI(const cv::Mat& image)
@@ -90,7 +106,7 @@ void redEyeRemoval_GUI(const cv::Mat& image)
 	const int max = 512;
 
 	Mat processed = image.clone();
-	UserData user_data = {title, max, points, image, processed};
+	UserData user_data = {title, max, points, image, {}, processed};
 
 	auto onProgressChanged = [](int progress, void* user_data)
 	{
@@ -108,20 +124,7 @@ void redEyeRemoval_GUI(const cv::Mat& image)
 		cv::imshow(data.title, data.processed);
 	};
 
-	auto onClick = [](int event, int x, int y, int flags, void* user_data)
-	{
-		UserData& data = *reinterpret_cast<UserData*>(user_data);
 
-		switch(event)
-		{
-		case EVENT_LBUTTONDOWN:
-			cv::imshow(data.title, data.original);
-			break;
-		default:
-			cv::imshow(data.title, data.processed);
-			break;
-		}
-	};
 
 	int progress = max / 2;
 
@@ -130,6 +133,36 @@ void redEyeRemoval_GUI(const cv::Mat& image)
 	cv::createTrackbar("amount", title, &progress, max, onProgressChanged, &user_data);
 
 	onProgressChanged(progress, &user_data);
+
+	cv::waitKey();
+}
+
+void skinDermabrasion(const cv::Mat& image)
+{
+	const std::string title("Skin Dermabrasion");
+	const int level_max = 20;
+
+	Mat processed = image.clone();
+	Mat mask = Beauty::calculateSkinRegion_RGB(image);
+	cv::imshow("mask", mask);
+
+	UserData user_data = {title, level_max, {}, image, mask, processed};
+
+	auto onProgressChanged = [](int level, void* user_data)
+	{
+		UserData& data = *reinterpret_cast<UserData*>(user_data);
+		float radius = 5.0F;  // can be tuned!
+		Beauty::beautifySkin(data.processed, data.original, data.mask, radius, level);
+
+		cv::imshow(data.title, data.processed);
+	};
+
+	int level = level_max / 2;
+	cv::namedWindow(title);
+	cv::setMouseCallback(title, onClick, &user_data);
+	cv::createTrackbar("amount", title, &level, level_max, onProgressChanged, &user_data);
+
+	onProgressChanged(level_max, &user_data);
 
 	cv::waitKey();
 }

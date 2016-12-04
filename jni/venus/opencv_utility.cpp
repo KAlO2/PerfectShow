@@ -167,6 +167,31 @@ cv::Mat merge(const cv::Mat& rgb, const cv::Mat& alpha)
 	return result;
 }
 
+cv::Mat normalize(const cv::Mat& mat, double* max/* = nullptr */)
+{
+	double x = 1.0;
+	Mat mat2;
+	switch(mat.depth())
+	{
+	case CV_8U:  x = std::numeric_limits<uint8_t>::max();  mat.convertTo(mat2, CV_32F, 1/x); break;
+	case CV_8S:  x = std::numeric_limits<int8_t>::max();   mat.convertTo(mat2, CV_32F, 1/x); break;
+	case CV_16U: x = std::numeric_limits<uint16_t>::max(); mat.convertTo(mat2, CV_32F, 1/x); break;
+	case CV_16S: x = std::numeric_limits<int16_t>::max();  mat.convertTo(mat2, CV_32F, 1/x); break;
+	case CV_32S: x = std::numeric_limits<int32_t>::max();  mat.convertTo(mat2, CV_32F, 1/x); break;
+
+	case CV_32F: mat.copyTo(mat2);                 break;
+	case CV_64F: mat.convertTo(mat2, CV_32F, 1.0); break;
+
+	default:
+		assert(false);
+		break;
+	}
+
+	if(max != nullptr)
+		*max = x;
+	return mat2;
+}
+
 void line(Mat& image, const Point2f& pt0, const Point2f& pt1, const Scalar& color,
 		int thickness/* = 1*/, int lineType/* = cv::LINE_8*/, int shift/* = 0*/)
 {

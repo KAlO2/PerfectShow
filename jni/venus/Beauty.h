@@ -52,6 +52,8 @@ public:
 	 * @param[in]  threshold  Range [0, 1], default to 0.5
 	 */
 	static void removeRedEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& polygon, float threshold = 0.5F);
+	
+	static void beautifySkin(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, float radius, float level);
 };
 
 } /* namespace venus */

@@ -4,6 +4,7 @@
 #include "venus/colorspace.h"
 #include "venus/Beauty.h"
 #include "venus/Feature.h"
+#include "venus/opencv_utility.h"
 #include "venus/scalar.h"
 
 using namespace cv;
@@ -208,6 +209,7 @@ static bool isSkinColor_HSV(const uint8_t* color)
 #else
 	const uint8_t& r = color[0], &g = color[1], &b = color[2];
 #endif
+
 	Vec3f rgb(r/255.0F, g/255.0F, b/255.0F);
 	Vec3f hsv = venus::rgb2hsv(rgb);
 
@@ -281,4 +283,50 @@ void Beauty::removeRedEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv
 
 	roi.copyTo(dst(rect));
 }
+
+// Refer to paper "Digital Image Enhancement and Noise Filtering by Use of Local Statistics" by Jong-sen Lee, 1979
+void Beauty::beautifySkin(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, float radius, float level)
+{
+	assert(src.rows == mask.rows && src.cols == mask.cols && mask.channels() == 1);
+	double max;
+	Mat _src  = venus::normalize(src, &max);
+	Mat _mask = venus::normalize(mask);
+
+//	level = 10 + level * level * 5;
+	int size = cvRound(radius) * 2 + 1;
+
+	// expectation: E[x] = (x1 + x2 + ... + xn)/n;  //x1*p1 + x2*p2 + ... + xn*pn;
+	// variance: Var(X) = E[(X - miu)^2] = E[X^2] - E[X]^2
+	Mat expectation, variance;
+	cv::blur(_src, expectation, Size(size, size), Point(-1, -1), BorderTypes::BORDER_CONSTANT);
+
+	dst = expectation - _src;
+//	cv::multiply(dst, dst, dst);  // dst = dst .* dst;  // element-wise multiplication
+	float* const dst_data = dst.ptr<float>();
+	const int channel = src.channels();
+	const int length = src.rows * src.cols * channel;
+
+	#pragma omp parallel for
+	for(int i = 0; i < length; ++i)
+		dst_data[i] *= dst_data[i];
+
+	cv::blur(dst, variance, Size(size, size), Point(-1, -1), BorderTypes::BORDER_CONSTANT);
+	
+	const float* _src_data = _src.ptr<float>();
+	const float* _mask_data = _mask.ptr<float>();
+	const float* expectation_data = expectation.ptr<float>();
+	const float* variance_data = variance.ptr<float>();
+
+	#pragma omp parallel for
+	for(int i = 0; i < length; ++i)
+	{
+		float k = variance_data[i] / (variance_data[i] + level);
+		float interp = lerp(expectation_data[i], _src_data[i], k);
+//		dst_data[i] = interp;
+		dst_data[i] = lerp(_src_data[i], interp, _mask_data[i/channel]);
+	}
+
+	dst.convertTo(dst, src.depth(), max);  // keep dst and src the same type
+}
+
 } /* namespace venus */

@@ -10,4 +10,6 @@ void detectSkin(const cv::Mat& image);
 void redEyeRemoval_CLI(const cv::Mat& image, float threshold);
 void redEyeRemoval_GUI(const cv::Mat& image);
 
+void skinDermabrasion(const cv::Mat& image);
+
 #endif /* EXAMPLE_BEAUTY_H_ */

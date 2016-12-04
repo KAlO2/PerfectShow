@@ -19,6 +19,8 @@ int main()
 //	redEyeRemoval_CLI(red_eye_sample, 0.72F);
 //	redEyeRemoval_GUI(red_eye_sample);
 	
+//	skinDermabrasion(image);
+
 //	judgeFaceShape(image_name);
 	
 //	createShape();

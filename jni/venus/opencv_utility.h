@@ -123,6 +123,8 @@ cv::Point2f centerOfCircumscribedCircle(const cv::Point2f& A, const cv::Point2f&
 
 cv::Mat merge(const cv::Mat& rgb, const cv::Mat& alpha);
 
+cv::Mat normalize(const cv::Mat& mat, double* max = nullptr);
+
 /**
  * like cv::line() but draw line that run through whole image, not line segment between pt0 and pt1
  */
