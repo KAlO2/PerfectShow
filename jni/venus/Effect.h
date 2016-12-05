@@ -46,6 +46,17 @@ public:
 	static inline void tone (cv::Mat& dst, const cv::Mat& src, uint32_t color) { tone(dst, src, color, (color>>24)/255.0F);     }
 
 	/**
+	 * <a href="https://en.wikipedia.org/wiki/Posterization">Posterization</a> of an image entails conversion of a continuous gradation of
+	 * tone to several regions of fewer tones, with abrupt changes from one tone to another. This was originally done with photographic
+	 * processes to create posters.
+	 *
+	 * @param[out] dst    The output image, and in-place posterizing is supported.
+	 * @param[in]  src    The input image.
+	 * @param[in]  level  Range [1.0, 256.0], and value 256 means copy @a src to @a dst.
+	 */
+	static void posterize(cv::Mat& dst, const cv::Mat& src, float level);
+
+	/**
 	 * Convert a color image into grayscale image.
 	 *
 	 * @param[in] image The color image.

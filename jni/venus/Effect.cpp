@@ -168,6 +168,49 @@ void Effect::tone(cv::Mat& dst, const cv::Mat& src, uint32_t color, float amount
 	}
 }
 
+void Effect::posterize(cv::Mat& dst, const cv::Mat& src, float level)
+{
+	assert(1.0F <= level && level <= 256.0F);
+	const int depth = src.depth();
+	const int channel = dst.channels();
+	if(src.data != dst.data)
+		src.copyTo(dst);
+
+	if(depth == CV_8U)
+	{
+		level = 256 / level;
+		uint8_t table[256];
+		for(int i = 0; i < 256; ++i)
+			table[i] = cvRound(std::floor(i / level) * level);
+	
+		mapColor(dst, src, table);
+	}
+	else if(depth == CV_32F)
+	{
+		float* data = dst.ptr<float>();
+		const int length = dst.rows * dst.cols * channel;
+
+		if(channel > 3)
+		{
+			#pragma omp parallel for
+			for(int i = 0; i < length; i += channel)
+			{
+				data[i+0] = cvRound(data[i+0] * level) / level;
+				data[i+1] = cvRound(data[i+1] * level) / level;
+				data[i+2] = cvRound(data[i+2] * level) / level;
+			}
+		}
+		else
+		{
+			#pragma omp parallel for
+			for(int i = 0; i < length; ++i)
+				data[i] = cvRound(data[i] * level) / level;
+		}
+	}
+	else
+		assert(false);
+}
+
 cv::Mat Effect::grayscale(const cv::Mat& image)
 {
 	Mat gray;
