@@ -14,6 +14,7 @@
 #include "example/makeup.h"
 #include "example/utility.h"
 
+#include "venus/Effect.h"
 #include "venus/Feature.h"
 #include "venus/ImageWarp.h"
 #include "venus/Makeup.h"
@@ -25,10 +26,7 @@ using namespace venus;
 
 void detectFace(const cv::Mat& image, const std::string& image_name/* = std::string()*/)
 {
-	assert(image.type() == CV_8UC3);
-
-	Mat gray;
-	cvtColor(image, gray, CV_BGR2GRAY);
+	Mat gray = Effect::grayscale(image);
 
 	bool found = false;
 	std::vector<Point2f> points;

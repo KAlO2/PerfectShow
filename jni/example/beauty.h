@@ -12,5 +12,6 @@ void redEyeRemoval_GUI(const cv::Mat& image);
 
 void skinWhiten(const cv::Mat& image);
 void skinDermabrasion(const cv::Mat& image);
+void skinDermabrasion(const cv::Mat& image, const cv::Mat& mask);
 
 #endif /* EXAMPLE_BEAUTY_H_ */

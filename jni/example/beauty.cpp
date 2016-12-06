@@ -1,12 +1,14 @@
 #include <opencv2/highgui.hpp>
 
 #include "example/beauty.h"
+#include "example/UserData.h"
 #include "example/utility.h"
 #include "platform/jni_bridge.h"
 
 #include "venus/Beauty.h"
 #include "venus/Effect.h"
 #include "venus/Feature.h"
+#include "venus/scalar.h"
 
 using namespace cv;
 using namespace venus;
@@ -70,32 +72,6 @@ void redEyeRemoval_CLI(const cv::Mat& image, float threshold)
 	cv::waitKey();
 }
 
-struct UserData
-{
-	const std::string title;            ///< window title
-	const int max;                      ///< progress max
-	const std::vector<Point2f> points;  ///< feature points
-
-	Mat original;  ///< original image
-	Mat mask;      ///< mask of orignal image
-	Mat processed; ///< processed image
-};
-
-static void onClick(int event, int x, int y, int flags, void* user_data)
-{
-	UserData& data = *reinterpret_cast<UserData*>(user_data);
-
-	switch(event)
-	{
-	case EVENT_LBUTTONDOWN:
-		cv::imshow(data.title, data.original);
-		break;
-	default:
-		cv::imshow(data.title, data.processed);
-		break;
-	}
-};
-
 void redEyeRemoval_GUI(const cv::Mat& image)
 {
 	Mat gray = Effect::grayscale(image);
@@ -106,7 +82,7 @@ void redEyeRemoval_GUI(const cv::Mat& image)
 	const int max = 512;
 
 	Mat processed = image.clone();
-	UserData user_data = {title, max, points, image, {}, processed};
+	UserData user_data(title, max, points, image, processed);
 
 	auto onProgressChanged = [](int progress, void* user_data)
 	{
@@ -120,14 +96,14 @@ void redEyeRemoval_GUI(const cv::Mat& image)
 			std::vector<Point2f> polygon = feature.calculateEyePolygon(data.points, i == 0);
 			Beauty::removeRedEye(data.processed, data.processed, polygon, threshold);
 		}
-
+		
 		cv::imshow(data.title, data.processed);
 	};
 
 	int progress = max / 2;
 
 	cv::namedWindow(title);
-	cv::setMouseCallback(title, onClick, &user_data);
+	cv::setMouseCallback(title, UserData::onClick, &user_data);
 	cv::createTrackbar("amount", title, &progress, max, onProgressChanged, &user_data);
 
 	onProgressChanged(progress, &user_data);
@@ -142,7 +118,8 @@ void skinWhiten(const cv::Mat& image)
 
 	Mat processed = image.clone();
 	Mat mask(image.rows, image.cols, CV_8UC1, Scalar(255));  // whole
-	UserData user_data = {title, max, {}, image, mask, processed};
+	UserData user_data(title, max, {}, image, processed);
+	user_data.setMask(mask);
 
 	auto onProgressChanged = [](int progress, void* user_data)
 	{
@@ -155,7 +132,7 @@ void skinWhiten(const cv::Mat& image)
 
 	int progress = max / 2;
 	cv::namedWindow(title);
-	cv::setMouseCallback(title, onClick, &user_data);
+	cv::setMouseCallback(title, UserData::onClick, &user_data);
 	cv::createTrackbar("level", title, &progress, max, onProgressChanged, &user_data);
 
 	onProgressChanged(progress, &user_data);
@@ -165,14 +142,20 @@ void skinWhiten(const cv::Mat& image)
 
 void skinDermabrasion(const cv::Mat& image)
 {
+	Mat mask = Beauty::calculateSkinRegion_RGB(image);
+	skinDermabrasion(image, mask);
+}
+
+void skinDermabrasion(const cv::Mat& image, const cv::Mat& mask)
+{
 	const std::string title("Skin Dermabrasion");
 	const int level_max = 20;
 
 	Mat processed = image.clone();
-	Mat mask = Beauty::calculateSkinRegion_RGB(image);
 	cv::imshow("mask", mask);
 
-	UserData user_data = {title, level_max, {}, image, mask, processed};
+	UserData user_data(title, level_max, {}, image, processed);
+	user_data.setMask(mask);
 
 	auto onProgressChanged = [](int level, void* user_data)
 	{
@@ -185,7 +168,7 @@ void skinDermabrasion(const cv::Mat& image)
 
 	int level = level_max / 2;
 	cv::namedWindow(title);
-	cv::setMouseCallback(title, onClick, &user_data);
+	cv::setMouseCallback(title, UserData::onClick, &user_data);
 	cv::createTrackbar("amount", title, &level, level_max, onProgressChanged, &user_data);
 
 	onProgressChanged(level_max, &user_data);
