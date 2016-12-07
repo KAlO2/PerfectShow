@@ -11,6 +11,7 @@
 
 #include "venus/colorspace.h"
 #include "venus/Effect.h"
+#include "venus/opencv_utility.h"
 #include "venus/scalar.h"
 
 
@@ -130,15 +131,10 @@ void Effect::tone(cv::Mat& dst, const cv::Mat& src, uint32_t color, float amount
 	dst.create(src.size(), src.type());
 
 	const float l_amount = 1.0F - amount;
-	if(src.type() == CV_32FC4)
+	if(src.depth() == CV_32F)
 		amount /= 255;
 
-	uint8_t r = color, g = color >> 8, b = color >> 16;
-#if USE_BGRA_LAYOUT
-	const Vec3f target(b * amount, g * amount, r * amount);
-#else
-	const Vec3f target(r * amount, g * amount, b * amount);
-#endif
+	Vec4f target = cast(color) * amount;
 	
 	switch(src.type())
 	{
@@ -243,10 +239,9 @@ void Effect::gaussianBlur(cv::Mat& dst, const cv::Mat& src, float radius)
 	cv::GaussianBlur(src, dst, Size(width, width), std_dev, std_dev, cv::BorderTypes::BORDER_CONSTANT);
 }
 
-void Effect::selectiveGaussianBlur(cv::Mat& dst, const cv::Mat& src, float radius, float tolerance)
+void Effect::gaussianBlurSelective(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, float radius, float tolerance)
 {
-	assert(radius >= 0 && tolerance >= 0);
-
+	assert(dst.data != src.data);
 	int R = cvRound(radius);
 	if(R <= 1)
 	{
@@ -255,12 +250,11 @@ void Effect::selectiveGaussianBlur(cv::Mat& dst, const cv::Mat& src, float radiu
 	}
 	
 	int width = (R << 1) + 1;
+#if 0
+	std::vector<cv::Mat> channels;
+	cv::split(src, channels);
 
-	std::vector<cv::Mat> src_channels;
-	cv::split(src, src_channels);
-
-#if 1
-	const int N = static_cast<int>(src_channels.size());
+	const int N = src.channels() < 4 ? src.channels() : 3;
 	#pragma omp parallel for
 //	for(cv::Mat& channel: src_channels)  // It seems that OpenMP doesn't support range based for in C++11.
 	// error C3016: 'i' : index variable in OpenMP 'for' statement must have signed integral type
@@ -268,73 +262,105 @@ void Effect::selectiveGaussianBlur(cv::Mat& dst, const cv::Mat& src, float radiu
 	// GCC support OpenMP 3.0 since its version 4.4 and allows unsigned int for the loop counter.
 	for(int i = 0; i < N; ++i)
 	{
-		cv::Mat& channel = src_channels[i];
+		cv::Mat& channel = channels[i];
 		cv::Mat tmp;  // Bilateral filter does not work inplace.
 		cv::bilateralFilter(channel, tmp, width, width*2.0, width/2.0);
 		channel = tmp;
 	}
 
-	cv::merge(src_channels.data(), src_channels.size(), dst);
+	cv::merge(channels.data(), channels.size(), dst);
 #else
-	Mat kernel(width, width, CV_32FC1, Scalar(0));
-	#pragma omp parallel for collapse(2)
-	for(int r = -R; r <= R; ++r)
-	for(int c = -R; c <= R; ++c)
-		kernel.at<float>(R + r, R + c) = std::exp(-0.5F * (r*r + c*c)) / radius;
+	Mat _src;
+	src.convertTo(_src, CV_32F);
+//	dst.create(src.rows, src.cols, CV_32F);
+	_src.copyTo(dst);
+	
+	assert(mask.type() == CV_8UC1);
+	const uint8_t* const mask_data = mask.ptr<uint8_t>();
+//	Mat _mask = normalize(mask);
+//	const float* const mask_data = mask.ptr<float>();
 
-	const size_t N = src_channels.size();
-	std::vector<cv::Mat> dst_channels(N);
-
-	#pragma omp parallel for
-	for(size_t i = 0; i < N; ++i)
+	// initialize Gaussian kernel
+	Mat kernel(width, width, CV_32FC1);
+//	kernel.at<float>(R, R) = 1.0F;
+	for(int r = 0; r <= R; ++r)
+	for(int c = 0; c <= R; ++c)
 	{
-		const cv::Mat& src_channel = src_channels[i];
-
-		cv::Mat dst_channel;
-		dst_channel.create(src_channel.rows, src_channel.cols, src_channel.type());
-
-		for(int r = 0; r < src.rows; ++r)
-		for(int c = 0; c < src.cols; ++c)
-		{
-			const uint8_t& center = src_channel.at<uint8_t>(r, c);
-			float accumulated = 0.0F, weight_sum = 0.0F;
-
-			for(int y = -R; y <= R; ++y)
-			{
-				int j = r + R + y;
-				if(j < 0 || j >= src.rows)
-					continue;
-
-				for(int x = -R; x <= R; ++x)
-				{
-					int i = c + R + x;
-					if(i < 0 || i >= src.cols)
-						continue;
-					
-					float weight = kernel.at<float>(R + y, R + x);
-					if(weight <= 0)//(x*x + y*y > R*R)
-						continue;
-
-					const uint8_t& around = src_channel.at<uint8_t>(j, i);  // Point(i, j)
-					weight *= around;
-
-					float diff = center - around;
-					if(diff <= tolerance)
-					{
-						accumulated += weight * around;
-						weight_sum  += weight;
-					}
-				}
-			}
-
-			// weight_sum can not be ZERO, since center point is counted.
-			dst_channel.at<uint8_t>(r, c) = cvRound(accumulated / weight_sum);
-		}
-
-		dst_channels[i] = dst_channel;
+		float v = std::exp(-0.5F * (r*r + c*c) / radius);
+		kernel.at<float>(R - r, R - c) = v;
+		kernel.at<float>(R - r, R + c) = v;
+		kernel.at<float>(R + r, R - c) = v;
+		kernel.at<float>(R + r, R + c) = v;
 	}
 
-	cv::merge(dst_channels.data(), N, dst);
+	const int channel = src.channels();
+	assert(channel >= 3);  // currently only support color image
+	const int length = src.rows * src.cols;
+
+	assert(_src.depth() == CV_32F && dst.depth() == CV_32F);
+	const float* const _src_data = _src.ptr<float>();
+	float* const dst_data = dst.ptr<float>();
+
+	#pragma omp parallel for
+	for(int k = 0; k < length; ++k)
+	{
+		if(mask_data[k] == 0)
+			continue;
+
+		int r = k / src.cols, c = k % src.cols;
+		int offset = k * channel;
+		const float* center = _src_data + offset;
+		
+		Vec3f accumulated(0, 0, 0), count(0, 0, 0);
+		for(int y = -R; y <= R; ++y)
+		{
+			int j = r + y;
+			if(j < 0 || j >= src.rows)
+				continue;
+
+			for(int x = -R; x <= R; ++x)
+			{
+				int i = c + x;
+				if(i < 0 || i >= src.cols)
+					continue;
+				
+				float weight = kernel.at<float>(R + y, R + x);
+				const float* around = _src_data + (j * src.cols + i) * channel;
+#if 1
+				// individual channel
+				for(int m = 0; m < 3; ++m)
+				{
+					float diff = std::abs(center[m] - around[m]);
+					if(diff > tolerance)
+						continue;
+					
+					accumulated[m] += weight * around[m];
+					count[m] += weight;
+				}
+#else
+				// RGB weighted measure method
+				float diff = (std::abs(center[0] - around[0]) +
+					std::abs(center[1] - around[1]) + std::abs(center[2] - around[2]))/3;
+				if(diff > tolerance)
+					continue;
+
+				for(int m = 0; m < 3; ++m)
+				{
+					accumulated[m] += weight * around[m];
+					count[m] += weight;
+				}
+#endif
+			}
+		}
+
+		// weight_sum can not be ZERO, since center point is counted.
+		dst_data[offset + 0] = accumulated[0] / count[0];
+		dst_data[offset + 1] = accumulated[1] / count[1];
+		dst_data[offset + 2] = accumulated[2] / count[2];
+	}
+
+	if(src.depth() == CV_8U)
+		dst.convertTo(dst, CV_8U);
 #endif
 }
 

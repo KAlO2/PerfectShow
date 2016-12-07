@@ -46,9 +46,9 @@ public:
 	static inline void tone (cv::Mat& dst, const cv::Mat& src, uint32_t color) { tone(dst, src, color, (color>>24)/255.0F);     }
 
 	/**
-	 * <a href="https://en.wikipedia.org/wiki/Posterization">Posterization</a> of an image entails conversion of a continuous gradation of
-	 * tone to several regions of fewer tones, with abrupt changes from one tone to another. This was originally done with photographic
-	 * processes to create posters.
+	 * <a href="https://en.wikipedia.org/wiki/Posterization">Posterization</a> of an image entails conversion of a
+	 * continuous gradation of tone to several regions of fewer tones, with abrupt changes from one tone to another.
+	 * This was originally done with photographic processes to create posters.
 	 *
 	 * @param[out] dst    The output image, and in-place posterizing is supported.
 	 * @param[in]  src    The input image.
@@ -75,10 +75,18 @@ public:
 	inline static void gaussianBlur(cv::Mat& image, float radius) { gaussianBlur(image, image, radius); }
 
 	/**
-	 *  Large filters (radius > 5) are very slow, so it is recommended to use radius = 3 for real-time applications,
+	 * "Selective Gaussian blur" blurs neighboring pixels, but only in low-contrast areas. It can't take in-place.
+	 * Large filters (radius > 5) are very slow, so it is recommended to use radius = 3 for real-time applications.
+	 * And a mask can be used to shorten processing time.
+	 *
+	 * @param[out] dst        The output image.
+	 * @param[in]  src        The input image.
+	 * @param[in]  mask       CV_8UC1 format
+	 * @param[in]  radius     Gaussian kernel radius, or bluring radius.
+	 * @param[in]  tolerance  Range [0, 255], pixels within tolerance will be handled.
 	 */
-	static void selectiveGaussianBlur(cv::Mat& dst, const cv::Mat& src, float radius, float tolerance);
-	inline static void selectiveGaussianBlur(cv::Mat& image, float radius, float tolerance) { selectiveGaussianBlur(image, image, radius, tolerance); }
+	static void gaussianBlurSelective(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, float radius, float tolerance);
+
 
 	/**
 	 * color balance is the global adjustment of the intensities of the colors (typically red, green, and blue primary colors).

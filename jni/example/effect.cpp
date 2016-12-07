@@ -7,6 +7,7 @@
 #include "platform/jni_bridge.h"
 #include "venus/scalar.h"
 
+#include "venus/Beauty.h"
 #include "venus/Effect.h"
 
 using namespace cv;
@@ -40,4 +41,41 @@ void posterize(const cv::Mat& image)
 	cv::createTrackbar("amount", title, &level, max, onProgressChanged, &user_data);
 
 	onProgressChanged(level, &user_data);
+}
+
+void selectiveGaussianBlur(const cv::Mat& image)
+{
+#if 0
+	Mat mask(image.rows, image.cols, CV_8UC1, 255);
+#else
+	Mat mask = Beauty::calculateSkinRegion_RGB(image);
+#endif
+	selectiveGaussianBlur(image, mask);
+}
+
+void selectiveGaussianBlur(const cv::Mat& image, const cv::Mat& mask)
+{
+	const std::string title("blur");
+	const int max = 255;
+	
+	Mat processed = image.clone();
+	UserData user_data(title, max, {}, image, processed);
+	user_data.setMask(mask);
+
+	auto onProgressChanged = [](int threshold, void* user_data)
+	{
+		UserData& data = *reinterpret_cast<UserData*>(user_data);
+		int radius = 7.0F;
+
+		Effect::gaussianBlurSelective(data.processed, data.original, data.mask, radius, threshold);
+		cv::imshow(data.title, data.processed);
+	};
+	
+	int threshold = 12;
+	cv::namedWindow(title);
+	cv::setMouseCallback(title, UserData::onClick, &user_data);
+	cv::createTrackbar("amount", title, &threshold, max, onProgressChanged, &user_data);
+
+	onProgressChanged(threshold, &user_data);
+	cv::waitKey();
 }
