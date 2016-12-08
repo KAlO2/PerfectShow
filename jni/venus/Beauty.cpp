@@ -19,14 +19,16 @@ namespace venus {
 	together, e.g., luminance elimination. They utilize the following rules: an R, G, B pixel is classified as skin
 	if and only if
 		at uniform daylight illumination:
-		1. R > 95 and G > 40 and B > 20
-		2. max(R, G, B) - min(R, G, B) > 15
-		3. abs(R - G) > 15 and R > G and R > B
+		1. R > 95 and G > 40 and B > 20 and max(R, G, B) - min(R, G, B) > 15;  // RGB components must not be close
+			together - greyness elimination
+		2. abs(R - G) > 15;  // also R and G components must not be close together, otherwise we are not dealing 
+			with the fair complexion
+		3. R > G and R > B;  // R component must be the greatest component
 
 		under flashlight or (light) daylight:
 		1. R > 220 and G > 210 and B > 170
-		2. abs(R - G) <= 15
-		3. R > B and G > B
+		2. abs(R - G) <= 15;  // R and G components must be close together
+		3. R > B and G > B;   // B component must be the smallest component
 */
 static bool isSkinColor_RGB(const uint8_t* color)
 {
@@ -37,7 +39,6 @@ static bool isSkinColor_RGB(const uint8_t* color)
 #endif
 
 	if(r > 95 && g > 40 && b > 20 &&
-		r > g && r > b &&
 		r - g > 15 && r - b > 15)
 		return true;
 
@@ -66,7 +67,7 @@ static cv::Mat calculateSkinRegion(const cv::Mat& image, const IsSkinColor& pred
 	#pragma omp parallel for
 	for(int i = 0; i < length; ++i)
 		mask_data[i] = pred(image_data + i * channel) ? 255 : 0;
-		
+	
 	return mask;
 }
 
@@ -211,8 +212,9 @@ static bool isSkinColor_HSV(const uint8_t* color)
 	const uint8_t& r = color[0], &g = color[1], &b = color[2];
 #endif
 
-	Vec3f rgb(r/255.0F, g/255.0F, b/255.0F);
-	Vec3f hsv = venus::rgb2hsv(rgb);
+	float rgb[3] = { r/255.0F, g/255.0F, b/255.0F };
+	float hsv[3];
+	rgb2hsv(rgb, hsv);
 
 	return 0 <= hsv[0] && hsv[0] <= 50/360.0F &&
 		0.20F < hsv[1] && hsv[1] <= 0.68F &&

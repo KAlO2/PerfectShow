@@ -768,13 +768,16 @@ cv::Vec4f Feature::getSymmetryAxis(const std::vector<cv::Point2f>& points)
 
 cv::Mat Feature::createMask(const std::vector<cv::Point2f>& points, float blur_radius/* = 0.0F */, cv::Point2i* position/* = nullptr */)
 {
+	assert(points.size() >= 3 && blur_radius >= 0.0F);
 //	Rect rect = cv::boundingRect(points);
 	Vec4f box = venus::boundingBox(points);
 	Rect2f rect = box2Rect(box);
-	Region::inset(rect, blur_radius);
+	const bool enable_blur = blur_radius > 0.0F;
+	if(enable_blur)
+		Region::inset(rect, blur_radius);
 
 	Rect2i _rect = rect;
-	cv::Mat mask(_rect.size(), CV_8UC1, Scalar::all(0));
+	cv::Mat mask(_rect.size(), CV_8UC1, Scalar(0));
 
 	cv::Point2i _position = _rect.tl();
 	if(position)
@@ -787,9 +790,10 @@ cv::Mat Feature::createMask(const std::vector<cv::Point2f>& points, float blur_r
 	
 	const Point2i* polygon_data[1] = { points_.data() };
 	const int       point_count[1] = { static_cast<int>(points_.size()) };
-	cv::fillPoly(mask, polygon_data, point_count, 1, Scalar::all(255));
+	cv::fillPoly(mask, polygon_data, point_count, 1, Scalar(255));
 
-	Effect::gaussianBlur(mask, blur_radius);
+	if(enable_blur)
+		Effect::gaussianBlur(mask, blur_radius);
 	
 	return mask;
 }

@@ -1,11 +1,9 @@
 #ifndef VENUS_COLORSPACE_H_
 #define VENUS_COLORSPACE_H_
 
-#include <opencv2/core.hpp>
-
 namespace venus {
 
-/**
+/*
  * @breif: Utility functions which convert colors between different color models.
  *
  * When programming pixel data manipulation functions you will often use algorithms 
@@ -13,23 +11,30 @@ namespace venus {
  * utility functions to convert colors between different color spaces.
  */
 
-cv::Vec3f rgb2hsv(const cv::Vec3f& rgb);
-cv::Vec3f hsv2rgb(const cv::Vec3f& hsv);
+void rgb2hsv(const float* rgb, float* hsv);
+void hsv2rgb(const float* hsv, float* rgb);
 
-cv::Vec3f rgb2hsl(const cv::Vec3f& rgb);
-cv::Vec3f hsl2rgb(const cv::Vec3f& hsl);
+void rgb2hsl(const float* rgb, float* hsl);
+void hsl2rgb(const float* hsl, float* rgb);
 
-// pullout: A scaling value (0-1) indicating how much black should be pulled out
-// A @pullout value of 0 makes this a conversion to CMY. A value of 1 causes the maximum amount of black to be pulled out.
-cv::Vec4f rgb2cmyk(const cv::Vec3f& rgb, float pullout);
-cv::Vec3f cmyk2rgb(const cv::Vec4f& cmyk);
+/**
+ * @param[in] rgb      RGB value in range [0, 1].
+ * @param[in] pullout  A scaling value (0-1) indicating how much black should be pulled out.
+ *		A @p pullout value of 0 makes this a conversion to CMY. A value of 1 causes the maximum
+ *		amount of black to be pulled out.
+ * @param[out] cmyk    CMYK value
+ */
+void rgb2cmyk(const float* rgb, const float& pullout, float* cmyk);
+void cmyk2rgb(const float* cmyk, float* rgb);
 
-
-// alpha value are directly copied
-cv::Vec4f rgb2hsv(const cv::Vec4f& rgba);
-cv::Vec4f hsv2rgb(const cv::Vec4f& hsva);
-
-cv::Vec4f color2alpha(const cv::Vec4f& color, const cv::Vec3f& from);
+/**
+ * Convert a specified color to transparency, works best with white.
+ *
+ * @param[in]  color  Reference color
+ * @param[in]  src    Input color
+ * @param[out] dst    Output clor
+ */
+void color2alpha(const float* color, const float* src, float* dst);
 
 
 } /* namespace venus */

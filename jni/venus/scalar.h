@@ -195,6 +195,19 @@ inline T clamp(const T& value)
 }
 
 /**
+ * Get minimum, maximum value from triple elements.
+ */
+template<typename T>
+void minmax(T& min, T& max, const T& _1, const T& _2, const T& _3)
+{
+	if(_1 < _2) { min = _1; max = _2; }
+	else        { min = _2; max = _1; }
+
+	if(min > _3)      min = _3;
+	else if(max < _3) max = _3;
+}
+
+/**
  * @brief Linearly interpolates between two values. Works for any classes that
  * define addition, subtraction, and multiplication (by a float) operators.
  *

@@ -399,22 +399,24 @@ void Effect::adjustColorBalance(float* const dst, const float* const src, int wi
 	constexpr int SHADOWS    = static_cast<int>(RangeMode::SHADOWS);
 	constexpr int MIDTONES   = static_cast<int>(RangeMode::MIDTONES);
 	constexpr int HIGHLIGHTS = static_cast<int>(RangeMode::HIGHLIGHTS);
-	
+
 	for(int i = 0, length = height * width * 4; i < length; i += 4)
 	{
-		const cv::Vec3f& rgb = src[i];
-		cv::Vec3f hsl = rgb2hsl(rgb);
+		const float* rgb = src + i;
+		float hsl[3];
+		rgb2hsl(rgb, hsl);
 
 		float& lightness = hsl[2];
-		cv::Vec3f rgb2 = dst[i];
+		float* rgb2 = dst + i;
 		for(int k = 0; k < 3; ++k)
 			rgb2[k] = mapColorBalance(rgb[k], lightness, config[SHADOWS][k], config[MIDTONES][k], config[HIGHLIGHTS][k]);
 
 		if(preserve_luminosity)
 		{
-			cv::Vec3f hsl2 = rgb2hsl(rgb2);
+			float hsl2[3];
+			rgb2hsl(rgb2, hsl2);
 			hsl2[2] = hsl[2];  // preserve brightness info
-			rgb2 = hsl2rgb(hsl2);
+			hsl2rgb(hsl2, rgb2);
 		}
 
 		dst[i+3] = src[i+3];  // keep alpha
@@ -438,33 +440,9 @@ void Effect::adjustGamma(cv::Mat& dst, const cv::Mat& src, float gamma)
 		for(int i = 0; i < 256; ++i)
 			table[i] = cvRound(std::pow(i/255.0, gamma) * 255.0);
 
-		if(channel == 4)
-		{
-			const cv::Vec4b* src_data = reinterpret_cast<const cv::Vec4b*>(src.data);
-			cv::Vec4b* const dst_data = reinterpret_cast<cv::Vec4b* const>(dst.data);
-			const int length = src.rows * src.cols;
-
-			#pragma omp parallel for
-			for(int i = 0; i < length; ++i)
-			{
-				const cv::Vec4b& s = src_data[i];
-				cv::Vec4b& d = dst_data[i];
-				for(int i = 0; i < 3; ++i)  // loop unrolling
-					d[i] = table[s[i]];
-			}
-		}
-		else
-		{
-			const uint8_t* src_data = src.data;
-			uint8_t* const dst_data = dst.data;
-			const int length = src.rows * src.cols * channel;
-
-			#pragma omp parallel for
-			for(int i = 0; i < length; ++i)
-				dst_data[i] = table[src_data[i]];
-		}
+		mapColor(dst, src, table);
 	}
-	else if(depth == CV_32F && channel == 4)
+	else if(depth == CV_32F)
 	{
 		const float* src_data = reinterpret_cast<const float*>(src.data);
 		float* const dst_data = reinterpret_cast<float* const>(dst.data);

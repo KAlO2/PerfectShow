@@ -1,349 +1,238 @@
 #include "venus/colorspace.h"
+#include "venus/scalar.h"
+#include "venus/compiler.h"
 
 #include <algorithm>
 
-#define HSV_UNDEFINED -1.0f
-#define HSL_UNDEFINED -1.0f
+static constexpr float HSV_UNDEFINED = -1.0F;
+static constexpr float HSL_UNDEFINED = -1.0F;
 
 namespace venus {
 
-template<typename T>
-void minmax(T& min, T& max, const T& _1, const T& _2, const T& _3)
+void rgb2hsv(const float* rgb, float* hsv)
 {
-	if(_1 < _2)
-	{
-		min = _1;
-		max = _2;
-	}
-	else
-	{
-		min = _2;
-		max = _1;
-	}
+	const float &r = rgb[0], &g = rgb[1], &b = rgb[2];
+	float &h = hsv[0], &s = hsv[1], &v = hsv[2];
 
-	if(min > _3)
-		min = _3;
-	else if(max < _3)
-		max = _3;
-}
-
-cv::Vec3f rgb2hsv(const cv::Vec3f& rgb)
-{
 	float min, max;
 	minmax(min, max, rgb[0], rgb[1], rgb[2]);
 
-	float h, s, v = max;
+	v = max;
 	float delta = max - min;
-	if(delta > 0.0001f)
+	if(delta > 0.0001F)
     {
 		s = delta / max;
 
-		if(rgb[0] == max)
+		if(r == max)
         {
-			h = (rgb[1] - rgb[2]) / delta;
-			if(h < 0.0f)
-				h += 6.0f;
+			h = (g - b) / delta;
+			if(h < 0.0F)
+				h += 6.0F;
 		}
-		else if(rgb[1] == max)
-        {
-			h = 2.0f + (rgb[2] - rgb[0]) / delta;
-        }
+		else if(g == max)
+			h = 2.0F + (b - r) / delta;
 		else
-		{
-			h = 4.0f + (rgb[0] - rgb[1]) / delta;
-		}
+			h = 4.0F + (r - g) / delta;
 		
 		h /= 6;
 	}
 	else
 	{
-		s = 0.0f;
-		h = 0.0f;
+		s = 0.0F;
+		h = 0.0F;
     }
-
-	return cv::Vec3f(h, s, v);
 }
 
-cv::Vec3f hsv2rgb(const cv::Vec3f& hsv)
+void hsv2rgb(const float* hsv, float* rgb)
 {
 	const float& h = hsv[0], &s = hsv[1], &v = hsv[2];
-	cv::Vec3f color;
-	if(s == 0.0)
-		color[2] = color[1] = color[0] = v;
+	float &r = rgb[0], &g = rgb[1], &b = rgb[2];
+
+	if(s == 0.0F)
+		b = g = r = v;
 	else
     {
 		float hue = h;
-		if(hue == 1.0f)
-			hue = 0.0;
-		hue *= 6.0f;
+		if(hue == 1.0F)
+			hue = 0.0F;
+		hue *= 6.0F;
 
 		int i = static_cast<int>(hue);
 		float f = hue - i;
-		float w = v * (1.0f - s);
-		float q = v * (1.0f - (s * f));
-		float t = v * (1.0f - (s * (1.0f - f)));
+		float w = v * (1.0F - s);
+		float q = v * (1.0F - (s * f));
+		float t = v * (1.0F - (s * (1.0F - f)));
 
 		switch(i)
 		{
-		case 0:
-			color[0] = v;
-			color[1] = t;
-			color[2] = w;
-			break;
-		case 1:
-			color[0] = q;
-			color[1] = v;
-			color[2] = w;
-			break;
-		case 2:
-			color[0] = w;
-			color[1] = v;
-			color[2] = t;
-			break;
-		case 3:
-			color[0] = w;
-			color[1] = q;
-			color[2] = v;
-			break;
-		case 4:
-			color[0] = t;
-			color[1] = w;
-			color[2] = v;
-			break;
-		case 5:
-			color[0] = v;
-			color[1] = w;
-			color[2] = q;
-			break;
+		case 0: r = v; g = t; b = w; break;
+		case 1: r = q; g = v; b = w; break;
+		case 2: r = w; g = v; b = t; break;
+		case 3: r = w; g = q; b = v; break;
+		case 4: r = t; g = w; b = v; break;
+		case 5: r = v; g = w; b = q; break;
 		}
 	}
-
-	return color;
 }
 
-cv::Vec3f rgb2hsl(const cv::Vec3f& rgb)
+void rgb2hsl(const float* rgb, float* hsl)
 {
+	const float &r = rgb[0], &g = rgb[1], &b = rgb[2];
+	float& h = hsl[0], &s = hsl[1], &l = hsl[2];
+
 	float min, max;
-	minmax(min, max, rgb[0], rgb[1], rgb[2]);
+	minmax(min, max, r, g, b);
 
-	float h, s, l = (max + min) / 2;
-
+	l = (max + min) / 2;
 	if(max == min)
 	{
-		s = 0.0f;
+		s = 0.0F;
 		h = HSL_UNDEFINED;
 	}
 	else
 	{
-		if(l <= 0.5f)
+		if(l <= 0.5F)
 			s = (max - min) / (max + min);
 		else
-			s = (max - min) / (2.0f - max - min);
+			s = (max - min) / (2.0F - max - min);
 
 		float delta = max - min;
-		if(delta == 0.0f)
-			delta = 1.0f;
+		if(delta == 0.0F)
+			delta = 1.0F;
 
-		if(rgb[0] == max)
-			h = (rgb[1] - rgb[2]) / delta;
-		else if(rgb[1] == max)
-			h = 2.0f + (rgb[2] - rgb[0]) / delta;
+		if(r == max)
+			h = (g - b) / delta;
+		else if(g == max)
+			h = 2.0F + (b - r) / delta;
 		else
-			h = 4.0f + (rgb[0] - rgb[1]) / delta;
+			h = 4.0F + (r - g) / delta;
 
 		h /= 6;
-		if(h < 0.0f)
-			h += 1.0f;
+		if(h < 0.0F)
+			h += 1.0F;
 	}
-
-	return cv::Vec3f(h, s, l);
 }
 
 static inline float hsl_value(float n1, float n2, float hue)
 {
 	float val;
 
-	if (hue > 6.0f)
-		hue -= 6.0f;
-	else if (hue < 0.0f)
-		hue += 6.0f;
+	if (hue > 6.0F)
+		hue -= 6.0F;
+	else if (hue < 0.0F)
+		hue += 6.0F;
 
-	if (hue < 1.0f)
+	if (hue < 1.0F)
 		val = n1 + (n2 - n1) * hue;
-	else if (hue < 3.0f)
+	else if (hue < 3.0F)
 		val = n2;
-	else if (hue < 4.0f)
-		val = n1 + (n2 - n1) * (4.0f - hue);
+	else if (hue < 4.0F)
+		val = n1 + (n2 - n1) * (4.0F - hue);
 	else
 		val = n1;
 
 	return val;
 }
 
-cv::Vec3f hsl2rgb(const cv::Vec3f& hsl)
+void hsl2rgb(const float* hsl, float* rgb)
 {
 	const float& h = hsl[0], &s = hsl[1], &l = hsl[2];
-	cv::Vec3f rgb;
-	if(s == 0.0f)  // achromatic case
-		rgb[2] = rgb[1] = rgb[0] = l;
+	float &r = rgb[0], &g = rgb[1], &b = rgb[2];
+
+	if(s == 0.0F)  // achromatic case
+		b = g = r = l;
 	else
 	{
 		float m2;
-		if (l <= 0.5f)
-			m2 = l * (1.0f + s);
+		if (l <= 0.5F)
+			m2 = l * (1.0F + s);
 		else
 			m2 = l + s - l * s;
 		
-		float m1 = 2.0f * l - m2;
+		float m1 = 2.0F * l - m2;
 
-		rgb[0] = hsl_value (m1, m2, h * 6.0f + 2.0f);
-		rgb[1] = hsl_value (m1, m2, h * 6.0f);
-		rgb[2] = hsl_value (m1, m2, h * 6.0f - 2.0f);
+		r = hsl_value(m1, m2, h * 6.0F + 2.0F);
+		g = hsl_value(m1, m2, h * 6.0F);
+		b = hsl_value(m1, m2, h * 6.0F - 2.0F);
     }
-
-	return rgb;
 }
 
-cv::Vec4f rgb2cmyk(const cv::Vec3f& rgb, float pullout)
+void rgb2cmyk(const float* rgb, const float& pullout, float* cmyk)
 {
-	float c = 1.0f - rgb[0];
-	float m = 1.0f - rgb[1];
-	float y = 1.0f - rgb[2];
-	float k = 1.0f;
+	const float &r = rgb[0], &g = rgb[1], &b = rgb[2];
+	float &c = cmyk[0], &m = cmyk[1], &y = cmyk[2], &k = cmyk[3];
+
+	c = 1.0F - r;
+	m = 1.0F - g;
+	y = 1.0F - b;
+	k = 1.0F;
 
 	if(c < k)  k = c;
 	if(m < k)  k = m;
 	if(y < k)  k = y;
 
 	k *= pullout;
-	if(k < 1.0f)
+	if(k < 1.0F)
 	{
-		c = (c - k) / (1.0f - k);
-		m = (m - k) / (1.0f - k);
-		y = (y - k) / (1.0f - k);
+		c = (c - k) / (1.0F - k);
+		m = (m - k) / (1.0F - k);
+		y = (y - k) / (1.0F - k);
 	}
 	else
 	{
-		c = 0.0f;
-		m = 0.0f;
-		y = 0.0f;
+		c = 0.0F;
+		m = 0.0F;
+		y = 0.0F;
 	}
-
-	return cv::Vec4f(c, m, y, k);
 }
 
-cv::Vec3f cmyk2rgb(const cv::Vec4f& cmyk)
+void cmyk2rgb(const float* cmyk, float* rgb)
 {
 	const float &c = cmyk[0], &m = cmyk[1], &y = cmyk[2], &k = cmyk[3];
-	cv::Vec3f color;
+	float &r = rgb[0], &g = rgb[1], &b = rgb[2];
 
-	if(k < 1.0f)
+	if(k < 1.0F)
 	{
-		color[0] = 1.0f - c * (1.0f - k) - k;
-		color[1] = 1.0f - m * (1.0f - k) - k;
-		color[2] = 1.0f - y * (1.0f - k) - k;
+		r = 1.0F - c * (1.0F - k) - k;
+		g = 1.0F - m * (1.0F - k) - k;
+		b = 1.0F - y * (1.0F - k) - k;
 	}
 	else
 	{
-		color[0] = 0.0f;
-		color[1] = 0.0f;
-		color[2] = 0.0f;
+		r = 0.0F;
+		g = 0.0F;
+		b = 0.0F;
 	}
-
-	return color;
 }
 
-cv::Vec4f rgb2hsv(const cv::Vec4f& rgba)
-{
-	cv::Vec4f hsva;
-	cv::Vec3f& hsv = *reinterpret_cast<cv::Vec3f*>(&hsva);
-	hsv = rgb2hsv(*reinterpret_cast<const cv::Vec3f*>(&rgba));
-	hsva[3] = rgba[3];
-
-	return hsva;
-}
-
-cv::Vec4f hsv2rgb(const cv::Vec4f& hsva)
-{
-	cv::Vec4f rgba;
-	cv::Vec3f& rgb = *reinterpret_cast<cv::Vec3f*>(&rgba);
-	rgb = hsv2rgb(*reinterpret_cast<const cv::Vec3f*>(&hsva));
-	rgba[3] = hsva[3];
-
-	return rgba;
-}
-
-/*
- * An excerpt from a discussion on #gimp that sheds some light on the ideas
- * behind the algorithm that is being used here.
- *
- <clahey>   so if a1 > c1, a2 > c2, and a3 > c2 and a1 - c1 > a2-c2, a3-c3,
- then a1 = b1 * alpha + c1 * (1-alpha)
- So, maximizing alpha without taking b1 above 1 gives
- a1 = alpha + c1(1-alpha) and therefore alpha = (a1-c1) / (1-c1).
- <sjburges> clahey: btw, the ordering of that a2, a3 in the white->alpha didn't
- matter
- <clahey>   sjburges: You mean that it could be either a1, a2, a3 or
- a1, a3, a2?
- <sjburges> yeah
- <sjburges> because neither one uses the other
- <clahey>   sjburges: That's exactly as it should be.  They are both just
- getting reduced to the same amount, limited by the the darkest
- color.
- <clahey>   Then a2 = b2 * alpha + c2 * (1- alpha).  Solving for b2 gives
- b2 = (a1-c2)/alpha + c2.
- <sjburges> yeah
- <clahey>   That gives us are formula for if the background is darker than the
- foreground? Yep.
- <clahey>   Next if a1 < c1, a2 < c2, a3 < c3, and c1-a1 > c2-a2, c3-a3, and
- by our desired result a1 = b1 * alpha + c1 * (1-alpha),
- we maximize alpha without taking b1 negative gives
- alpha = 1 - a1 / c1.
- <clahey>   And then again, b2 = (a2-c2) / alpha + c2 by the same formula.
- (Actually, I think we can use that formula for all cases, though
- it may possibly introduce rounding error.
- <clahey>   sjburges: I like the idea of using floats to avoid rounding error.
- Good call.
-*/
-cv::Vec4f color2alpha(const cv::Vec4f& color, const cv::Vec3f& from)
+void color2alpha(const float* color, const float* src, float* dst)
 {
 	float alpha[4];
-	cv::Vec4f dst(color);
 
 	alpha[3] = dst[3];
+	const float EPS = 0.00001F;
 	for(int i = 0; i < 3; ++i)
 	{
-		if(from[i] < 0.00001f)
+		if(color[i] < EPS)
 			alpha[i] = dst[i];
-		else if(dst[i] > from[i] + 0.00001f)
-			alpha[i] = (dst[i] - from[i]) / (1.0f - from[i]);
-		else if(dst[i] < from[i] - 0.00001f)
-			alpha[i] = (from[i] - dst[i]) / (from[i]);
-		else
-			alpha[i] = 0.0f;
+		else if(dst[i] > color[i] + EPS)
+			alpha[i] = (dst[i] - color[i]) / (1.0F - color[i]);
+		else if(dst[i] < color[i] - EPS)
+			alpha[i] = (color[i] - dst[i]) / color[i];
+		else //(dst[i] == color[i])
+			alpha[i] = 0.0F;
 	}
 
-	if(alpha[0] > alpha[1])
-	{
-		if(alpha[0] > alpha[2])
-			dst[3] = alpha[0];
-		else
-			dst[3] = alpha[2];
-	}
-	else if (alpha[1] > alpha[2])
-		dst[3] = alpha[1];
-	else
-		dst[3] = alpha[2];
+	// alpha3 = max(alpha[0], alpha[1], alpha[2])
+	dst[3] = std::max(std::max(alpha[0], alpha[1]), alpha[2]);
 
-	if(dst[3] >= 0.00001f)
-	{
-		for(int i = 0; i < 3; ++i)
-			dst[i] = (dst[i] - color[i]) / dst[3] + color[i];
+	if(dst[3] < EPS)
+		return;
+	
+	for(int i = 0; i < 3; ++i)
+		dst[i] = (dst[i] - color[i]) / dst[3] + color[i];
 
-		dst[3] *= alpha[3];
-	}
-
-	return dst;
+	dst[3] *= alpha[3];
 }
 
 
