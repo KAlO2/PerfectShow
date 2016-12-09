@@ -364,6 +364,38 @@ void Effect::gaussianBlurSelective(cv::Mat& dst, const cv::Mat& src, const cv::M
 #endif
 }
 
+void Effect::unsharpMask(cv::Mat& dst, const cv::Mat& src,  float radius/* = 5.0F*/, int threshold/* = 0*/, float amount/* = 0.5F*/)
+{
+	assert(radius >= 0.0F);
+	assert(0.0F <= amount && amount <= 1.0F);
+
+	cv::Mat blurred;
+
+	/* If the radius is less than 10, use a true gaussian kernel. This is slower, but more accurate and allows for finer adjustments.
+	 * Otherwise use a three-pass box blur; this is much faster but it isn't a perfect approximation, and it only allows radius
+	 * increments of about 0.42.
+	 */
+	const bool use_box_blur = radius >= 10;
+	if(use_box_blur)
+	{
+		// Three box blurs of this width approximate a gaussian
+		int box_width = cvRound(radius * 3 * sqrt (2 * M_PI) / 4);
+		const Size size(box_width, box_width);
+		const Point2i point(-1, -1);  // means center
+		BorderTypes type = BorderTypes::BORDER_REPLICATE;
+		cv::blur(src, blurred, size, point, type);
+		cv::blur(blurred, dst, size, point, type);  // trampoline
+		cv::blur(dst, blurred, size, point, type);
+	}
+	else
+		gaussianBlur(blurred, src, radius);
+
+	// Sharpened = Original + ( Original - Blurred ) * Amount
+	Mat lowContrastMask = cv::abs(src - blurred) <= threshold;
+	dst = src + (src - blurred) * amount; // src*(1 + amount) + blurred*(-amount);
+	src.copyTo(dst, lowContrastMask);
+}
+
 float Effect::mapColorBalance(float value, float lightness, float shadows, float midtones, float highlights)
 {
 	/* Apply masks to the corrections for shadows, midtones and highlights so that each correction affects only one range.

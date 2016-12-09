@@ -87,6 +87,13 @@ public:
 	 */
 	static void gaussianBlurSelective(cv::Mat& dst, const cv::Mat& src, const cv::Mat& mask, float radius, float tolerance);
 
+	/**
+	 * <a href="https://en.wikipedia.org/wiki/Unsharp_masking">Unsharp masking</a>
+	 * The most widely useful method for sharpening an image. The unsharp mask is a sharpening filter that works
+	 * by comparing using the difference of the image and a blurred version of the image.  It is commonly used on
+	 * photographic images, and is provides a much more pleasing result than the standard sharpen.
+	 */
+	static void unsharpMask(cv::Mat& dst, const cv::Mat& src, float radius = 5.0F, int threshold = 0, float amount = 0.5F);
 
 	/**
 	 * color balance is the global adjustment of the intensities of the colors (typically red, green, and blue primary colors).
