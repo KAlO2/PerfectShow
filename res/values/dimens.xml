@@ -28,4 +28,9 @@
 	<dimen name="color_brick_width">72dp</dimen>
 	<dimen name="color_brick_height">64dp</dimen>
 	
+	<!-- NailBar -->
+	<dimen name="NailBar_barThickness">2dp</dimen>
+	<dimen name="NailBar_circleRadius">5dp</dimen>
+	<dimen name="NailBar_nailRadius">8dp</dimen>
+	
 </resources>

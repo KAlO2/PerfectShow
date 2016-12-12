@@ -86,4 +86,10 @@
     <color name="HorizontalProgressWheelView_line">#808080</color>
     <color name="widget_selected">#FF6E40</color>
     	
+	<!-- NailBar -->
+	<color name="NailBar_lowSideColor">#571A7E</color>
+	<color name="NailBar_highSideColor">#D43478</color>
+	<color name="NailBar_circleColor">#B6BA43</color>
+	<color name="NailBar_nailColor">#FFFFFF</color>
+	
 </resources>

@@ -10,6 +10,8 @@
 		<!-- The ColorPicker dialog theme. -->
 		<attr name="colorPickerDialogTheme" format="reference" />
 		
+		<!-- The NailBar style -->
+		<attr name="nailBarStyle" format="reference" />
 	</declare-styleable>
 	
 	<declare-styleable name="ColorPicker">
@@ -23,5 +25,18 @@
 		</attr>
 		<attr name="color" format="color" />
 		<attr name="enableAlpha" format="boolean" />
+	</declare-styleable>
+
+	<declare-styleable name="NailBar">
+		<attr name="min" format="float" />
+		<attr name="max" format="float" />
+		<attr name="steps" format="integer" />
+		<attr name="lowSideColor" format="color" />
+		<attr name="highSideColor" format="color" />
+		<attr name="circleColor" format="color" />
+		<attr name="nailColor" format="color" />
+		<attr name="barThickness" format="dimension" />
+		<attr name="circleRadius" format="dimension" />
+		<attr name="nailRadius" format="dimension" />
 	</declare-styleable>
 </resources>

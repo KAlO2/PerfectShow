@@ -71,6 +71,19 @@
 -->
 	</style>
 	
+	<style name="Widget.NailBar">
+		<item name="min">-100.0</item>
+		<item name="max">+100.0</item>
+		<item name="steps">200</item>
+		<item name="lowSideColor">@color/NailBar_lowSideColor</item>
+		<item name="highSideColor">@color/NailBar_highSideColor</item>
+		<item name="circleColor">@color/NailBar_circleColor</item>
+		<item name="nailColor">@color/NailBar_nailColor</item>
+		<item name="barThickness">2dp</item>
+		<item name="circleRadius">5dp</item>
+		<item name="nailRadius">8dp</item>
+	</style>
+	
 	<style name="Widget.Spinner" parent="@android:style/Widget.Spinner">
 		<item name="android:layout_width">wrap_content</item>
 	   	<item name="android:layout_height">wrap_content</item>

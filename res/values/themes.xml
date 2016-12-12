@@ -13,7 +13,7 @@
 	</style>
 
 	<!-- Application theme. -->
-	<style name="AppTheme" parent="AppBaseTheme">
+	<style name="Theme" parent="AppBaseTheme">
 		<!-- All customizations that are NOT specific to a particular API-level can go here. -->
 		
 		<!-- ColorPicker style -->
@@ -22,6 +22,8 @@
 		<!-- ColorPicker dialog theme -->
 		<item name="colorPickerDialogTheme">?android:style/Theme.Dialog</item>
 		
+		<!-- NailBar style -->
+		<item name="nailBarStyle">@style/Widget.NailBar</item>
 	</style>
 	
 	
