@@ -458,6 +458,68 @@ void Effect::adjustColorBalance(float* const dst, const float* const src, int wi
 	}
 }
 
+void Effect::adjustBrightnessAndContrast(Mat& dst, const Mat& src, float brightness/* = 0.0F */, float contrast/* = 1.0F */)
+{
+	assert(-0.5F <= brightness && brightness <= 0.5F);
+	assert(0.0F <= contrast && contrast < std::numeric_limits<float>::infinity());
+
+	// y = k*x + b, k is contrast, b is brightness.
+	// brightness and contrast interval used to be [-1.0, 1.0].
+	// when contrast = 1.0, tan(pi/2) = +INF, which yields wrong black result.
+	// So contrast should be open interval (-1.0, 1.0).
+//	brightness /= 2.0F;
+//	contrast = std::tan((contrast + 1.0F) * M_PI_4);
+
+	auto brightness_contrast = [&brightness, &contrast](const float& x)
+	{
+		float value;
+		if(brightness < 0.0F)
+			value = x * (1.0F + brightness);  // [0, x]
+		else
+			value = x + ((1.0F - x) * brightness);  // [x, 1]
+
+		value = (value - 0.5F) * contrast + 0.5F;
+		return value;
+	};
+
+	const int depth = src.depth();
+	if(depth == CV_8U)
+	{
+		uint8_t table[256];
+		int threshold = 128;
+		for(int i = 0; i < 256; ++i)
+			table[i] = saturate_cast<uint8_t>(brightness_contrast(i/255.0F) * 256.0F);
+
+		mapColor(dst, src, table);
+	}
+	else if(depth == CV_32F)
+	{
+		if(src.data != dst.data)
+			src.copyTo(dst);
+
+		float* const data = dst.ptr<float>();
+		const int channels = src.channels();
+		const int length = src.rows * src.cols * channels;
+		constexpr float threshold = 0.5F;
+		if(channels >= 4)  // has alpha
+		{
+			#pragma omp parallel for
+			for(int i = 0; i < length; i += 4)
+			{
+				data[i+0] = clamp((data[i+0] - threshold) * contrast + brightness + threshold);
+				data[i+1] = clamp((data[i+1] - threshold) * contrast + brightness + threshold);
+				data[i+2] = clamp((data[i+2] - threshold) * contrast + brightness + threshold);
+			}
+		}
+		else
+			#pragma omp parallel for
+			for(int i = 0; i < length; ++i)
+				data[i] = clamp((data[i] - threshold) * contrast + brightness + threshold);
+	}
+	else
+		assert(false);  // unimplemented branch goes here.
+}
+
 void Effect::adjustGamma(cv::Mat& dst, const cv::Mat& src, float gamma)
 {
 	assert(gamma > 0);

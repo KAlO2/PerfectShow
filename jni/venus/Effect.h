@@ -108,9 +108,21 @@ public:
 	static void adjustColorBalance(float* const dst, const float* const src, int width, int height, const cv::Vec3f config[3], bool preserve_luminosity);
 //	static void adjustColorBalance(uint8_t* const dst, const uint8_t* const src, int width, int height, const cv::Vec3f config[3], bool preserve_luminosity);
 //	static void adjustColorBalance(cv::Mat& dst, const cv::Mat& src, const cv::Vec3f config[3], bool preserve_luminosity);
-	
 	/**
-	 * https://en.wikipedia.org/wiki/Gamma_correction,  In NTSC television recording, γ = 2.2
+	 * Changes the light level and contrast. This operation operates in linear light, 'contrast' is a scale 
+	 * factor around 50% gray, and 'brightness' a constant offset to apply after contrast scaling.
+	 * @param[out] dst       The resulting image, can be the same as input image.
+	 * @param[in] src        The input image to operate on.
+	 * @param[in] brightness Range [-0.5, 0.5], amount to increase brightness, and 0.0 takes no effect.
+	 * @param[in] contrast   Range [0, +INF), slope of a straight Line, scaling bigger than 1.0 get brighten effect, lower than
+	 *                       1.0 get darken effect.
+	 */
+	static void adjustBrightnessAndContrast(cv::Mat& dst, const cv::Mat& src, float brightness = 0.0F, float contrast = 1.0F);
+
+	/**
+	 * <a href="https://en.wikipedia.org/wiki/Gamma_correction">Gamma correction</a> is defined by y = x^gamma.
+	 * gamma = 1 yields a linear output, when gamma < 1, the line arches upward, whereas the opposite occurs 
+	 * when gamma > 1.
 	 *
 	 * @param[out] dst    The resulting image, can be the same as input image.
 	 * @param[in]  src    The input image to operate on.
