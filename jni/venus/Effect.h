@@ -5,12 +5,13 @@
 
 namespace venus {
 
-enum class RangeMode
+enum RangeMode
 {
-	SHADOWS,
-	MIDTONES,
-	HIGHLIGHTS,
+	RANGE_SHADOW,
+	RANGE_MIDTONE,
+	RANGE_HIGHLIGHT,
 };
+
 class Effect
 {
 private:
@@ -19,6 +20,7 @@ private:
 public:
 	static void mapColor(cv::Mat& dst, const cv::Mat&src, const uint8_t table[256]);
 	static void mapColor(cv::Mat& dst, const cv::Mat&src, const uint8_t* mask, const uint8_t table[256]);
+
 	/**
 	 * Tone is a color term commonly used by painters. Toning a bitmap with specified color, it's 
 	 * like mixing the color pixel by pixel, the color resulting in layering a color 
@@ -92,6 +94,11 @@ public:
 	 * The most widely useful method for sharpening an image. The unsharp mask is a sharpening filter that works
 	 * by comparing using the difference of the image and a blurred version of the image.  It is commonly used on
 	 * photographic images, and is provides a much more pleasing result than the standard sharpen.
+	 * @param[out] dst
+	 * @param[in]  src
+	 * @param[in]  radius     Radius of gaussian blur (in pixels > 1.0).
+	 * @param[in]  threshold  Range [0, 255]
+	 * @param[in]  amount     Range [0.0, 1.0], strength of effect.
 	 */
 	static void unsharpMask(cv::Mat& dst, const cv::Mat& src, float radius = 5.0F, int threshold = 0, float amount = 0.5F);
 
@@ -105,9 +112,8 @@ public:
 	 *                    each channel is in range [-1.0, 1.0].
 	 * @param[in] preserve_luminosity
 	 */
-	static void adjustColorBalance(float* const dst, const float* const src, int width, int height, const cv::Vec3f config[3], bool preserve_luminosity);
-//	static void adjustColorBalance(uint8_t* const dst, const uint8_t* const src, int width, int height, const cv::Vec3f config[3], bool preserve_luminosity);
-//	static void adjustColorBalance(cv::Mat& dst, const cv::Mat& src, const cv::Vec3f config[3], bool preserve_luminosity);
+	static void adjustColorBalance(cv::Mat& dst, const cv::Mat& src, const cv::Vec3f config[3], bool preserve_luminosity);
+
 	/**
 	 * Changes the light level and contrast. This operation operates in linear light, 'contrast' is a scale 
 	 * factor around 50% gray, and 'brightness' a constant offset to apply after contrast scaling.
@@ -133,11 +139,21 @@ public:
 
 	/**
 	 * It's the same as @ref adjustGamma(cv::Mat&, const cv::Mat&, float) except that this works on different gamma values for RGB channels.
-	 * It gives a fine-grain control on seperate channels.
+	 * It gives a fine-grain control on separate channels.
 	 *
 	 * @copydoc adjustGamma(cv::Mat&, const cv::Mat&, float)
 	 */
 	static void adjustGamma(cv::Mat& dst, const cv::Mat& src, const cv::Vec3f& gamma);
+
+	/**
+	 * Adjust hue, saturation, and lightness.
+	 *
+	 * @param[in] hue         Range [-0.5, 0.5], which maps to [-180, 180] degree interval.
+	 * @param[in] saturation  Range [ 0.0, 2.0]
+	 * @param[in] lightness   Range [-0.5, 0.5]
+	 */
+	static void adjustHueSaturation(cv::Mat& dst, const cv::Mat& src, float hue = 0.0F, float saturation = 1.0F, float lightness = 0.0F);
+	
 };
 
 } /* namespace venus */

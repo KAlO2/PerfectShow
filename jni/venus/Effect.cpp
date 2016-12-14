@@ -425,37 +425,58 @@ float Effect::mapColorBalance(float value, float lightness, float shadows, float
 	return value;
 }
 
-void Effect::adjustColorBalance(float* const dst, const float* const src, int width, int height, const cv::Vec3f config[3], bool preserve_luminosity)
+void Effect::adjustColorBalance(cv::Mat& dst, const cv::Mat& src, const cv::Vec3f config[3], bool preserve_luminosity)
 {
-	assert(src != nullptr && dst != nullptr);
-	constexpr int SHADOWS    = static_cast<int>(RangeMode::SHADOWS);
-	constexpr int MIDTONES   = static_cast<int>(RangeMode::MIDTONES);
-	constexpr int HIGHLIGHTS = static_cast<int>(RangeMode::HIGHLIGHTS);
+	assert((src.depth() == CV_8U || src.depth() == CV_32F) && src.channels() >= 3);
+	if(src.data != dst.data)
+		dst.create(src.rows, src.cols, src.type());
 
-	for(int i = 0, length = height * width * 4; i < length; i += 4)
+	const int channels = src.channels();
+	const int length = src.rows * src.cols * channels;
+	bool need_cast = src.depth() == CV_8U;
+	Mat _src, _dst;
+	const float* src_data;
+	float* dst_data;
+	if(need_cast)
 	{
-		const float* rgb = src + i;
+		src.convertTo(_src, CV_32F, 1/255.0F);
+		_dst.create(_src.rows, _src.cols, _src.type());
+		dst_data = _dst.ptr<float>();
+		src_data = _src.ptr<float>();
+	}
+	else
+	{
+		dst_data = dst.ptr<float>();
+		src_data = src.ptr<float>();
+	}
+
+	for(int i = 0; i < length; i += channels)
+	{
+		const float* src_rgb = src_data + i;
+		float* dst_rgb = dst_data + i;
+
 		float hsl[3];
-		rgb2hsl(rgb, hsl);
+		rgb2hsl(src_rgb, hsl);
 
 		float& lightness = hsl[2];
-		float* rgb2 = dst + i;
+		
 		for(int k = 0; k < 3; ++k)
-			rgb2[k] = mapColorBalance(rgb[k], lightness, config[SHADOWS][k], config[MIDTONES][k], config[HIGHLIGHTS][k]);
+			dst_rgb[k] = mapColorBalance(src_rgb[k], lightness, config[RANGE_SHADOW][k], config[RANGE_MIDTONE][k], config[RANGE_HIGHLIGHT][k]);
 
 		if(preserve_luminosity)
 		{
 			float hsl2[3];
-			rgb2hsl(rgb2, hsl2);
+			rgb2hsl(dst_rgb, hsl2);
 			hsl2[2] = hsl[2];  // preserve brightness info
-			hsl2rgb(hsl2, rgb2);
+			hsl2rgb(hsl2, dst_rgb);
 		}
 
-		dst[i+3] = src[i+3];  // keep alpha
-
 		for(int k = 0; k < 3; ++k)
-			assert(0 <= dst[k] && dst[k] <= 1);
+			assert(0.0F <= dst_rgb[k] && dst_rgb[k] <= 1.0F);
 	}
+
+	if(need_cast)
+		_dst.convertTo(dst, 255.0F);
 }
 
 void Effect::adjustBrightnessAndContrast(Mat& dst, const Mat& src, float brightness/* = 0.0F */, float contrast/* = 1.0F */)
@@ -486,7 +507,6 @@ void Effect::adjustBrightnessAndContrast(Mat& dst, const Mat& src, float brightn
 	if(depth == CV_8U)
 	{
 		uint8_t table[256];
-		int threshold = 128;
 		for(int i = 0; i < 256; ++i)
 			table[i] = saturate_cast<uint8_t>(brightness_contrast(i/255.0F) * 256.0F);
 
@@ -526,7 +546,7 @@ void Effect::adjustGamma(cv::Mat& dst, const cv::Mat& src, float gamma)
 	gamma = 1/gamma;
 
 	dst.create(src.rows, src.cols, src.type());
-	int depth = src.depth(), channel = src.channels();
+	int depth = src.depth();
 	if(depth == CV_8U)
 	{
 		// build a lookup table mapping the pixel values [0, 255] to their adjusted gamma values
@@ -574,4 +594,65 @@ void Effect::adjustGamma(cv::Mat& dst, const cv::Mat& src, const cv::Vec3f& gamm
 
 	cv::merge(channels, dst);
 }
+
+void Effect::adjustHueSaturation(cv::Mat& dst, const cv::Mat& src, float hue/* = 0.0F */, float saturation/* = 1.0F */, float lightness/* = 0.0F */)
+{
+	assert(-0.5F <= hue && hue <= 0.5F);
+	assert(0.0F <= saturation && saturation <= 2.0F);
+	assert(-0.5F <= lightness && lightness <= 0.5F);
+
+	const int channel = src.channels();
+	const int depth   = src.depth();
+	const int length  = src.rows * src.cols * channel;
+	assert(channel >= 3 && (depth == CV_8U || depth == CV_32F));
+	assert(dst.data != src.data);
+
+	Mat _dst, _src;  // float type storage
+	if(depth == CV_8U)
+		src.convertTo(_src, CV_32F, 1/255.0F);
+	else
+		src.copyTo(_src);
+#if USE_BGRA_LAYOUT
+	const bool has_alpha = channel > 3;
+	cvtColor(_src, _src, has_alpha?CV_BGRA2RGBA:CV_BGR2RGB);
+#endif
+
+	_src.copyTo(_dst);
+	const float* _src_data = _src.ptr<float>();
+	float* _dst_data = _dst.ptr<float>();
+
+	#pragma omp parallel for
+	for(int i = 0; i < length; i += channel)
+	{
+		float hsl[3];
+		rgb2hsl(_src_data + i, hsl);
+
+		// wrap around interval [0, 1], make sure that hue interval length is 1.
+		hsl[0] += hue;
+		if(hsl[0] < 0.0F)
+			hsl[0] += 1.0F;
+		else if(hsl[0] > 1.0F)
+			hsl[0] -= 1.0F;
+
+		hsl[1] *= saturation;
+		hsl[1] = clamp(hsl[1]);
+
+		float v = lightness;
+		if(v < 0.0F)
+			hsl[2] *= (v + 1.0F);
+		else
+			hsl[2] += v * (1.0F - hsl[2]);
+		
+		hsl2rgb(hsl, _dst_data + i);
+	}
+	
+#if USE_BGRA_LAYOUT
+	cvtColor(_dst, _dst, has_alpha?CV_RGBA2BGRA:CV_RGB2BGR);
+#endif
+	if(depth == CV_8U)
+		_dst.convertTo(dst, CV_8U, 255.0F);
+	else
+		_dst.copyTo(dst);
+}
+
 } /* namespace venus */
