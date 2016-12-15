@@ -2,6 +2,7 @@ package com.cloudream.ishow.util;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -16,7 +17,6 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
@@ -24,22 +24,33 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.view.View.MeasureSpec;
+import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
+
+import com.cloudream.ishow.App;
+import com.cloudream.ishow.BuildConfig;
+import com.cloudream.ishow.R;
 
 /**
  * Utility class that deals with operations with an ImageView.
@@ -49,15 +60,12 @@ import javax.microedition.khronos.egl.EGLDisplay;
  */
 public final class BitmapUtils
 {
-
-	static final Rect EMPTY_RECT = new Rect();
-
-	static final RectF EMPTY_RECT_F = new RectF();
-
+	private static final String TAG = BitmapUtils.class.getSimpleName();
+	
 	/**
 	 * Reusable rectangle for general internal usage
 	 */
-	static final RectF RECT = new RectF();
+	private static final Rect EMPTY_RECT = new Rect();
 
 	/**
 	 * Used to know the max texture size allowed to be rendered
@@ -69,6 +77,8 @@ public final class BitmapUtils
 	 */
 	static Pair<String, WeakReference<Bitmap>> mStateBitmap;
 
+	private static final String FORMATS[] = { "jpg", "png", "webp" };
+	
 	public static final BitmapFactory.Options OPTION_RGBA8888 = new BitmapFactory.Options();
 	public static final BitmapFactory.Options OPTION_A8 = new BitmapFactory.Options();
 	static
@@ -84,6 +94,9 @@ public final class BitmapUtils
 		OPTION_A8.inDither = false;
 		OPTION_A8.inMutable = true;
 		OPTION_A8.inPremultiplied = false;
+		
+		if(BuildConfig.DEBUG && FORMATS.length > Bitmap.CompressFormat.values().length)
+			throw new IndexOutOfBoundsException("More image formats need to be added to FORMATS.");
 	}
 	
 	/**
@@ -642,9 +655,6 @@ public final class BitmapUtils
 			}
 		}
 	}
-	// endregion
-
-	// region: Inner class: DecodeBitmapResult
 
 	/**
 	 * The result of
@@ -809,6 +819,81 @@ public final class BitmapUtils
 		return bitmap;
 	}
 
+	public static String getImageSuffix(Bitmap.CompressFormat format)
+	{
+		return FORMATS[format.ordinal()];
+	}
+	
+	public static String saveImage(Context context, Bitmap bitmap, String category, String name,
+			Bitmap.CompressFormat format, int quality)
+	{
+//		String root = Environment.getExternalStorageDirectory().toString();
+		String path = App.getWorkingDirectory();
+		if(category != null)
+			path += File.separator + category;
+		File dir = new File(path);
+		dir.mkdirs();
+		
+		final String suffix = FORMATS[format.ordinal()];
+		String filename = String.format("%s.%s", name, suffix);
+		File file = new File(dir, filename);
+		
+		if(file.exists())  // edge case, unlikely happen
+		{
+			for(int i = 1; i < Integer.MAX_VALUE; ++i)
+			{
+				filename = String.format("%s (%d).%s", name, i, suffix);
+				file = new File(dir, filename);
+				if(!file.exists())
+					break;
+			}
+		}
+		
+		final String full_name = file.getAbsolutePath();
+		
+		try
+		{
+			FileOutputStream out = new FileOutputStream(file);
+			bitmap.compress(format, quality, out);
+		
+			out.flush();
+			out.close();
+			
+			// Whenever adding a file, let Gallery (MediaStore Content Provider) knows.
+			// command: am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///mnt/sdcard/Pictures/XXX.jpg
+			Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file));
+			context.sendBroadcast(intent);
+//			context.getContentResolver().delete(Uri.fromFile(file), null, null);  // if delete a file
+			
+			Toast.makeText(context, context.getString(R.string.image_saved_to, full_name), Toast.LENGTH_LONG).show();
+			Log.d(TAG, "image name: " + filename + ", quality: " + quality);
+		}
+		catch(FileNotFoundException e)
+		{
+			Log.e(TAG, "save image failed with directory: " + full_name);
+			e.printStackTrace();
+		}
+		catch(IOException e)
+		{
+			Log.e(TAG, "save image failed");
+			e.printStackTrace();
+		}
+		
+		return full_name;
+	}
+	
+	public static String saveImage(Context context, Bitmap bitmap, String category,
+			Bitmap.CompressFormat format, int quality)
+	{
+		// generate a unique filename based on time
+		// yyyy-MM-dd HH:mm:ss.SSSZ 1970-01-01 00:00:00.000+0000
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.getDefault());
+//		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));  // TODO take care of time zone?
+		String time = sdf.format(new Date());
+		
+		return saveImage(context, bitmap, category, time, format, quality);
+	}
+	
 	// bilinear interpolation
 	public static int getColor(Bitmap bitmap, float x, float y)
 	{
@@ -883,7 +968,7 @@ public final class BitmapUtils
 	}
 	
 	/**
-	 * It's like BitmapFactory#decodeFile(String, Options), but take EXIF information into account.
+	 * It's like BitmapFactory#decodeFile(String, Options), but takes EXIF information into account.
 	 * 
 	 * @param pathName Complete path name for the file to be decoded.
 	 * @param opts     Image Decoding options.
@@ -934,15 +1019,15 @@ public final class BitmapUtils
 			matrix.setRotate(-90);
 			break;
 		case ExifInterface.ORIENTATION_NORMAL:
-//			return bitmap;  // fall through
+//			return bitmap;
+//			[[fallthrough]];
 		default:
 			return bitmap;
 		}
-		
 
-        Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-        bitmap.recycle();
-        return rotated;
+		Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+		bitmap.recycle();
+		return rotated;
 	}
 	
 	/**

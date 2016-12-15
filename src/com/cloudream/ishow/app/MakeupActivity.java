@@ -30,6 +30,9 @@ import android.support.annotation.FloatRange;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.TimingLogger;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
@@ -254,6 +257,30 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		}
 	};
 
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu)
+	{
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.header, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		switch(item.getItemId())
+		{
+		case R.id.back:
+			onBackPressed();
+			return true;
+		case R.id.save:
+			SettingsActivity.saveImage(this, makeup.getIntermediateImage(), null);
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+	}
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{

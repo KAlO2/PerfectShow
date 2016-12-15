@@ -85,7 +85,7 @@
 	<string name="vibrance">Vibrance</string>
 	<string name="saturation">Saturation</string>
 	<string name="sharpness">Sharpness</string>
-	<string name="brightness">Bright</string>
+	<string name="brightness">Brightness</string>
 	<string name="hue">Hue</string>
 	<string name="lightness">Lightness</string>
 
@@ -147,6 +147,7 @@
 	<string name="change_theme">Change theme</string>
 	<string name="mark">Mark</string>
 	
+	<string name="back">Back</string>
 	<string name="save">Save</string>
 	<string name="image_saved_to">Image saved to %1$s</string>
 	<string name="select_picture">Select picture(s)</string>
