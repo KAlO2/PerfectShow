@@ -153,7 +153,7 @@ public class GPUImageFilterAdjuster
 		@Override
 		public void adjust(final int percentage)
 		{
-			getFilter().setContrast(range(percentage, 0.0F, 2.0F));
+			getFilter().setContrast(range(percentage, -1.0F, 1.0F));
 		}
 	}
 
@@ -171,7 +171,7 @@ public class GPUImageFilterAdjuster
 		@Override
 		public void adjust(final int percentage)
 		{
-			getFilter().setBrightness(range(percentage, -1.0F, 1.0F));
+			getFilter().setBrightness(range(percentage, -0.5F, 0.5F));
 		}
 	}
 

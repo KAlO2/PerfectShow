@@ -6,11 +6,11 @@ import com.cloudream.ishow.gpuimage.GPUImageFilterType;
 import android.opengl.GLES20;
 
 /**
- * brightness value ranges from -1.0 to 1.0, with 0.0 as the normal level
+ * brightness value ranges from -0.5 to 0.5, with 0.0 as the normal level.
  */
 public class GPUImageBrightnessFilter extends GPUImageFilter
 {
-	private static final String FRAGMENT_SHADER = "" +
+	private static final String FRAGMENT_SHADER = 
 			"varying highp vec2 textureCoordinate;\n" +
 			"\n" +
 			"uniform sampler2D inputImageTexture;\n" +
@@ -18,11 +18,17 @@ public class GPUImageBrightnessFilter extends GPUImageFilter
 			"\n" +
 			"void main()\n" +
 			"{\n" +
-			"	lowp vec4 textureColor = texture2D(inputImageTexture, textureCoordinate);\n" +
+			"	lowp vec4 color = texture2D(inputImageTexture, textureCoordinate);\n" +
 			"	\n" +
-			"	gl_FragColor = vec4((textureColor.rgb + vec3(brightness)), textureColor.w);\n" +
+			"	lowp vec3 value;\n" +
+			"	if(brightness < 0.0)\n" +
+			"		value = color.rgb * (1.0 + brightness);\n" +
+			"	else\n" +
+			"		value = color.rgb + (vec3(1.0) - color.rgb) * brightness;\n" +
+			"	\n" +
+			"	gl_FragColor = vec4(value, color.w);\n" +
 			"}";
-
+	
 	private int mBrightnessLocation;
 	private float mBrightness;
 

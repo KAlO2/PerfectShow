@@ -20,9 +20,9 @@ public class GPUImageContrastFilter extends GPUImageFilter
 			"\n" + 
 			"void main()\n" + 
 			"{\n" + 
-			"	lowp vec4 textureColor = texture2D(inputImageTexture, textureCoordinate);\n" + 
+			"	lowp vec4 color = texture2D(inputImageTexture, textureCoordinate);\n" + 
 			"	\n" + 
-			"	gl_FragColor = vec4(((textureColor.rgb - vec3(0.5)) * contrast + vec3(0.5)), textureColor.w);\n" + 
+			"	gl_FragColor = vec4(((color.rgb - vec3(0.5)) * contrast + vec3(0.5)), color.w);\n" + 
 			"}";
 
 	private int mContrastLocation;
@@ -30,13 +30,13 @@ public class GPUImageContrastFilter extends GPUImageFilter
 
 	public GPUImageContrastFilter()
 	{
-		this(1.2F);
+		this(0.0F);
 	}
 
 	public GPUImageContrastFilter(float contrast)
 	{
 		super(GPUImageFilterType.CONTRAST, NO_FILTER_VERTEX_SHADER, CONTRAST_FRAGMENT_SHADER);
-		mContrast = contrast;
+		mContrast = map(contrast);
 	}
 
 	@Override
@@ -53,9 +53,19 @@ public class GPUImageContrastFilter extends GPUImageFilter
 		setContrast(mContrast);
 	}
 
+	/**
+	 * mapping value from [-1.0, 1.0) to [0, +INF), to make the slop is uniform.
+	 * @param x input value.
+	 * @return mapped value.
+	 */
+	private static float map(float x)
+	{
+		return (float)Math.tan((x + 1)*Math.PI/4);
+	}
+	
 	public void setContrast(final float contrast)
 	{
-		mContrast = contrast;
+		mContrast = map(contrast);
 		setFloat(mContrastLocation, mContrast);
 	}
 }

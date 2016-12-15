@@ -197,7 +197,7 @@ public class GPUImageFilterTools
 		case HUE:
 			return new GPUImageHueFilter(90.0F);
 		case BRIGHTNESS:
-			return new GPUImageBrightnessFilter(1.5F);
+			return new GPUImageBrightnessFilter();
 		case GRAYSCALE:
 			return new GPUImageGrayscaleFilter();
 		case SEPIA:
