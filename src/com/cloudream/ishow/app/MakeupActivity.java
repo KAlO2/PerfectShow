@@ -141,7 +141,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 			textures = dodgeArrayAllocation(textures, R.drawable.eye_lash_00 + index);
 			break;
 		case EYE_BROW:
-			textures = dodgeArrayAllocation(textures, R.drawable.eye_brow_00 + index);
+			textures = dodgeArrayAllocation(textures, R.drawable.eye_brow_mask_00 + index);
 			break;
 		case BLUSH:
 			textures = dodgeArrayAllocation(textures, index);
