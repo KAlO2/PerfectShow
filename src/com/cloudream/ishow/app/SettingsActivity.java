@@ -1,5 +1,6 @@
 package com.cloudream.ishow.app;
 
+import java.io.File;
 import java.util.List;
 import com.cloudream.ishow.R;
 import com.cloudream.ishow.util.BitmapUtils;
@@ -77,9 +78,17 @@ public class SettingsActivity extends PreferenceActivity
 		return new Pair<Bitmap.CompressFormat, Integer>(compress_format, image_quality);
 	}
 	
-	public static String saveImage(Context context, @NonNull Bitmap bitmap, @Nullable String category)
+	/**
+	 * Save bitmap into file.
+	 * @param context
+	 * @param bitmap    the bitmap to be saved.
+	 * @param file      if null, generate a filename according to the current time.
+	 * @param category  sub-directory
+	 * @return full path of the saved image, or null if save operation failed for some reason.
+	 */
+	public static String saveImage(Context context, @NonNull Bitmap bitmap, @Nullable File file, String category)
 	{
-		Pair<Bitmap.CompressFormat, Integer> pair = getFormatAndQuality(context);
+		Pair<Bitmap.CompressFormat, Integer> pair = SettingsActivity.getFormatAndQuality(context);
 		Bitmap.CompressFormat format = pair.first;
 		int quality = pair.second;
 		
@@ -87,7 +96,21 @@ public class SettingsActivity extends PreferenceActivity
 		if(TEMP_DIR.equals(category))
 			format = Bitmap.CompressFormat.PNG;
 		
-		return BitmapUtils.saveImage(context, bitmap, category, format, quality);
+		if(file == null)
+		{
+			String name = BitmapUtils.createUniversalFilename();
+			file = BitmapUtils.createImageFile(name, category, format);
+		}
+		
+		if(BitmapUtils.saveImage(bitmap, file, format, quality))
+			return file.getAbsolutePath();
+		else
+			return null;
+	}
+	
+	public static String saveImage(Context context, @NonNull Bitmap bitmap, String category)
+	{
+		return saveImage(context, bitmap, null, category);
 	}
 
 }

@@ -5,28 +5,28 @@ public class TextureRotationUtil {
 	public static final float TEXCOORD_ARRAY[][] =
 	{
 		{	// Surface.ROTATION_0
-			0.0f, 1.0f,
-			1.0f, 1.0f,
-			0.0f, 0.0f,
-			1.0f, 0.0f,
+			0.0F, 1.0F,
+			1.0F, 1.0F,
+			0.0F, 0.0F,
+			1.0F, 0.0F,
 		},
 		{	// Surface.ROTATION_90
-			1.0f, 1.0f,
-			1.0f, 0.0f,
-			0.0f, 1.0f,
-			0.0f, 0.0f,
+			1.0F, 1.0F,
+			1.0F, 0.0F,
+			0.0F, 1.0F,
+			0.0F, 0.0F,
 		},
 		{	// Surface.ROTATION_180
-			1.0f, 0.0f,
-			0.0f, 0.0f,
-			1.0f, 1.0f,
-			0.0f, 1.0f,
+			1.0F, 0.0F,
+			0.0F, 0.0F,
+			1.0F, 1.0F,
+			0.0F, 1.0F,
 		},
 		{	// Surface.ROTATION_270
-			0.0f, 0.0f,
-			0.0f, 1.0f,
-			1.0f, 0.0f,
-			1.0f, 1.0f,
+			0.0F, 0.0F,
+			0.0F, 1.0F,
+			1.0F, 0.0F,
+			1.0F, 1.0F,
 		}
 	};
 
@@ -42,6 +42,13 @@ public class TextureRotationUtil {
 	{
 	}
 
+	/**
+	 * 
+	 * @param rotation
+	 * @param flipHorizontal
+	 * @param flipVertical
+	 * @return
+	 */
 	public static float[] getRotation(final int rotation, final boolean flipHorizontal, final boolean flipVertical)
 	{
 		float[] rotatedTex = TEXCOORD_ARRAY[rotation];
@@ -69,11 +76,8 @@ public class TextureRotationUtil {
 		return rotatedTex;
 	}
 
-	private static float flip(final float i)
+	private static float flip(final float x)
 	{
-		if(i == 0.0F)
-			return 1.0F;
-		
-		return 0.0F;
+		return 1.0F - x;
 	}
 }

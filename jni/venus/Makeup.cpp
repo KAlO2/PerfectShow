@@ -347,7 +347,7 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 
 		Mat roi = dst(_rect);
 		if(roi.channels() == 4)
-			cv::cvtColor(roi, roi, CV_BGRA2BGR);  // CV_RGBA2RGB
+			cv::cvtColor(roi, roi, CV_RGBA2RGB);  // or CV_BGRA2BGR, strip alpha.
 
 		Mat submask = Feature::createMask(polygon);  // TODO 4 seems fine.
 		Mat mask(_rect.height, _rect.width, CV_8UC1, Scalar::all(0));
@@ -369,7 +369,7 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 		}
 
 		Vec2f scale(static_cast<float>(rect.width) / makeup_rect.width,
-		            static_cast<float>(rect.height) / makeup_rect.height);
+		            static_cast<float>(rect.height)/ makeup_rect.height);
 		Size target_size = makeup_rect.size();
 		Point2f target_center = makeup_center;
 		Mat affine = Region::transform(target_size, target_center, angle, scale);

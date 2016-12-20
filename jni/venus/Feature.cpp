@@ -872,13 +872,12 @@ std::vector<cv::Point2f> Feature::calculateBrowPolygon(const std::vector<cv::Poi
 		  _.-`          |      |          `-._
 	right 22--23--24--25`      `26--31--30--29  left
 */
-#if 0  // not so good
+#if 0  // not precise branch
 	const int start = right ? 20:26, length = 6;
 	std::vector<Point2f> polygon(length);
 
 	for(int i = 0; i < length; ++i)
 		polygon[i] = points[start + i];
-	
 #else
 	const Point2f& _20 = points[right ? 20:27];
 	const Point2f& _21 = points[right ? 21:28];
@@ -890,25 +889,25 @@ std::vector<cv::Point2f> Feature::calculateBrowPolygon(const std::vector<cv::Poi
 
 	std::vector<Point2f> polygon;
 	polygon.push_back(_20);
-	polygon.push_back(catmullRomSpline(0.25f, _25, _20, _21, _22));
-	polygon.push_back(catmullRomSpline(0.50f, _25, _20, _21, _22));
-	polygon.push_back(catmullRomSpline(0.75f, _25, _20, _21, _22));
+	polygon.push_back(catmullRomSpline(0.25F, _25, _20, _21, _22));
+	polygon.push_back(catmullRomSpline(0.50F, _25, _20, _21, _22));
+	polygon.push_back(catmullRomSpline(0.75F, _25, _20, _21, _22));
 	polygon.push_back(_21);
 
-	polygon.push_back(catmullRomSpline(0.25f, _20, _21, _22, _00));
-	polygon.push_back(catmullRomSpline(0.50f, _20, _21, _22, _00));
-	polygon.push_back(catmullRomSpline(0.75f, _20, _21, _22, _00));
+	polygon.push_back(catmullRomSpline(0.25F, _20, _21, _22, _00));
+	polygon.push_back(catmullRomSpline(0.50F, _20, _21, _22, _00));
+	polygon.push_back(catmullRomSpline(0.75F, _20, _21, _22, _00));
 	polygon.push_back(_22);
 	polygon.push_back(_23);
 
-//	polygon.push_back(catmullRomSpline(0.50f, _22, _23, _24, _25));
+//	polygon.push_back(catmullRomSpline(0.50F, _22, _23, _24, _25));
 	polygon.push_back(_24);
 	polygon.push_back(_25);
 
 	Point2f diff = _25 - _21;
 	float r = std::sqrt(diff.x * diff.x + diff.y * diff.y);
 	diff /= r;
-	r = distance(_24, _25) * 0.81f;  // 0.81 is OK
+	r = distance(_24, _25) * 0.81F;  // 0.81 seemes fine.
 	polygon.push_back(_20 + r * diff);
 
 #endif

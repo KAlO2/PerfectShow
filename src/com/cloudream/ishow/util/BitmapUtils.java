@@ -2,7 +2,6 @@ package com.cloudream.ishow.util;
 
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -24,12 +23,9 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.view.View.MeasureSpec;
-import android.widget.Toast;
-
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
@@ -39,18 +35,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import javax.microedition.khronos.egl.EGL10;
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.egl.EGLContext;
-import javax.microedition.khronos.egl.EGLDisplay;
-
 import com.cloudream.ishow.App;
 import com.cloudream.ishow.BuildConfig;
-import com.cloudream.ishow.R;
+import com.cloudream.ishow.gpuimage.OpenGLUtils;
 
 /**
  * Utility class that deals with operations with an ImageView.
@@ -70,12 +62,12 @@ public final class BitmapUtils
 	/**
 	 * Used to know the max texture size allowed to be rendered
 	 */
-	static int mMaxTextureSize;
+	private static int mMaxTextureSize = 0;
 
 	/**
 	 * used to save bitmaps during state save and restore so not to reload them.
 	 */
-	static Pair<String, WeakReference<Bitmap>> mStateBitmap;
+	private static Pair<String, WeakReference<Bitmap>> mStateBitmap;
 
 	private static final String FORMATS[] = { "jpg", "png", "webp" };
 	
@@ -98,6 +90,11 @@ public final class BitmapUtils
 		if(BuildConfig.DEBUG && FORMATS.length > Bitmap.CompressFormat.values().length)
 			throw new IndexOutOfBoundsException("More image formats need to be added to FORMATS.");
 	}
+	
+	/**
+	 * static-methods-only (utility) class
+	 */
+	private BitmapUtils(){}
 	
 	/**
 	 * Rotate the given image by reading the EXIF value of the image (URI).<br>
@@ -162,7 +159,7 @@ public final class BitmapUtils
 
 			// Calculate inSampleSize
 			options.inSampleSize = Math.max(
-					calculateInSampleSizeByReqestedSize(options.outWidth, options.outHeight, reqWidth, reqHeight),
+					calculateInSampleSize(options.outWidth, options.outHeight, reqWidth, reqHeight),
 					calculateInSampleSizeByMaxTextureSize(options.outWidth, options.outHeight));
 
 			// Decode bitmap with inSampleSize set
@@ -231,17 +228,10 @@ public final class BitmapUtils
 
 		int width = reqWidth > 0 ? reqWidth : rect.width();
 		int height = reqHeight > 0 ? reqHeight : rect.height();
-
-		Bitmap result = null;
-		try
-		{
-			// decode only the required image from URI, optionally sub-sampling if
-			// reqWidth/reqHeight is given.
-			result = decodeSampledBitmapRegion(context, loadedImageUri, rect, width, height);
-		}
-		catch(Exception e)
-		{
-		}
+	
+		// decode only the required image from URI, optionally sub-sampling if
+		// reqWidth/reqHeight is given.
+		Bitmap result = decodeSampledBitmapRegion(context, loadedImageUri, rect, width, height);
 
 		if(result != null)
 		{
@@ -251,11 +241,10 @@ public final class BitmapUtils
 			// rotating by 0, 90, 180 or 270 degrees doesn't require extra cropping
 			if(degreesRotated % 90 != 0)
 			{
-
-				// extra crop because non rectengular crop cannot be done directly on the image
+				// extra crop because non rectangular crop cannot be done directly on the image
 				// without rotating first
-				result = cropForRotatedImage(result, points, rect, degreesRotated, fixAspectRatio, aspectRatioX,
-						aspectRatioY);
+				result = cropForRotatedImage(result, points, rect, degreesRotated, fixAspectRatio,
+						aspectRatioX, aspectRatioY);
 			}
 		}
 		else
@@ -265,7 +254,7 @@ public final class BitmapUtils
 			try
 			{
 				BitmapFactory.Options options = new BitmapFactory.Options();
-				options.inSampleSize = calculateInSampleSizeByReqestedSize(rect.width(), rect.height(), reqWidth,
+				options.inSampleSize = calculateInSampleSize(rect.width(), rect.height(), reqWidth,
 						reqHeight);
 
 				Bitmap fullBitmap = decodeImage(context.getContentResolver(), loadedImageUri, options);
@@ -407,8 +396,7 @@ public final class BitmapUtils
 		try
 		{
 			BitmapFactory.Options options = new BitmapFactory.Options();
-			options.inSampleSize = calculateInSampleSizeByReqestedSize(rect.width(), rect.height(), reqWidth,
-					reqHeight);
+			options.inSampleSize = calculateInSampleSize(rect.width(), rect.height(), reqWidth, reqHeight);
 
 			stream = context.getContentResolver().openInputStream(uri);
 			decoder = BitmapRegionDecoder.newInstance(stream, false);
@@ -482,32 +470,14 @@ public final class BitmapUtils
 
 	/**
 	 * Calculate the largest inSampleSize value that is a power of 2 and keeps both height and width
-	 * larger than the requested height and width.
-	 */
-	private static int calculateInSampleSizeByReqestedSize(int width, int height, int reqWidth, int reqHeight)
-	{
-		int inSampleSize = 1;
-		if(height > reqHeight || width > reqWidth)
-		{
-			while((height / 2 / inSampleSize) > reqHeight && (width / 2 / inSampleSize) > reqWidth)
-			{
-				inSampleSize *= 2;
-			}
-		}
-		return inSampleSize;
-	}
-
-	/**
-	 * Calculate the largest inSampleSize value that is a power of 2 and keeps both height and width
 	 * smaller than max texture size allowed for the device.
 	 */
 	private static int calculateInSampleSizeByMaxTextureSize(int width, int height)
 	{
 		int inSampleSize = 1;
 		if(mMaxTextureSize == 0)
-		{
-			mMaxTextureSize = getMaxTextureSize();
-		}
+			mMaxTextureSize = OpenGLUtils.getMaxTextureSize();
+		
 		if(mMaxTextureSize > 0)
 		{
 			while((height / inSampleSize) > mMaxTextureSize || (width / inSampleSize) > mMaxTextureSize)
@@ -524,7 +494,6 @@ public final class BitmapUtils
 	 */
 	private static File getFileFromUri(Context context, Uri uri)
 	{
-
 		// first try by direct path
 		File file = new File(uri.getPath());
 		if(file.exists())
@@ -536,8 +505,7 @@ public final class BitmapUtils
 		Cursor cursor = null;
 		try
 		{
-			String[] proj =
-			{ MediaStore.Images.Media.DATA };
+			String[] proj = { MediaStore.Images.Media.DATA };
 			cursor = context.getContentResolver().query(uri, proj, null, null, null);
 			int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
 			cursor.moveToFirst();
@@ -549,10 +517,7 @@ public final class BitmapUtils
 		}
 		finally
 		{
-			if(cursor != null)
-			{
-				cursor.close();
-			}
+			closeSafe(cursor);
 		}
 
 		return file;
@@ -582,61 +547,6 @@ public final class BitmapUtils
 	}
 
 	/**
-	 * Get the max size of bitmap allowed to be rendered on the device.<br>
-	 * http://stackoverflow.com/questions/7428996/hw-accelerated-activity-how-to-get-opengl-texture-size-limit.
-	 */
-	private static int getMaxTextureSize()
-	{
-		// Safe minimum default size
-		final int IMAGE_MAX_BITMAP_DIMENSION = 2048;
-
-		try
-		{
-			// Get EGL Display
-			EGL10 egl = (EGL10) EGLContext.getEGL();
-			EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
-
-			// Initialize
-			int[] version = new int[2];
-			egl.eglInitialize(display, version);
-
-			// Query total number of configurations
-			int[] totalConfigurations = new int[1];
-			egl.eglGetConfigs(display, null, 0, totalConfigurations);
-
-			// Query actual list configurations
-			EGLConfig[] configurationsList = new EGLConfig[totalConfigurations[0]];
-			egl.eglGetConfigs(display, configurationsList, totalConfigurations[0], totalConfigurations);
-
-			int[] textureSize = new int[1];
-			int maximumTextureSize = 0;
-
-			// Iterate through all the configurations to located the maximum texture size
-			for(int i = 0; i < totalConfigurations[0]; i++)
-			{
-				// Only need to check for width since opengl textures are always squared
-				egl.eglGetConfigAttrib(display, configurationsList[i], EGL10.EGL_MAX_PBUFFER_WIDTH, textureSize);
-
-				// Keep track of the maximum texture size
-				if(maximumTextureSize < textureSize[0])
-				{
-					maximumTextureSize = textureSize[0];
-				}
-			}
-
-			// Release
-			egl.eglTerminate(display);
-
-			// Return largest texture size found, or default
-			return Math.max(maximumTextureSize, IMAGE_MAX_BITMAP_DIMENSION);
-		}
-		catch(Exception e)
-		{
-			return IMAGE_MAX_BITMAP_DIMENSION;
-		}
-	}
-
-	/**
 	 * Close the given closeable object (Stream) in a safe way: check if it is null and catch-log
 	 * exception thrown.
 	 *
@@ -644,15 +554,15 @@ public final class BitmapUtils
 	 */
 	private static void closeSafe(Closeable closeable)
 	{
-		if(closeable != null)
+		if(closeable == null)
+			return;
+	
+		try
 		{
-			try
-			{
-				closeable.close();
-			}
-			catch(IOException ignored)
-			{
-			}
+			closeable.close();
+		}
+		catch(IOException ignored)
+		{
 		}
 	}
 
@@ -700,11 +610,12 @@ public final class BitmapUtils
 		return result;
 	}
 
-	private static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight)
+	/**
+	 * Calculate the largest inSampleSize value that is a power of 2 and keeps both height and width
+	 * larger than the requested height and width.
+	 */
+	private static int calculateInSampleSize(int height, int width, int reqWidth, int reqHeight)
 	{
-		// Raw height and width of image
-		final int height = options.outHeight;
-		final int width = options.outWidth;
 		int inSampleSize = 1;
 
 		if(height > reqHeight || width > reqWidth)
@@ -717,8 +628,7 @@ public final class BitmapUtils
 			while((halfHeight / inSampleSize) > reqHeight && (halfWidth / inSampleSize) > reqWidth)
 			{
 				// Note: A power of two value is calculated because the decoder uses a final value
-				// by rounding down to the nearest power of two, as per the inSampleSize
-				// documentation.
+				// by rounding down to the nearest power of two, as per the inSampleSize documentation.
 				inSampleSize *= 2;
 			}
 		}
@@ -735,7 +645,7 @@ public final class BitmapUtils
 		BitmapFactory.decodeResource(res, resId, options);
 
 		// Calculate inSampleSize
-		options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+		options.inSampleSize = calculateInSampleSize(options.outWidth, options.outHeight, reqWidth, reqHeight);
 
 		// Decode bitmap with inSampleSize set
 		options.inJustDecodeBounds = false;
@@ -747,11 +657,10 @@ public final class BitmapUtils
 		// First decode with inJustDecodeBounds = true to check dimensions
 		final BitmapFactory.Options options = new BitmapFactory.Options();
 		options.inJustDecodeBounds = true;
-		Bitmap bitmap = BitmapFactory.decodeFile(filename, options);
-		// here bitmap is null
+		BitmapFactory.decodeFile(filename, options);
 
 		// Calculate inSampleSize
-		options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+		options.inSampleSize = calculateInSampleSize(options.outWidth, options.outHeight, reqWidth, reqHeight);
 
 		// Decode bitmap with inSampleSize set
 		options.inJustDecodeBounds = false;
@@ -824,8 +733,64 @@ public final class BitmapUtils
 		return FORMATS[format.ordinal()];
 	}
 	
-	public static String saveImage(Context context, Bitmap bitmap, String category, String name,
-			Bitmap.CompressFormat format, int quality)
+	public static boolean saveImage(Bitmap bitmap, File file, Bitmap.CompressFormat format, int quality)
+	{
+		try
+		{
+			FileOutputStream out = new FileOutputStream(file);
+			bitmap.compress(format, quality, out);
+//			bitmap.recycle();
+			out.flush();
+			out.close();
+		}
+		catch(FileNotFoundException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		
+		return true;
+	}
+	
+	public static Bitmap getBitmapFromUri(Context context, final Uri uri, BitmapFactory.Options options)
+	{
+//		Uri uri = data.getData();
+		String scheme = uri.getScheme();
+		InputStream inputStream = null;
+		try
+		{
+			if(scheme != null && (scheme.startsWith("http") || scheme.startsWith("https")))
+				inputStream = new URL(uri.toString()).openStream();
+			else
+				inputStream = context.getContentResolver().openInputStream(uri);
+		}
+		catch(IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+//		if(inputStream == null)  return null;  // this is handled in decodeStream()
+		return BitmapFactory.decodeStream(inputStream, null, options);
+	}
+	
+	public static synchronized String createUniversalFilename()
+	{
+		// generate a unique filename based on time
+		// yyyy-MM-dd HH:mm:ss.SSSZ 1970-01-01 00:00:00.000+0000
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.getDefault());
+//		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));  // TODO take care of time zone?
+		String time = sdf.format(new Date());
+		
+		return time;
+	}
+	
+	public static synchronized File createImageFile(String name, String category, Bitmap.CompressFormat format)
 	{
 //		String root = Environment.getExternalStorageDirectory().toString();
 		String path = App.getWorkingDirectory();
@@ -835,63 +800,21 @@ public final class BitmapUtils
 		dir.mkdirs();
 		
 		final String suffix = FORMATS[format.ordinal()];
-		String filename = String.format("%s.%s", name, suffix);
+		String filename = String.format("IMG_%s.%s", name, suffix);
 		File file = new File(dir, filename);
 		
 		if(file.exists())  // edge case, unlikely happen
 		{
 			for(int i = 1; i < Integer.MAX_VALUE; ++i)
 			{
-				filename = String.format("%s (%d).%s", name, i, suffix);
+				filename = String.format("IMG_%s (%d).%s", name, i, suffix);
 				file = new File(dir, filename);
 				if(!file.exists())
 					break;
 			}
 		}
 		
-		final String full_name = file.getAbsolutePath();
-		
-		try
-		{
-			FileOutputStream out = new FileOutputStream(file);
-			bitmap.compress(format, quality, out);
-		
-			out.flush();
-			out.close();
-			
-			// Whenever adding a file, let Gallery (MediaStore Content Provider) knows.
-			// command: am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///mnt/sdcard/Pictures/XXX.jpg
-			Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file));
-			context.sendBroadcast(intent);
-//			context.getContentResolver().delete(Uri.fromFile(file), null, null);  // if delete a file
-			
-			Toast.makeText(context, context.getString(R.string.image_saved_to, full_name), Toast.LENGTH_LONG).show();
-			Log.d(TAG, "image name: " + filename + ", quality: " + quality);
-		}
-		catch(FileNotFoundException e)
-		{
-			Log.e(TAG, "save image failed with directory: " + full_name);
-			e.printStackTrace();
-		}
-		catch(IOException e)
-		{
-			Log.e(TAG, "save image failed");
-			e.printStackTrace();
-		}
-		
-		return full_name;
-	}
-	
-	public static String saveImage(Context context, Bitmap bitmap, String category,
-			Bitmap.CompressFormat format, int quality)
-	{
-		// generate a unique filename based on time
-		// yyyy-MM-dd HH:mm:ss.SSSZ 1970-01-01 00:00:00.000+0000
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.getDefault());
-//		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));  // TODO take care of time zone?
-		String time = sdf.format(new Date());
-		
-		return saveImage(context, bitmap, category, time, format, quality);
+		return file;
 	}
 	
 	// bilinear interpolation
@@ -899,8 +822,6 @@ public final class BitmapUtils
 	{
 		assert (0 <= x && x < bitmap.getWidth());
 		assert (0 <= y && y < bitmap.getHeight());
-		// if(color == null || color.length < 3)
-		// throw new IllegalArgumentException("color should be RGB");
 
 		int x0 = (int) x;
 		int y0 = (int) y;
@@ -976,22 +897,39 @@ public final class BitmapUtils
 	 * 
 	 * @see BitmapFactory#decodeFile(String, Options)
 	 */
-	public static Bitmap decodeFile(String pathName, @Nullable Options opts)
+	public static Bitmap decodeFile(@NonNull String pathName, @Nullable Options opts)
 	{
 		Bitmap bitmap = BitmapFactory.decodeFile(pathName, opts);
-		int orientation = ExifInterface.ORIENTATION_UNDEFINED;
 		
+		final String lowerPathName = pathName.toLowerCase();
+		boolean isJPEG = lowerPathName.endsWith(".jpg") || lowerPathName.endsWith(".jpeg");
+		if(isJPEG)
+		{
+			Matrix matrix = getOrientationFromJPEGFile(pathName);
+			Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+			
+			bitmap.recycle();
+			return rotated;
+		}
+		
+		return bitmap;
+	}
+	
+	public static Matrix getOrientationFromJPEGFile(String path)
+	{
+		int orientation = ExifInterface.ORIENTATION_UNDEFINED;
+		Matrix matrix = new Matrix();  // identity matrix
 		try
 		{
-			ExifInterface exif = new ExifInterface(pathName);
+			ExifInterface exif = new ExifInterface(path);
 			orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED); 
 		}
 		catch(IOException e)
 		{
 			e.printStackTrace();
+			return matrix;
 		}
 		
-		Matrix matrix = new Matrix();
 		switch (orientation)
 		{
 		case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
@@ -1022,12 +960,10 @@ public final class BitmapUtils
 //			return bitmap;
 //			[[fallthrough]];
 		default:
-			return bitmap;
+			break;
 		}
-
-		Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-		bitmap.recycle();
-		return rotated;
+		
+		return matrix;
 	}
 	
 	/**

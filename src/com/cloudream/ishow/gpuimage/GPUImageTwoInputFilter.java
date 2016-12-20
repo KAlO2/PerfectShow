@@ -48,21 +48,9 @@ public class GPUImageTwoInputFilter extends GPUImageFilter
 		super.onInit();
 
 		mFilterSecondTextureCoordinateAttribute = GLES20.glGetAttribLocation(getProgram(), "inputTextureCoordinate2");
-		mFilterInputTextureUniform2 = GLES20.glGetUniformLocation(getProgram(), "inputImageTexture2"); // This
-																										// does
-																										// assume
-																										// a
-																										// name
-																										// of
-																										// "inputImageTexture2"
-																										// for
-																										// second
-																										// input
-																										// texture
-																										// in
-																										// the
-																										// fragment
-																										// shader
+		
+		// This does assume a name of "inputImageTexture2" for second input texture in the fragment shader
+		mFilterInputTextureUniform2 = GLES20.glGetUniformLocation(getProgram(), "inputImageTexture2");
 		GLES20.glEnableVertexAttribArray(mFilterSecondTextureCoordinateAttribute);
 
 		if(mBitmap != null && !mBitmap.isRecycled())
@@ -73,15 +61,10 @@ public class GPUImageTwoInputFilter extends GPUImageFilter
 
 	public void setBitmap(final Bitmap bitmap)
 	{
-		if(bitmap != null && bitmap.isRecycled())
-		{
+		if(bitmap == null || bitmap.isRecycled())
 			return;
-		}
+		
 		mBitmap = bitmap;
-		if(mBitmap == null)
-		{
-			return;
-		}
 		runOnDraw(new Runnable()
 		{
 			public void run()
@@ -116,8 +99,7 @@ public class GPUImageTwoInputFilter extends GPUImageFilter
 	public void onDestroy()
 	{
 		super.onDestroy();
-		GLES20.glDeleteTextures(1, new int[]
-		{ mFilterSourceTexture2 }, 0);
+		GLES20.glDeleteTextures(1, new int[]{ mFilterSourceTexture2 }, 0);
 		mFilterSourceTexture2 = OpenGLUtils.NO_TEXTURE;
 	}
 

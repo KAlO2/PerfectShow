@@ -37,7 +37,7 @@ import android.util.Log;
 
 public class PixelBuffer
 {
-	private final static String TAG = "PixelBuffer";
+	private static final String TAG = PixelBuffer.class.getSimpleName();
 	final static boolean LIST_CONFIGS = false;
 
 	GLSurfaceView.Renderer mRenderer; // borrow this interface
@@ -60,8 +60,7 @@ public class PixelBuffer
 		mHeight = height;
 
 		int[] version = new int[2];
-		int[] attribList = new int[]
-		{ EGL_WIDTH, mWidth, EGL_HEIGHT, mHeight, EGL_NONE };
+		int[] attribList = new int[]{ EGL_WIDTH, mWidth, EGL_HEIGHT, mHeight, EGL_NONE };
 
 		// No error checking performed, minimum required code to elucidate logic
 		mEGL = (EGL10) EGLContext.getEGL();
@@ -72,8 +71,7 @@ public class PixelBuffer
 		// mEGLContext = mEGL.eglCreateContext(mEGLDisplay, mEGLConfig,
 		// EGL_NO_CONTEXT, null);
 		int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
-		int[] attrib_list =
-		{ EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE };
+		int[] attrib_list = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE };
 		mEGLContext = mEGL.eglCreateContext(mEGLDisplay, mEGLConfig, EGL_NO_CONTEXT, attrib_list);
 
 		mEGLSurface = mEGL.eglCreatePbufferSurface(mEGLDisplay, mEGLConfig, attribList);

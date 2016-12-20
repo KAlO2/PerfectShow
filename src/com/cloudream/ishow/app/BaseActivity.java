@@ -15,7 +15,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
 import android.util.TypedValue;
 
-public class BaseActivity extends Activity
+class BaseActivity extends Activity
 {
 	protected final int PERMISSION_READ_EXTERNAL_STORAGE = 1;
 	protected final int PERMISSION_WRITE_EXTERNAL_STORAGE = 2;

@@ -42,7 +42,6 @@ public class GPUImageFilterGroup extends GPUImageFilter
 	 */
 	public GPUImageFilterGroup(List<GPUImageFilter> filters)
 	{
-		super();
 		mFilters = filters;
 		if(mFilters == null)
 		{
@@ -78,11 +77,6 @@ public class GPUImageFilterGroup extends GPUImageFilter
 		updateMergedFilters();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see jp.co.cyberagent.android.gpuimage.GPUImageFilter#onInit()
-	 */
 	@Override
 	public void onInit()
 	{
@@ -93,11 +87,6 @@ public class GPUImageFilterGroup extends GPUImageFilter
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see jp.co.cyberagent.android.gpuimage.GPUImageFilter#onDestroy()
-	 */
 	@Override
 	public void onDestroy()
 	{
@@ -123,11 +112,6 @@ public class GPUImageFilterGroup extends GPUImageFilter
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see jp.co.cyberagent.android.gpuimage.GPUImageFilter#onOutputSizeChanged(int, int)
-	 */
 	@Override
 	public void onOutputSizeChanged(final int width, final int height)
 	{
@@ -171,12 +155,6 @@ public class GPUImageFilterGroup extends GPUImageFilter
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see jp.co.cyberagent.android.gpuimage.GPUImageFilter#onDraw(int, java.nio.FloatBuffer,
-	 * java.nio.FloatBuffer)
-	 */
 	@SuppressLint("WrongCall")
 	@Override
 	public void onDraw(final int textureId, final FloatBuffer cubeBuffer, final FloatBuffer textureBuffer)

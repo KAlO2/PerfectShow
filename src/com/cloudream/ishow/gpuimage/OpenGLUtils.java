@@ -6,14 +6,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.IntBuffer;
 
+import javax.microedition.khronos.egl.EGL10;
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.egl.EGLContext;
+import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
+import android.app.ActivityManager;
 import android.content.Context;
+import android.content.pm.ConfigurationInfo;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
-import android.hardware.Camera.Size;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLException;
@@ -27,7 +32,14 @@ public class OpenGLUtils
 	private static final String TAG = OpenGLUtils.class.getSimpleName();
 	
 	public static final int NO_TEXTURE = -1;
+	public static final int NOT_INIT = -1;
+	public static final int ON_DRAWN = 1;
 
+	/**
+	 * static-methods-only (utility) class
+	 */
+	private OpenGLUtils(){}
+	
 	/**
 	 * As of version 4.2 Android offers an option called "Enable OpenGL traces" in the phone's
 	 * developer options. If you set this to "Call stack on glGetError" you'll see error logs if
@@ -57,9 +69,74 @@ public class OpenGLUtils
 		return found;
 	}
 
-	public static Bitmap createBitmapFromGLSurface(int x, int y, int w, int h, GL10 gl) throws OutOfMemoryError
+	/**
+	 * Checks if OpenGL ES 2.0 is supported on the current device.
+	 *
+	 * @param context the context
+	 * @return true if supports OpenGL ES 2.0, otherwise false.
+	 */
+	public static boolean isOpenGLES2Supported(Context context)
 	{
-		Log.i(TAG, "surface size: " + w + "x" + h);
+		ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+		ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
+		return configurationInfo.reqGlEsVersion >= 0x20000;
+	}
+	
+	/**
+	 * Get the max size of bitmap allowed to be rendered on the device.<br>
+	 * http://stackoverflow.com/questions/7428996/hw-accelerated-activity-how-to-get-opengl-texture-size-limit.
+	 */
+	public static int getMaxTextureSize()
+	{
+		// Safe minimum default size
+		final int IMAGE_MAX_BITMAP_DIMENSION = 2048;
+
+		try
+		{
+			// Get EGL Display
+			EGL10 egl = (EGL10) EGLContext.getEGL();
+			EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
+
+			// Initialize
+			int[] version = new int[2];
+			egl.eglInitialize(display, version);
+
+			// Query total number of configurations
+			int[] totalConfigurations = new int[1];
+			egl.eglGetConfigs(display, null, 0, totalConfigurations);
+
+			// Query actual list configurations
+			EGLConfig[] configurationsList = new EGLConfig[totalConfigurations[0]];
+			egl.eglGetConfigs(display, configurationsList, totalConfigurations[0], totalConfigurations);
+
+			int[] textureSize = new int[1];
+			int maximumTextureSize = 0;
+
+			// Iterate through all the configurations to located the maximum texture size
+			for(int i = 0; i < totalConfigurations[0]; i++)
+			{
+				// Only need to check for width since OpenGL textures are always squared
+				egl.eglGetConfigAttrib(display, configurationsList[i], EGL10.EGL_MAX_PBUFFER_WIDTH, textureSize);
+
+				// Keep track of the maximum texture size
+				if(maximumTextureSize < textureSize[0])
+					maximumTextureSize = textureSize[0];
+			}
+
+			// Release
+			egl.eglTerminate(display);
+
+			// Return largest texture size found, or default
+			return Math.max(maximumTextureSize, IMAGE_MAX_BITMAP_DIMENSION);
+		}
+		catch(Exception e)
+		{
+			return IMAGE_MAX_BITMAP_DIMENSION;
+		}
+	}
+
+	public static Bitmap createBitmapFromGLSurface(int x, int y, int w, int h, GL10 gl)
+	{
 		int bitmapBuffer[] = new int[w * h];
 		int bitmapSource[] = new int[w * h];
 		IntBuffer intBuffer = IntBuffer.wrap(bitmapBuffer);
@@ -67,12 +144,13 @@ public class OpenGLUtils
 
 		try
 		{
+			gl.glPixelStorei(GL10.GL_PACK_ALIGNMENT, 4);
 			gl.glReadPixels(x, y, w, h, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, intBuffer);
-			int offset1, offset2;
+			
 			for(int i = 0; i < h; i++)
 			{
-				offset1 = i * w;
-				offset2 = (h - i - 1) * w;
+				int offset1 = i * w;
+				int offset2 = (h - i - 1) * w;
 				for(int j = 0; j < w; j++)
 				{
 					int texturePixel = bitmapBuffer[offset1 + j];
@@ -99,7 +177,10 @@ public class OpenGLUtils
 	public static int loadTexture(final @NonNull Bitmap image, final int usedTexId, final boolean recycle)
 	{
 		if(image == null)
-			return NO_TEXTURE;
+			throw new NullPointerException("loadTexture can't be used with a null Bitmap");
+		if(image.isRecycled())
+			throw new IllegalArgumentException("bitmap is recycled");
+
 		int textures[] = new int[1];
 		if(usedTexId == NO_TEXTURE)
 		{
@@ -150,9 +231,9 @@ public class OpenGLUtils
 		return textures[0];
 	}
 
-	public static int loadTextureAsBitmap(final IntBuffer data, final Size size, final int usedTexId)
+	public static int loadTextureAsBitmap(final IntBuffer data, int width, int height, final int usedTexId)
 	{
-		Bitmap bitmap = Bitmap.createBitmap(data.array(), size.width, size.height, Config.ARGB_8888);
+		Bitmap bitmap = Bitmap.createBitmap(data.array(), width, height, Config.ARGB_8888);
 		return loadTexture(bitmap, usedTexId);
 	}
 
@@ -208,33 +289,30 @@ public class OpenGLUtils
 		return image;
 	}
 
-	public static int loadProgram(final String strVSource, final String strFSource)
+	public static int loadProgram(final String vertSource, final String fragSource)
 	{
-		int iVShader;
-		int iFShader;
-		int iProgId;
 		int[] link = new int[1];
-		iVShader = loadShader(strVSource, GLES20.GL_VERTEX_SHADER);
+		int iVShader = loadShader(vertSource, GLES20.GL_VERTEX_SHADER);
 		if(iVShader == 0)
 		{
 			Log.e(TAG, "Load Program, Vertex Shader Failed");
 			return 0;
 		}
-		iFShader = loadShader(strFSource, GLES20.GL_FRAGMENT_SHADER);
+		int iFShader = loadShader(fragSource, GLES20.GL_FRAGMENT_SHADER);
 		if(iFShader == 0)
 		{
 			Log.e(TAG, "Load Program, Fragment Shader Failed");
 			return 0;
 		}
+		
+		int program = GLES20.glCreateProgram();
 
-		iProgId = GLES20.glCreateProgram();
+		GLES20.glAttachShader(program, iVShader);
+		GLES20.glAttachShader(program, iFShader);
 
-		GLES20.glAttachShader(iProgId, iVShader);
-		GLES20.glAttachShader(iProgId, iFShader);
+		GLES20.glLinkProgram(program);
 
-		GLES20.glLinkProgram(iProgId);
-
-		GLES20.glGetProgramiv(iProgId, GLES20.GL_LINK_STATUS, link, 0);
+		GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, link, 0);
 		if(link[0] <= 0)
 		{
 			Log.e(TAG, "Load Program, Linking Failed");
@@ -242,7 +320,7 @@ public class OpenGLUtils
 		}
 		GLES20.glDeleteShader(iVShader);
 		GLES20.glDeleteShader(iFShader);
-		return iProgId;
+		return program;
 	}
 
 	private static int loadShader(final String strSource, final int iType)

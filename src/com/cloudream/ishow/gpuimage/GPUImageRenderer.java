@@ -233,9 +233,7 @@ public class GPUImageRenderer implements Renderer, PreviewCallback
 	public void setImageBitmap(final Bitmap bitmap, final boolean recycle)
 	{
 		if(bitmap == null)
-		{
 			return;
-		}
 
 		runOnDraw(new Runnable()
 		{
@@ -243,29 +241,30 @@ public class GPUImageRenderer implements Renderer, PreviewCallback
 			@Override
 			public void run()
 			{
-				Bitmap resizedBitmap = null;
-				if(bitmap.getWidth() % 2 == 1)
+				Bitmap alignedBitmap = null;
+				final int width = bitmap.getWidth();
+				final int height = bitmap.getHeight();
+				if(width % 2 == 1)
 				{
-					resizedBitmap = Bitmap.createBitmap(bitmap.getWidth() + 1, bitmap.getHeight(),
-							Bitmap.Config.ARGB_8888);
-					Canvas can = new Canvas(resizedBitmap);
-					can.drawARGB(0x00, 0x00, 0x00, 0x00);
-					can.drawBitmap(bitmap, 0, 0, null);
+					alignedBitmap = Bitmap.createBitmap(width + 1, height, Bitmap.Config.ARGB_8888);
+					Canvas canvas = new Canvas(alignedBitmap);
+					canvas.drawARGB(0x00, 0x00, 0x00, 0x00);
+					canvas.drawBitmap(bitmap, 0, 0, null);
 					mAddedPadding = 1;
 				}
 				else
 				{
+					alignedBitmap = bitmap;
 					mAddedPadding = 0;
 				}
 
-				mGLTextureId = OpenGLUtils.loadTexture(resizedBitmap != null ? resizedBitmap : bitmap, mGLTextureId,
-						recycle);
-				if(resizedBitmap != null)
+				mGLTextureId = OpenGLUtils.loadTexture(alignedBitmap, mGLTextureId, recycle);
+				if(alignedBitmap != null)
 				{
-					resizedBitmap.recycle();
+					alignedBitmap.recycle();
 				}
-				mImageWidth = bitmap.getWidth();
-				mImageHeight = bitmap.getHeight();
+				mImageWidth = width;
+				mImageHeight = height;
 				adjustImageScaling();
 			}
 		});
@@ -332,12 +331,7 @@ public class GPUImageRenderer implements Renderer, PreviewCallback
 
 	private float addDistance(float coordinate, float distance)
 	{
-		return coordinate == 0.0f ? distance : 1 - distance;
-	}
-
-	public void setRotationCamera(final int rotation, final boolean flipHorizontal, final boolean flipVertical)
-	{
-		setRotation(rotation, flipVertical, flipHorizontal);
+		return coordinate == 0.0F ? distance : 1 - distance;
 	}
 
 	public void setRotation(final int rotation)

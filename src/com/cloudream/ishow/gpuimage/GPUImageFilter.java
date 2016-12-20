@@ -90,7 +90,7 @@ public class GPUImageFilter
 		onDestroy();
 	}
 
-	public void onDestroy()
+	protected void onDestroy()
 	{
 	}
 
