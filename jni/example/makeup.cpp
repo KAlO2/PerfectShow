@@ -81,8 +81,7 @@ void mark(const std::string& image_name)
 	Mat image = cv::imread(image_name);
 	assert(image.type() == CV_8UC3);
 	
-	cv::Mat gray;
-	cvtColor(image, gray, CV_BGR2GRAY);
+	Mat gray  = Effect::grayscale(image);
 	const std::vector<cv::Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
 	assert(!points.empty());
 
@@ -223,9 +222,7 @@ void detectFaceSkin(const std::string& image_name)
 void judgeFaceShape(const std::string& image_name)
 {
 	Mat image = imread(image_name);
-
-	Mat gray;
-	cvtColor(image, gray, CV_BGR2GRAY);
+	Mat gray  = Effect::grayscale(image);
 	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
 
 	float L = 0.0f;  // circumference
@@ -376,8 +373,7 @@ void morphology(const cv::Mat& image)
 void applyLip(const std::string& image_name)
 {
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
-	Mat gray;
-	cvtColor(image, gray, CV_BGR2GRAY);
+	Mat gray  = Effect::grayscale(image);
 
 	const std::vector<cv::Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
 
@@ -407,8 +403,8 @@ void applyLip(const std::string& image_name)
 void applyBlush(const std::string& image_name)
 {
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
-	Mat gray;
-	cvtColor(image, gray, CV_BGR2GRAY);
+	Mat gray  = Effect::grayscale(image);
+
 	if(image.type() == CV_8UC3)
 		cvtColor(image, image, CV_BGR2BGRA);
 
@@ -466,14 +462,12 @@ void applyEyeShadow(const std::string& image_name)
 void applyEyeLash(const std::string& image_name)
 {
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
-	
-	Mat gray;
-	cv::cvtColor(image, gray, CV_BGR2GRAY);
+	Mat gray  = Effect::grayscale(image);
+
 	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
 
 	if(image.channels() == 3)
-		cv::cvtColor(image, image, CV_BGR2BGRA);
-	assert(image.type() == CV_8UC4);
+		cv::cvtColor(image, image, CV_BGR2BGRA);  // add alpha channel
 
 	int index = 6;  // 0 ~ 9
 	std::ostringstream stream;
@@ -495,9 +489,8 @@ void applyEyeLash(const std::string& image_name)
 void applyBrow(const std::string& image_name)
 {
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
-	
-	Mat gray;
-	cv::cvtColor(image, gray, CV_BGR2GRAY);
+	Mat gray  = Effect::grayscale(image);
+
 	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
 
 	if(image.channels() == 3)
@@ -505,14 +498,18 @@ void applyBrow(const std::string& image_name)
 	
 	int index = 6;  // 0 ~ 15
 	std::ostringstream stream;
-	stream << PROJECT_DIR << "res/drawable-nodpi/eye_brow_" << std::setw(2) << std::setfill('0') << index << ".png";
+	stream << PROJECT_DIR << "res/drawable-nodpi/eye_brow_mask_" << std::setw(2) << std::setfill('0') << index << ".png";
 	std::string target_brow_filename = stream.str();
 
 	std::cout << target_brow_filename << std::endl;
 	Mat mask = cv::imread(target_brow_filename, cv::IMREAD_UNCHANGED);
 //	assert(!target_brow.empty() && target_brow.channels() == 4);
-	uint32_t color = 0xFEEDF00D;
+	uint32_t color = 0xEE070909;
 	Mat target_brow = Makeup::pack(mask, color);
+
+	// Sighs, OpenCV doesn't handle alpha channel correctly in cv::inshow, I got to use other image viewers to see the result.
+	cv::imshow("target_brow", target_brow);
+	cv::imwrite(PROJECT_DIR + "target_brow.png", target_brow);
 
 	Rect rect = Region::boundingRect(target_brow);
 	std::cout << "left: " << rect.x << ", right: " << (rect.x + rect.width)  << '\n'
