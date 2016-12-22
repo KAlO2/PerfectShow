@@ -195,12 +195,13 @@ std::vector<cv::Point2f> Makeup::createPolygon(const std::vector<cv::Point2f>& p
 
 void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, const cv::Point2i& origin, float amount)
 {
-	assert(src.channels() == 4);
+	assert(!src.empty() && (src.type() == CV_8UC4 || src.type() == CV_32FC4));
 
 	// Note that dst.copyTo(result); will invoke result.create(src.size(), src.type());
 	// which has this clause if( dims <= 2 && rows == _rows && cols == _cols && type() == _type && data ) return;
 	// which means that result's memory will only be allocated the first time in if result is empty.
-	dst.copyTo(result);
+	if(result.data != dst.data)
+		dst.copyTo(result);
 
 	Rect rect_src(origin.x, origin.y, src.cols, src.rows);
 	Rect rect_dst(0, 0, dst.cols, dst.rows);
@@ -317,52 +318,55 @@ void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, cons
 
 void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, uint32_t color, float amount)
 {
-	assert(src.type() == CV_8UC4 && mask.type() == CV_8UC1);
-	src.copyTo(dst);
+	assert(src.channels() >= 3 && mask.type() == CV_8UC1);
+	if(src.data != dst.data)
+		src.copyTo(dst);
 
 	Feature feature(src, points);
 	Vec4f line = feature.getSymmetryAxis();
 	float angle = std::atan2(line[1], line[0]) - static_cast<float>(M_PI/2);
 //	std::cout << __FUNCTION__ << " angle: " << rad2deg(angle) << '\n';
 
-	Mat     makeup_mask = mask;
-	Rect2i  makeup_rect = Region::boundingRect(makeup_mask, 4);  // mask image is not so good, so allow some tolerance.
+	const Mat&   makeup_mask = mask;
+	const Rect2i makeup_rect = Region::boundingRect(makeup_mask, 4);  // mask image is not so good, so allow some tolerance.
 
+	// centroid @see http://docs.opencv.org/2.4/doc/tutorials/imgproc/shapedescriptors/moments/moments.html
 	Moments makeup_moment = cv::moments(mask);
-	Point2f makeup_center(static_cast<float>(makeup_moment.m10/makeup_moment.m00),
-	                      static_cast<float>(makeup_moment.m01/makeup_moment.m00));
+	Point2f makeup_center(static_cast<float>(makeup_moment.m10 / makeup_moment.m00),
+	                      static_cast<float>(makeup_moment.m01 / makeup_moment.m00));
 
-	constexpr int offset = 8;
+	constexpr int offset = 8;  // TODO, tweak offset according to the eye brow size?
+	const bool has_alpha = src.channels() > 3;
+
 	for(int i = 0; i < 2; ++i)
 	{
 		const bool right = (i == 0);
 		std::vector<Point2f> polygon = Feature::calculateBrowPolygon(points, right);
 		Moments moment = cv::moments(polygon);
-		const Point2f center(static_cast<float>(moment.m10/moment.m00),
-			                 static_cast<float>(moment.m01/moment.m00));
+		const Point2f center(static_cast<float>(moment.m10 / moment.m00),
+			                 static_cast<float>(moment.m01 / moment.m00));
 
 		const Rect rect = cv::boundingRect(polygon);
-		Rect _rect = rect;
-		Region::inset(_rect, -offset);
+		Rect rect_with_margin = rect;
+		Region::inset(rect_with_margin, -offset);
 
-		Mat roi = dst(_rect);
-		if(roi.channels() == 4)
-			cv::cvtColor(roi, roi, CV_RGBA2RGB);  // or CV_BGRA2BGR, strip alpha.
+		Mat roi = dst(rect_with_margin).clone();
+		if(has_alpha)
+			cv::cvtColor(roi, roi, CV_RGBA2RGB);  // or CV_BGRA2BGR, just strip alpha.
 
-		Mat submask = Feature::createMask(polygon);  // TODO 4 seems fine.
-		Mat mask(_rect.height, _rect.width, CV_8UC1, Scalar::all(0));
-		submask.copyTo(mask(Rect(offset, offset, submask.cols, submask.rows)));
+		Mat roi_mask = Feature::createMask(polygon);
+		Mat roi_mask_with_margin(rect_with_margin.height, rect_with_margin.width, CV_8UC1, Scalar::all(0));
+		roi_mask.copyTo(roi_mask_with_margin(Rect(offset, offset, roi_mask.cols, roi_mask.rows)));
 
-		cv::inpaint(roi, mask, roi, 3/* inpait radius */, cv::INPAINT_TELEA);  // INPAINT_NS, INPAINT_TELEA
-		for(int r = rect.y, r_end = rect.y + rect.height; r < r_end; ++r)
-		for(int c = rect.x, c_end = rect.x + rect.width;  c < c_end; ++c)
-		{
-			const cv::Vec3b& src_color = roi.at<cv::Vec3b>(r - rect.y, c - rect.x);
-			cv::Vec4b& dst_color = dst.at<cv::Vec4b>(r, c);
-			*reinterpret_cast<cv::Vec3b*>(&dst_color) = src_color;
-		}
+		constexpr double inpaint_radius = 10.0;  // TODO, tune it for fine result.
+		// tested with Navier-Stokes algorithm and A. Telea algorithm, and no obvious difference found.
+		cv::inpaint(roi, roi_mask_with_margin, roi, inpaint_radius, cv::INPAINT_TELEA);
 
-		if(!right)
+		if(has_alpha)
+			cv::cvtColor(roi, roi, CV_RGB2RGBA);  // recover alpha
+		roi.copyTo(dst(rect_with_margin), roi_mask_with_margin);
+
+		if(!right)  // mirror image for left side
 		{
 			cv::flip(makeup_mask, makeup_mask, 1/* horizontal */);
 			makeup_center.x = makeup_rect.width - makeup_center.x;
@@ -377,7 +381,6 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 		cv::warpAffine(makeup_mask, affined_mask, affine, target_size, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
 
 		Mat affined_brow = Makeup::pack(affined_mask, color);
-
 		Point2f origin = center - target_center;
 		Makeup::blend(dst, dst, affined_brow, origin, amount);
 	}
