@@ -370,6 +370,59 @@ void morphology(const cv::Mat& image)
 	imshow(__FUNCTION__, image_processed);
 }
 
+
+/**
+ * Find candidate positions for template matching.
+ *
+ * This is a convinience method for using TemplateMatchCandidates.
+ *
+ * @param image Image to search in
+ * @param templ Template image
+ * @param templMask Optional template mask
+ * @param candidate A mask of possible candidates. If image size is W,H and template size is w,h
+ *         the size of candidate will be W - w + 1, H - h + 1.
+ * @param partitionSize Number of blocks to subdivide template into
+ * @param maxWeakErrors Max classification mismatches per channel.
+ * @param maxMeanDifference Max difference of patch / template mean before rejecting a candidate.
+ */
+void findTemplateMatchCandidates(
+    const cv::Mat& image,
+    const cv::Mat& templ,
+    const cv::Mat& templMask,
+    cv::Mat& candidates,
+    cv::Size partitionSize = cv::Size(3,3),
+    int maxWeakErrors = 3,
+    float maxMeanDifference = 20)
+{
+    TemplateMatchCandidates tmc;
+    tmc.setSourceImage(image);
+    tmc.setPartitionSize(partitionSize);
+    tmc.setTemplateSize(templ.size());
+    tmc.initialize();
+
+    candidates.create(
+        image.size().height - templ.size().height + 1,
+        image.size().width - templ.size().width + 1,
+        CV_8UC1);
+
+    tmc.findCandidates(templ, templMask, candidates, maxWeakErrors, maxMeanDifference);
+}
+
+void inpaint(cv::Mat& dst, const cv::Mat& src, const cv::Mat& dst_mask, const cv::Mat& src_mask, int patch_size)
+{
+	CriminisiInpainter inpainter;
+	inpainter.setSourceImage(src);
+	inpainter.setSourceMask(src_mask);
+	inpainter.setTargetMask(dst_mask);
+	inpainter.setPatchSize(patch_size);
+	inpainter.initialize();
+	
+	while(inpainter.hasMoreSteps())
+		inpainter.step();
+
+	inpainter.image().copyTo(dst);
+}
+
 void applyLip(const std::string& image_name)
 {
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);

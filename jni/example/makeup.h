@@ -17,6 +17,8 @@ void imageWarp();
 
 void morphology(const cv::Mat& image);
 
+void inpaint(cv::Mat& dst, const cv::Mat& src, const cv::Mat& dst_mask, const cv::Mat& src_mask, int patch_size);
+
 void applyLip(const std::string& image_name);
 void applyBlush(const std::string& image_name);
 void applyEyeShadow(const std::string& image_name);
