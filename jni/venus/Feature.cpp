@@ -751,7 +751,7 @@ cv::Vec4f Feature::getSymmetryAxis(const std::vector<cv::Point2f>& points)
 	line[2] += line[0] * t;  // center.x = line[2] + line[0] * t;
 	line[3] += line[1] * t;  // center.y = line[3] + line[1] * t;
 
-	if(line[1] < 0)  // this makes Vec2f(line[0], line[1]) a downward vector, close to Y axis direction.
+	if(line[1] < 0)  // this makes Vec2f(line[0], line[1]) a downward vector, align to Y axis.
 	{
 		line[0] = -line[0];
 		line[1] = -line[1];

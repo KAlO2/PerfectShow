@@ -1,21 +1,3 @@
-/*
- * This file is part of Inpaint.
- * 
- * Copyright Christoph Heindl 2014
- * 
- * Inpaint is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * Inpaint is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with Inpaint.  If not, see <http://www.gnu.org/licenses/>.
- */
 #ifndef VENUS_INPAINT_H_
 #define VENUS_INPAINT_H_
 
@@ -117,7 +99,7 @@ public:
 	discarding them.
 
 */
-class CriminisiInpainter
+class Inpainter
 {
 private:
 	struct UserSpecified
@@ -162,7 +144,7 @@ private:
 public:
 
 	/** Empty constructor */
-	CriminisiInpainter() = default;
+	Inpainter() = default;
 	
 	/** Set the image to be inpainted. */
 	inline void setSourceImage(const cv::Mat &bgrImage) { _input.image = bgrImage; }
@@ -191,20 +173,6 @@ public:
     /** Access the current state of the target region. */
 	const cv::Mat& targetRegion() const { return _targetRegion; }
 };
-
-/** 
- * Inpaint image.
- *
- * Implementation of the exemplar based inpainting algorithm described in
- * "Object Removal by Exemplar-Based Inpainting", A. Criminisi et. al. 
- *     
- * @param image Image to be inpainted. 
- * @param targetMask Region to be inpainted.
- * @param sourceMask Optional mask that specifies the region of the image to synthezise from. If left empty
- *         the entire image without the target mask is used.
- * @param patchSize Patch size to use.
- */
-void inpaintCriminisi(cv::InputArray image, cv::InputArray targetMask, cv::InputArray sourceMask, int patchSize);
 
 } /* namespace venus */
 #endif /* VENUS_INPAINT_H_ */

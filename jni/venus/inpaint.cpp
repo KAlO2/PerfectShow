@@ -1,21 +1,3 @@
-/*
- * This file is part of Inpaint.
- * 
- * Copyright Christoph Heindl 2014
- * 
- * Inpaint is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * Inpaint is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with Inpaint.  If not, see <http://www.gnu.org/licenses/>.
- */
 #include <opencv2/imgproc.hpp>
 
 #include "venus/compiler.h"
@@ -47,7 +29,7 @@ void TemplateMatchCandidates::initialize()
 void TemplateMatchCandidates::findCandidates(const cv::Mat &templ, const cv::Mat &templMask, cv::Mat &candidates,
 		int maxWeakErrors, float maxMeanDifference)
 {
-	CV_Assert(templ.type() == CV_MAKETYPE(CV_8U, _integrals.size()) && templ.size() == _templateSize && 
+	CV_Assert(templ.type() == CV_MAKETYPE(CV_8U, static_cast<int>(_integrals.size())) && templ.size() == _templateSize && 
 			(templMask.empty() || templMask.size() == _templateSize));
 
 	candidates.create(
@@ -89,12 +71,13 @@ void TemplateMatchCandidates::weakClassifiersForTemplate(const cv::Mat &templ, c
 		cv::Mat1i &classifiers, cv::Scalar &mean)
 {
 	const int nChannels = templ.channels();
-	classifiers.create(nChannels, (int)rects.size());
+	const int size = static_cast<int>(rects.size());
+	classifiers.create(nChannels, size);
 
 	// Note we use cv::mean here to make use of mask.
 	mean = cv::mean(templ, templMask);
 
-	for(int x = 0; x < (int)rects.size(); ++x)
+	for(int x = 0; x < size; ++x)
 	{
 		cv::Scalar blockMean = cv::mean(templ(rects[x]), templMask.empty() ? cv::noArray() : templMask(rects[x]));
 		
@@ -195,13 +178,13 @@ enum PatchFlags
 /** 
  * Returns a patch anchored on the given top-left corner.
  * 
- * @param Flags Combination of flags for patch creation.
- * @param m Underlying image
- * @param y y-coordinate of the patch top-left corner
- * @param x x-coordinate of the patch top-left corner
- * @param height height of patch (extension along y-axis)
- * @param width width of patch (extension along x-axis)
- * @return Returns a view on the image that contains only the patch region.
+ * @param Flags   Combination of flags for patch creation.
+ * @param m       Underlying image
+ * @param y       y-coordinate of the patch top-left corner
+ * @param x       x-coordinate of the patch top-left corner
+ * @param height  height of patch (extension along y-axis)
+ * @param width   width of patch (extension along x-axis)
+ * @return a view on the image that contains only the patch region.
  */
 template<int Flags>
 cv::Mat topLeftPatch(const cv::Mat &m, int y, int x, int height, int width) 
@@ -248,12 +231,12 @@ inline cv::Mat topLeftPatch(const cv::Mat &m, const cv::Rect &r)
 /** 
  * Returns a patch centered around the given pixel coordinates.
  * 
- * @param Flags Combination of flags for patch creation.
- * @param m Underlying image
- * @param y y-coordinate of the patch center
- * @param x x-coordinate of the patch center
- * @param halfPatchSize Half the patch size. I.e for a 3x3 patch window, set this to 1.
- * @return Returns a view on the image that contains only the patch region.
+ * @param Flags          Combination of flags for patch creation.
+ * @param m              Underlying image
+ * @param y              y-coordinate of the patch center
+ * @param x              x-coordinate of the patch center
+ * @param halfPatchSize  Half the patch size. I.e for a 3x3 patch window, set this to 1.
+ * @return a view on the image that contains only the patch region.
  */
 template<int Flags>
 cv::Mat centeredPatch(const cv::Mat &m, int y, int x, int halfPatchSize) 
@@ -277,13 +260,13 @@ inline cv::Mat centeredPatch(const cv::Mat &m, int y, int x, int halfPatchSize)
 /** 
  * Given two centered patches in two images compute the comparable region in both images as top-left patches. 
  * 
- * @param a first image
- * @param b second image
- * @param ap center in first image
- * @param bp center in second image
+ * @param a             first image
+ * @param b             second image
+ * @param ap            center in first image
+ * @param bp            center in second image
  * @param halfPatchSize halfPatchSize Half the patch size. I.e for a 3x3 patch window, set this to 1.
- * @return Comparable rectangles for first, second image. Rectangles are of same size, but anchored top-left
- * with respect to the given center points.
+ * @return Comparable   rectangles for first, second image. Rectangles are of same size, but anchored top-left
+ *                      with respect to the given center points.
  */
 inline std::pair<cv::Rect, cv::Rect> comparablePatchRegions(const cv::Mat &a, const cv::Mat &b, cv::Point ap, cv::Point bp, int halfPatchSize)
 {
@@ -316,7 +299,7 @@ inline bool isCenteredPatchCrossingBoundary(cv::Point p, int halfPatchSize, cons
 
 constexpr int PATCHFLAGS = PATCH_BOUNDS;
 
-void CriminisiInpainter::initialize()
+void Inpainter::initialize()
 {
 	CV_Assert(_input.image.channels() == 3 && _input.image.depth() == CV_8U &&
 			_input.targetMask.size() == _input.image.size() &&
@@ -384,12 +367,12 @@ void CriminisiInpainter::initialize()
 	_tmc.initialize();
 }
 
-bool CriminisiInpainter::hasMoreSteps() const
+bool Inpainter::hasMoreSteps() const
 {
 	return cv::countNonZero(_targetRegion) > 0;
 }
 
-void CriminisiInpainter::step()
+void Inpainter::step()
 {	
 	// We also need an updated knowledge of gradients in the border region
 	updateFillFront();
@@ -406,7 +389,7 @@ void CriminisiInpainter::step()
 	propagatePatch(targetPatchLocation, sourcePatchLocation);
 }
 
-void CriminisiInpainter::updateFillFront()
+void Inpainter::updateFillFront()
 {
 	// 2nd order derivative used to find border.
 	cv::Laplacian(_targetRegion, _borderRegion, CV_8U, 3, 1, 0, cv::BORDER_REPLICATE);
@@ -427,7 +410,7 @@ void CriminisiInpainter::updateFillFront()
 	}
 }
 
-cv::Point CriminisiInpainter::findTargetPatchLocation()
+cv::Point Inpainter::findTargetPatchLocation()
 {
 	// Sweep over all pixels in the border region and priorize them based on 
 	// a confidence term (i.e how many pixels are already known) and a data term that prefers
@@ -482,19 +465,19 @@ cv::Point CriminisiInpainter::findTargetPatchLocation()
 	return bestLocation;
 }
 
-float CriminisiInpainter::confidenceForPatchLocation(const cv::Point& point) const
+float Inpainter::confidenceForPatchLocation(const cv::Point& point) const
 {
 	cv::Mat1f c = centeredPatch<PATCHFLAGS>(_confidence, point.y, point.x, _halfPatchSize);
 	return (float)cv::sum(c)[0] / c.size().area();
 }
 
-cv::Point CriminisiInpainter::findSourcePatchLocation(const cv::Point& targetPatchLocation, bool useCandidateFilter)
+cv::Point Inpainter::findSourcePatchLocation(const cv::Point& targetPatchLocation, bool useCandidateFilter)
 {	
 	cv::Point bestLocation(-1, -1);
 	float bestError = std::numeric_limits<float>::max();
 
-	cv::Mat_<cv::Vec3b> targetImagePatch = centeredPatch<PATCHFLAGS>(_image, targetPatchLocation.y, targetPatchLocation.x, _halfMatchSize);
-	cv::Mat_<uchar> targetMask = centeredPatch<PATCHFLAGS>(_targetRegion, targetPatchLocation.y, targetPatchLocation.x, _halfMatchSize);
+	cv::Mat3b targetImagePatch = centeredPatch<PATCHFLAGS>(_image, targetPatchLocation.y, targetPatchLocation.x, _halfMatchSize);
+	cv::Mat1b targetMask = centeredPatch<PATCHFLAGS>(_targetRegion, targetPatchLocation.y, targetPatchLocation.x, _halfMatchSize);
 	
 	cv::Mat invTargetMask = (targetMask == 0);
 	if(useCandidateFilter)
@@ -527,9 +510,9 @@ cv::Point CriminisiInpainter::findSourcePatchLocation(const cv::Point& targetPat
 	return bestLocation;
 }
 
-void CriminisiInpainter::propagatePatch(const cv::Point& target, const cv::Point& source)
+void Inpainter::propagatePatch(const cv::Point& target, const cv::Point& source)
 {
-	cv::Mat_<uchar> copyMask = centeredPatch<PATCHFLAGS>(_targetRegion, target.y, target.x, _halfPatchSize);
+	cv::Mat1b copyMask = centeredPatch<PATCHFLAGS>(_targetRegion, target.y, target.x, _halfPatchSize);
 
 	centeredPatch<PATCHFLAGS>(_image, source.y, source.x, _halfPatchSize).copyTo(
 	centeredPatch<PATCHFLAGS>(_image, target.y, target.x, _halfPatchSize), copyMask);

@@ -1,15 +1,20 @@
-#include "venus/Makeup.h"
-
 #include "venus/blend.h"
-#include "venus/ImageWarp.h"
+#include "venus/compiler.h"
 #include "venus/Feature.h"
+#include "venus/ImageWarp.h"
+#include "venus/Makeup.h"
 #include "venus/opencv_utility.h"
 #include "venus/Scalar.h"
 
 #include <opencv2/imgproc.hpp>
-#include <opencv2/photo.hpp>
 
-#include <omp.h>
+// OpenCV's inpaint algorithm is lame, needs an alternative.
+#define USE_OPENCV_INPAINT 0
+#if USE_OPENCV_INPAINT
+#  include <opencv2/photo.hpp>
+#else
+#  include "venus/inpaint.h"
+#endif
 
 using namespace cv;
 
@@ -30,7 +35,7 @@ cv::Mat Makeup::pack(const cv::Mat& mask, uint32_t color)
 		uint8_t alpha = ((color >> 24) * mask_data[i] + 127) / 255;
 #if USE_BGRA_LAYOUT
 		// Swap R and B channel, then assembly it to BGRA format.
-		image_data[i] = ((color >> 16) & 0xff) | (color &0x00ff00) | ((color & 0xff) << 16) | (alpha << 24);
+		image_data[i] = ((color >> 16) & 0xFF) | (color &0x00FF00) | ((color & 0xFF) << 16) | (alpha << 24);
 #else
 		image_data[i] = (color & 0x00FFFFFF) | (alpha << 24);
 #endif
@@ -49,7 +54,7 @@ std::vector<cv::Point2f> Makeup::createHeartShape(const cv::Point2f& center, flo
 	// http://mathworld.wolfram.com/HeartCurve.html
 	// x = 16*sin(t)^3
 	// y = 13*cos(t) - 5*cos(2*t) - 2*cos(3*t) - cos(4*t)
-	// where parameter t in range [0 : 2*pi]
+	// where parameter t is in range [0 : 2*pi]
 	//
 	// cos(2*t) = cos(t)^2 - sin(t)^2
 	// cos(3*t) = 4*cos(t)^3 - 3*cos(t)
@@ -278,10 +283,8 @@ void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, cons
 	{
 		const int src_r = r - origin.y, src_c = c - origin.x;
 		Point2i mask_position(src_c - offset_x, src_r - offset_y);
-		if(!rect_mask.contains(mask_position) || mask.at<uchar>(mask_position) == 0)
+		if(!rect_mask.contains(mask_position) || mask.at<uint8_t>(mask_position) == 0)
 			continue;
-
-		const cv::Vec4b& src_color = src.at<cv::Vec4b>(src_r, src_c);
 
 		switch(dst.type())
 		{
@@ -319,7 +322,7 @@ void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, cons
 void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points,
 		const cv::Mat& mask, uint32_t color, float amount, float offsetY/* = 0.0F */)
 {
-	assert(src.channels() >= 3 && mask.type() == CV_8UC1);
+	assert(src.type() == CV_8UC4 && mask.type() == CV_8UC1);
 	if(src.data != dst.data)
 		src.copyTo(dst);
 
@@ -359,13 +362,53 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 		Mat roi_mask_with_margin(rect_with_margin.height, rect_with_margin.width, CV_8UC1, Scalar::all(0));
 		roi_mask.copyTo(roi_mask_with_margin(Rect(offset, offset, roi_mask.cols, roi_mask.rows)));
 
-		constexpr double inpaint_radius = 10.0;  // TODO, tune it for fine result.
+#if USE_OPENCV_INPAINT
+		constexpr double inpaint_radius = 10.0;  // TODO, make it adaptive, or tune it for a fine result.
+
 		// tested with Navier-Stokes algorithm and A. Telea algorithm, and no obvious difference found.
 		cv::inpaint(roi, roi_mask_with_margin, roi, inpaint_radius, cv::INPAINT_TELEA);
+#else
+		Mat source_mask;
+		cv::bitwise_not(roi_mask_with_margin, source_mask);
 
+		Inpainter inpainter;
+		inpainter.setSourceImage(roi);
+		inpainter.setSourceMask(source_mask);
+		inpainter.setTargetMask(roi_mask_with_margin);
+		inpainter.setPatchSize(4);
+		inpainter.initialize();
+	
+		while(inpainter.hasMoreSteps())
+			inpainter.step();
+
+		inpainter.image().copyTo(roi);
+#endif
+
+#if 0
+		// This branch will overwrite alpha channel value if @p src is not opaque(255).
 		if(has_alpha)
-			cv::cvtColor(roi, roi, CV_RGB2RGBA);  // recover alpha
+			cv::cvtColor(roi, roi, CV_RGB2RGBA);  // recover alpha with full value(255).
 		roi.copyTo(dst(rect_with_margin), roi_mask_with_margin);
+#else
+		// This branch keeps alpha channel untouched, so it's preferable.
+		for(int r = 0; r < rect.height; ++r)
+		for(int c = 0; c < rect.width;  ++c)
+		{
+			uint8_t alpha = roi_mask_with_margin.at<uint8_t>(r + offset, c + offset);
+			if(alpha == 0)  // shortcut
+				continue;
+
+			const cv::Vec3b& src_color = roi.at<cv::Vec3b>(r, c);
+			cv::Vec4b& dst_color = dst.at<cv::Vec4b>(r + rect.y, c + rect.x);
+
+//			*reinterpret_cast<cv::Vec3b*>(&dst_color) = src_color;
+			// mixing(below) seems better than just overwriting(above).
+			uint8_t* p = reinterpret_cast<uint8_t*>(&dst_color);
+			p[0] = lerp(p[0], src_color[0], alpha);
+			p[1] = lerp(p[1], src_color[1], alpha);
+			p[2] = lerp(p[2], src_color[2], alpha);
+		}
+#endif
 
 		if(!right)  // mirror image for left side
 		{

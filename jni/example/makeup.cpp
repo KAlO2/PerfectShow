@@ -17,6 +17,7 @@
 #include "venus/Effect.h"
 #include "venus/Feature.h"
 #include "venus/ImageWarp.h"
+#include "venus/inpaint.h"
 #include "venus/Makeup.h"
 #include "venus/opencv_utility.h"
 #include "venus/Scalar.h"
@@ -410,7 +411,7 @@ void findTemplateMatchCandidates(
 
 void inpaint(cv::Mat& dst, const cv::Mat& src, const cv::Mat& dst_mask, const cv::Mat& src_mask, int patch_size)
 {
-	CriminisiInpainter inpainter;
+	Inpainter inpainter;
 	inpainter.setSourceImage(src);
 	inpainter.setSourceMask(src_mask);
 	inpainter.setTargetMask(dst_mask);
@@ -560,7 +561,7 @@ void applyBrow(const std::string& image_name)
 	uint32_t color = 0xEE070909;
 	Mat target_brow = Makeup::pack(mask, color);
 
-	// Sighs, OpenCV doesn't handle alpha channel correctly in cv::inshow, I got to use other image viewers to see the result.
+	// Sighs, OpenCV doesn't handle alpha channel correctly in cv::inshow, I've got to use other image viewers to see the result.
 	cv::imshow("target_brow", target_brow);
 	cv::imwrite(PROJECT_DIR + "target_brow.png", target_brow);
 
@@ -574,7 +575,7 @@ void applyBrow(const std::string& image_name)
 	std::cout << "skew angle: " << rad2deg(angle) << '\n';
 
 	Mat result;
-	Makeup::applyBrow(result, image, points, mask, color, 0.81F);
+	Makeup::applyBrow(result, image, points, mask, color, 0.81F， 0.0F);
 
 #if 0
 	for(int i = 0; i <= 1; ++i)

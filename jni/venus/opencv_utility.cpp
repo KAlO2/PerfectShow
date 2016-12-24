@@ -20,9 +20,9 @@ cv::Vec4f cast(uint32_t color)
 {
 	uint8_t r = color, g = color >> 8, b = color >> 16, a = color >> 24;
 #if USE_BGRA_LAYOUT
-	return Vec4f(b, g, r ,a) / 255;
+	return Vec4f(b, g, r ,a) / 255.0F;
 #else
-	return Vec4f(r, g, b ,a) / 255;
+	return Vec4f(r, g, b ,a) / 255.0F;
 #endif
 }
 

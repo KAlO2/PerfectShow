@@ -176,6 +176,7 @@ target_link_libraries(${PROJECT_NAME}
 	debug libwebpd   optimized libwebp
 	
 	debug opencv_core${VERSION_CODE}d      optimized opencv_core${VERSION_CODE}
+#	debug opencv_flann${VERSION_CODE}d     optimized opencv_flann${VERSION_CODE}
 	debug opencv_hal${VERSION_CODE}d       optimized opencv_hal${VERSION_CODE}
 	debug opencv_highgui${VERSION_CODE}d   optimized opencv_highgui${VERSION_CODE}
 	debug opencv_imgproc${VERSION_CODE}d   optimized opencv_imgproc${VERSION_CODE}

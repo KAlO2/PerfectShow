@@ -17,6 +17,19 @@ void imageWarp();
 
 void morphology(const cv::Mat& image);
 
+/**
+ * Inpaint image.
+ *
+ * Implementation of the exemplar based inpainting algorithm described in
+ * "Object Removal by Exemplar-Based Inpainting", A. Criminisi et. al.
+ * 
+ * @param dst        The result
+ * @param src        Image to be inpainted.
+ * @param dst_mask   Region to be inpainted.
+ * @param src_mask   Optional mask that specifies the region of the image to synthezise from. If left empty
+ *                   the entire image without the target mask is used.
+ * @param patch_size Patch size to use.
+ */
 void inpaint(cv::Mat& dst, const cv::Mat& src, const cv::Mat& dst_mask, const cv::Mat& src_mask, int patch_size);
 
 void applyLip(const std::string& image_name);

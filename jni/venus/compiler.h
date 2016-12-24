@@ -9,7 +9,8 @@
 
 #define NELEM(array) (sizeof(array)/sizeof(array[0]))
 
-// OpenCV and android.graphics.Color use BGRA instead of common RGBA memory layout.
+// OpenCV and android.graphics.Color use BGRA instead of common RGBA memory layout,
+// and android.graphics.Bitmap use Skia to load bitmap into RGBA memory layout.
 #ifdef ANDROID
 #  define USE_BGRA_LAYOUT 0
 #else
