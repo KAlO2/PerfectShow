@@ -316,7 +316,8 @@ void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, cons
 	}
 }
 
-void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, uint32_t color, float amount)
+void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points,
+		const cv::Mat& mask, uint32_t color, float amount, float offsetY/* = 0.0F */)
 {
 	assert(src.channels() >= 3 && mask.type() == CV_8UC1);
 	if(src.data != dst.data)
@@ -380,8 +381,11 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 		cv::Mat affined_mask;
 		cv::warpAffine(makeup_mask, affined_mask, affine, target_size, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
 
+		// need to move X coordinate with respect to the 1/slant.
+		Point2f translation(offsetY/line[1] * line[0], offsetY);
+
 		Mat affined_brow = Makeup::pack(affined_mask, color);
-		Point2f origin = center - target_center;
+		Point2f origin = center - target_center + translation;
 		Makeup::blend(dst, dst, affined_brow, origin, amount);
 	}
 }

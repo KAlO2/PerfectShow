@@ -62,10 +62,11 @@ public:
 	 * @param[in] src     The source image
 	 * @param[in] points  Feature points detected from <code>src</code> image.
 	 * @param[in] mask    Mask of eye brow image, a gray image.
-	 * @param[in] color   eye brow's color, 0xAABBGGRR or RGBA memory layout.
+	 * @param[in] color   Eye brow's color, 0xAABBGGRR or RGBA memory layout.
 	 * @param[in] amount  Blending amount in range [0, 1], The larger the value, the thicker/heavier the eyebrow will looks.
+	 * @param[in] offsetY Tweak eye brow's height by pixel, since a litter upper(negative value) or lower(positive value) may look better.
 	 */
-	static void applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, uint32_t color, float amount);
+	static void applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, uint32_t color, float amount, float offsetY = 0.0F);
 
 	/**
 	 * @param[in] cosmetic makeup about eyes
