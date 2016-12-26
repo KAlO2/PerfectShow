@@ -13,7 +13,7 @@ import com.cloudream.ishow.util.BitmapUtils;
 import com.cloudream.ishow.util.ColorUtils;
 import com.cloudream.ishow.util.Compatibility;
 import com.cloudream.ishow.util.MathUtils;
-import com.cloudream.ishow.view.ImageViewTouch;
+import com.cloudream.ishow.widget.ImageViewTouch;
 
 import android.content.Context;
 import android.content.Intent;

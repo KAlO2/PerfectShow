@@ -324,7 +324,8 @@ void Region::selectContiguousRegionByColor(cv::Mat& mask, const cv::Mat& image, 
 
 void Region::shrink(cv::Mat& dst, const cv::Mat& src, int offset)
 {
-	src.copyTo(dst);  // self copy will be skipped
+	if(src.data != dst.data)
+		src.copyTo(dst);
 	if(offset == 0)  // shortcut
 		return;
 

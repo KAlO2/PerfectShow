@@ -111,8 +111,9 @@ float distance(const cv::Point2f& pt0, const cv::Point2f& pt1);
 float distance(const cv::Point2f& point, const cv::Point2f& A, const cv::Point2f& B);
 
 /**
+ * Calculate the distance from a point to a line.
  * @param[in] point
- * @param[in] line Vec4f(vx, vy, x0, y0)
+ * @param[in] line Vec4f(vx, vy, x0, y0), where (vx, vy) forms a unit vector.
  */
 float distance(const cv::Point2f& point, const cv::Vec4f& line);
 

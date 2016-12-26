@@ -4,7 +4,7 @@
 	android:layout_height="match_parent"
 	android:orientation="vertical" >
 
-	<com.cloudream.ishow.view.ImageViewTouch
+	<com.cloudream.ishow.widget.ImageViewTouch
 		android:id="@+id/image"
 		android:layout_width="match_parent"
 		android:layout_height="0dp"

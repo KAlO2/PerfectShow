@@ -6,7 +6,7 @@
 
     <TextView
         style="@style/TitleBar"
-		android:id="@+id/title"
+	android:id="@+id/title"
         android:text="@string/app_name" />
 
 </FrameLayout>

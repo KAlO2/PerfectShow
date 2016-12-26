@@ -106,8 +106,8 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeTone(JNIEnv* env,
 	unlockJavaBitmap(env, _bitmap);
 }
 
-void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeGrayToAlpha
-	(JNIEnv* env, jclass clazz, jobject _src_bitmap, jobject _dst_bitmap)
+void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeGrayToAlpha(JNIEnv* env,
+		jclass clazz, jobject _src_bitmap, jobject _dst_bitmap)
 {
 	AndroidBitmapInfo src_info, dst_info;
 	uint32_t* src_pixels = lockJavaBitmap(env, _src_bitmap, src_info);
@@ -162,18 +162,8 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeColorToAlpha
 	unlockJavaBitmap(env, _dst_bitmap);
 	unlockJavaBitmap(env, _src_bitmap);
 }
-/*
-cv::Vec4f getNativeColor(uint32_t color)
-{
-	uint8_t* bytes = reinterpret_cast<uint8_t*>(&color);
-	cv::Vec4f rgba;  // RGBA format
-	for(int i = 0; i < 4; ++i)
-		rgba[i] = bytes[i] / 255.0F;
 
-	return rgba;
-}
-*/
-void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeSelectContiguousRegionByColor(JNIEnv* env,
+void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeSelectContiguousRegionByColor(JNIEnv *env,
 		jclass clazz, jobject _mask, jobject _image, jint _color, jint _select_criterion, jfloat threshold, jboolean antialias, jboolean select_transparent)
 {
 	AndroidBitmapInfo image_info;

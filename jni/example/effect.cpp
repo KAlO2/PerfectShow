@@ -65,7 +65,7 @@ void selectiveGaussianBlur(const cv::Mat& image, const cv::Mat& mask)
 	auto onProgressChanged = [](int threshold, void* user_data)
 	{
 		UserData& data = *reinterpret_cast<UserData*>(user_data);
-		int radius = 7.0F;
+		float radius = 7.0F;
 
 		Effect::gaussianBlurSelective(data.processed, data.original, data.mask, radius, threshold);
 		cv::imshow(data.title, data.processed);

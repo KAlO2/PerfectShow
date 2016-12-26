@@ -30,7 +30,7 @@ void cmyk2rgb(const float* cmyk, float* rgb);
 /**
  * Convert a specified color to transparency, works best with white.
  *
- * @param[in]  color  Reference color
+ * @param[in]  color  Reference color, 4 channels, and alpha is last.
  * @param[in]  src    Input color
  * @param[out] dst    Output clor
  */
