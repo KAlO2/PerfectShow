@@ -85,6 +85,17 @@ public:
 	static std::vector<cv::Point2f> calculateLipPolygon  (const std::vector<cv::Point2f>& points, bool upper);
 	static std::vector<cv::Point2f> calculateTeethPolygon(const std::vector<cv::Point2f>& points);
 
+	static cv::RotatedRect calculateBlushRectangle(const std::vector<cv::Point2f>& points, bool right);
+
+	/**
+	 * @param points Feature points of detected face.
+	 * @param angle  Skew angle, measured in radians.
+	 * @param right  Right or left side of face.
+	 *
+	 * Note that angle of cv::RotatedRect is in degrees, not in radians.
+	 */
+	static cv::RotatedRect calculateBlushRectangle(const std::vector<cv::Point2f>& points, float angle, bool right);
+
 	Region calculateBrowRegion(bool right) const { return calculateBrowRegion(points, line, right);  }
 	Region calculateEyeRegion(bool right)  const { return calculateEyeRegion(points, line, right);   }
 	Region calculateLipshRegion()          const { return calculateLipsRegion(points, line); }

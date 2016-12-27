@@ -983,6 +983,54 @@ std::vector<cv::Point2f> Feature::calculateEyePolygon(const std::vector<cv::Poin
 	return polygon;
 }
 
+cv::RotatedRect Feature::calculateBlushRectangle(const std::vector<cv::Point2f>& points, bool right)
+{
+	Vec4f line = Feature::getSymmetryAxis(points);
+	float angle = std::atan2(line[1], line[0]) - static_cast<float>(M_PI/2);
+
+	return calculateBlushRectangle(points, angle, right);
+}
+
+cv::RotatedRect Feature::calculateBlushRectangle(const std::vector<cv::Point2f>& points,float angle, bool right)
+{
+	// symmetric point
+	const Point2f& _54 = points[right? 54:52];
+	const Point2f& _00 = points[right?  0:12];
+	const Point2f& _01 = points[right?  1:11];
+	const Point2f& _02 = points[right?  2:10];
+	const Point2f& _03 = points[right?  3: 9];
+	const Point2f& _04 = points[right?  4: 8];
+	const Point2f& _63 = points[right? 63:69];
+	const Point2f& _62 = points[right? 62:58];
+	const Point2f& _34 = points[right? 34:44];
+
+	// keep those formula synchronized with member function below
+	Point2f t0 = (_54 + _34 + _62)/3;
+	Point2f t1 = (_00 + _01 + _54*2)/4;
+	Point2f& t = (t0.y < t1.y) ? t0 : t1;
+
+	Point2f b = (_03 + _63 + _62)/3;
+	Point2f l = _02;
+	Point2f r = _62;
+
+	const float cosa = std::cos(angle);
+	const float sina = std::sin(angle);
+	auto _rotate = [&cosa, sina](Point2f& p) { return Point2f(cosa * p.x - sina * p.y, sina * p.x + cosa * p.y); };
+	
+	t = _rotate(t);  // rotate(t, angle);
+	b = _rotate(b);  // rotate(b, angle);
+	l = _rotate(l);  // rotate(l, angle);
+	r = _rotate(r);  // rotate(r, angle);
+
+	Point2f center((l.x + r.x)/2, (b.y + t.y)/2);
+	center = rotate(center, -angle);
+
+	Size2f size(right?(r.x - l.x):(l.x - r.x), b.y - t.y);
+	assert(size.width >= 0 && size.height >= 0);
+
+	return RotatedRect(center, size, rad2deg(angle));
+}
+
 std::vector<cv::Point2f> Feature::calculateBlushPolygon(const std::vector<cv::Point2f>& points, bool right)
 {
 	// symmetric point
@@ -994,21 +1042,23 @@ std::vector<cv::Point2f> Feature::calculateBlushPolygon(const std::vector<cv::Po
 	const Point2f& _04 = points[right?  4: 8];
 	const Point2f& _63 = points[right? 63:69];
 	const Point2f& _62 = points[right? 62:58];
-		
+	const Point2f& _34 = points[right? 34:44];
+
+	// keep consistent with member function above
 	std::vector<Point2f> polygon
 	{
-		_54,
+		(_54 + _34 + _62)/3,
 		(_00 + _01 + _54*2)/4,
 		(_00 + _01*2)/3,
 		_01,
-		catmullRomSpline(1.0f/3, _00, _01, _02, _03),
-		catmullRomSpline(2.0f/3, _00, _01, _02, _03),
+		catmullRomSpline(1.0F/3, _00, _01, _02, _03),
+		catmullRomSpline(2.0F/3, _00, _01, _02, _03),
 		_02,
-		catmullRomSpline(1.0f/3, _01, _02, _03, _04),
-		catmullRomSpline(2.0f/3, _01, _02, _03, _04),
+		catmullRomSpline(1.0F/3, _01, _02, _03, _04),
+		catmullRomSpline(2.0F/3, _01, _02, _03, _04),
 		_03,
 		(_03 + _63 + _62)/3,
-//		_62,
+		_62,
 	};
 
 	return polygon;
@@ -1181,26 +1231,11 @@ Region Feature::calculateTeethRegion() const
 	const std::vector<Point2f> polygon = calculateTeethPolygon(points);
 	Rect rect = cv::boundingRect(polygon);
 	Mat mask = maskPolygon(rect, polygon);
-#if 1
-	Mat gray;
-	switch(image.channels())
-	{
-	case 1:  gray = image(rect).clone(); break;
-	
-#if USE_BGRA_LAYOUT
-	case 3:  cv::cvtColor(image(rect), gray, cv::COLOR_BGR2GRAY);  break;
-	case 4:  cv::cvtColor(image(rect), gray, cv::COLOR_BGRA2GRAY); break;
-#else
-	case 3:  cv::cvtColor(image(rect), gray, cv::COLOR_RGB2GRAY);  break;
-	case 4:  cv::cvtColor(image(rect), gray, cv::COLOR_RGBA2GRAY); break;
-#endif
 
-	default: assert(false);  // unimplemented yet.
-	}
+	Mat gray = Effect::grayscale(image(rect));
 	
 	Scalar sum = cv::sum(gray);
 	double threshold = sum[0] / (image.rows * image.cols);
-#endif
 /*
 	Mat roi = image(rect).clone();
 	Scalar sum = cv::sum(roi);
