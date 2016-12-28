@@ -999,7 +999,6 @@ cv::RotatedRect Feature::calculateBlushRectangle(const std::vector<cv::Point2f>&
 	const Point2f& _01 = points[right?  1:11];
 	const Point2f& _02 = points[right?  2:10];
 	const Point2f& _03 = points[right?  3: 9];
-	const Point2f& _04 = points[right?  4: 8];
 	const Point2f& _63 = points[right? 63:69];
 	const Point2f& _62 = points[right? 62:58];
 	const Point2f& _34 = points[right? 34:44];
@@ -1012,21 +1011,23 @@ cv::RotatedRect Feature::calculateBlushRectangle(const std::vector<cv::Point2f>&
 	Point2f b = (_03 + _63 + _62)/3;
 	Point2f l = _02;
 	Point2f r = _62;
-
+	
 	const float cosa = std::cos(angle);
 	const float sina = std::sin(angle);
-	auto _rotate = [&cosa, sina](Point2f& p) { return Point2f(cosa * p.x - sina * p.y, sina * p.x + cosa * p.y); };
+	const Point2f h(cosa, sina), v(-sina, cosa);
+
+	Point2f tl, br;
+	lineIntersection(t, t + h, l, l + v, &tl);
+	lineIntersection(b, b + h, r, r + v, &br);
 	
-	t = _rotate(t);  // rotate(t, angle);
-	b = _rotate(b);  // rotate(b, angle);
-	l = _rotate(l);  // rotate(l, angle);
-	r = _rotate(r);  // rotate(r, angle);
+	Point2f center = (tl + br) / 2;
+	Vec2f direction = br - tl;
+	if(direction.dot(v) < 0)
+		direction = -direction;
 
-	Point2f center((l.x + r.x)/2, (b.y + t.y)/2);
-	center = rotate(center, -angle);
-
-	Size2f size(right?(r.x - l.x):(l.x - r.x), b.y - t.y);
-	assert(size.width >= 0 && size.height >= 0);
+	Vec2f along = v.dot(direction) * v;
+	Vec2f normal = direction - along;
+	Size2f size(std::sqrt(normal.dot(normal)), std::sqrt(along.dot(along)));
 
 	return RotatedRect(center, size, rad2deg(angle));
 }
