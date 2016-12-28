@@ -207,6 +207,32 @@ void Effect::posterize(cv::Mat& dst, const cv::Mat& src, float level)
 		assert(false);
 }
 
+void Effect::pixelize(cv::Mat& dst, const cv::Mat& src, int width, int height)
+{
+	assert(width > 0 && height > 0);
+	dst.create(src.rows, src.cols, src.type());
+	
+	const int br_count = (src.rows + height - 1) / height;
+	const int bc_count = (src.cols + width  - 1) / width;
+	for(int br = 0; br < br_count; ++br)
+	{
+		int sr0 = br * height;
+		int height = std::min(height, src.rows - sr0);
+		
+		for(int bc = 0; bc < bc_count; ++bc)
+		{
+			int sc0 = bc * width;
+			int width = std::min(width, src.cols - sc0);
+			Rect rect(sc0, sr0, width, height);
+			
+			Scalar sum = cv::sum(src(rect));
+			Scalar avg = sum / (width * height);
+			
+			dst(rect).setTo(avg);
+		}
+	}
+}
+
 cv::Mat Effect::grayscale(const cv::Mat& image)
 {
 	Mat gray;

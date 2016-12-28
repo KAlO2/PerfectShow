@@ -39,8 +39,36 @@ void posterize(const cv::Mat& image)
 	cv::namedWindow(title);
 	cv::setMouseCallback(title, UserData::onClick, &user_data);
 	cv::createTrackbar("amount", title, &level, max, onProgressChanged, &user_data);
-
+	
 	onProgressChanged(level, &user_data);
+}
+
+void pixelize(const cv::Mat& image)
+{
+	const std::string title("Pixelize");
+	const int max = 52;
+
+	Mat processed = image.clone();
+	UserData user_data(title, max, {}, image, processed);
+
+	auto onProgressChanged = [](int block_size, void* user_data)
+	{
+		UserData& data = *reinterpret_cast<UserData*>(user_data);
+		if(block_size <= 1)
+			data.original.copyTo(data.processed);
+		else
+			Effect::pixelize(data.processed, data.original, block_size);
+
+		cv::imshow(data.title, data.processed);
+	};
+	
+	int block_size = 4;
+	cv::namedWindow(title);
+	cv::setMouseCallback(title, UserData::onClick, &user_data);
+	cv::createTrackbar("amount", title, &block_size, max, onProgressChanged, &user_data);
+
+	onProgressChanged(block_size, &user_data);
+	cv::waitKey();
 }
 
 void selectiveGaussianBlur(const cv::Mat& image)

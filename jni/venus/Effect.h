@@ -58,6 +58,17 @@ public:
 	 */
 	static void posterize(cv::Mat& dst, const cv::Mat& src, float level);
 
+	static inline void pixelize(cv::Mat& dst, const cv::Mat& src, int size) { pixelize(dst, src, size, size); }
+	
+	/**
+	 * <a href="https://en.wikipedia.org/wiki/Pixelization">Pixelization</a>
+	 * @param[out] dst    The output image, and in-place pixelizing is supported.
+	 * @param[in]  src    The input image.
+	 * @param[in]  width  Pixel block width, an positive value.
+	 * @param[in]  height Pixel block height, an positive value.
+	 */
+	static void pixelize(cv::Mat& dst, const cv::Mat& src, int width, int height);
+
 	/**
 	 * Convert a color image into grayscale image.
 	 *
