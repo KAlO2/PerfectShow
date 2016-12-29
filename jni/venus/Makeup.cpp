@@ -49,13 +49,15 @@ std::vector<cv::Point2f> Makeup::createHeartShape(const cv::Point2f& center, flo
 	const int N = 32;  // can be tweaked!
 	std::vector<Point2f> heart(N);
 
+	constexpr float y_min = -0.745203257F, y_max = 1.062500000;
+	Point2f origin(center.x, center.y + (y_max + y_min));
 	const float cosa = std::cos(angle), sina = std::sin(angle);
-
+	
 	// http://mathworld.wolfram.com/HeartCurve.html
 	// x = 16*sin(t)^3
 	// y = 13*cos(t) - 5*cos(2*t) - 2*cos(3*t) - cos(4*t)
-	// where parameter t is in range [0 : 2*pi]
-	//
+	// where parameter t is in range [0 : 2*pi], x [-1.0, 1.0], y [-0.745203257, 1.062500000].
+	// 
 	// cos(2*t) = cos(t)^2 - sin(t)^2
 	// cos(3*t) = 4*cos(t)^3 - 3*cos(t)
 	// cos(4*t) = cos(2*t)^2 - sin(2*t)^2
@@ -74,8 +76,9 @@ std::vector<cv::Point2f> Makeup::createHeartShape(const cv::Point2f& center, flo
 		// rotate (x, y) by angle:
 		// (x + y*i)*(cosa + sina * i) = (x*cosa - y*sina) + (x*sina + y*cosa)*i
 		Point2f rotated(x*cosa - y*sina, x*sina + y*cosa);
-		heart[i] = center + radius * rotated;
+		heart[i] = origin + radius * rotated;
 	}
+	
 	return heart;
 }
 
@@ -637,22 +640,68 @@ void Makeup::applyEyeShadow(cv::Mat& dst, const cv::Mat& src, const std::vector<
 void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, BlushShape shape, uint32_t color, float amount)
 {
 	assert(!src.empty() && points.size() == Feature::COUNT);
-	assert(0 <= amount && amount <= 1);
+	assert(0.0F <= amount && amount <= 1.0F);
 
-	src.copyTo(dst);
+	if(src.data != dst.data)
+		src.copyTo(dst);
 
-	for(int i = 0; i <= 1; ++i)  // i == 0 for left cheek, i == 1 for right cheek
+	for(int i = 0; i < 2; ++i)
 	{
 		// static_cast<bool>(i) emits warning "C4800: 'int' : forcing value to bool 'true' or 'false' (performance warning)".
 		// But why it says performance warning?
 		// http://stackoverflow.com/questions/206564/what-is-the-performance-implication-of-converting-to-bool-in-c
-		std::vector<Point2f> polygon = createPolygon(points, shape, i != 0);
+		std::vector<Point2f> polygon = createPolygon(points, shape, i == 0);
 
 		Rect rect = cv::boundingRect(polygon);
 		Mat  mask = Feature::maskPolygonSmooth(rect, polygon, 8);  // level (here 8) can be tuned.
 		Mat blush = pack(mask, color);
-//		cv::imshow(std::string("blush mask ") + (i == 0 ? "left":"right"), mask);
+//		cv::imshow(std::string("blush mask ") + (i == 0 ? "right":"left"), mask);
 		blend(dst, dst, blush, rect.tl(), amount);
+	}
+}
+
+void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, uint32_t color, float amount)
+{
+	assert(!src.empty() && points.size() == Feature::COUNT);
+	assert(!mask.empty() && mask.type() == CV_8UC1);  // In fact, relaxing CV_8UC1 restriction can be achieved by Effect::grayscale()
+	assert(0.0F <= amount && amount <= 1.0F);
+
+	if(src.data != dst.data)
+		src.copyTo(dst);
+
+	constexpr bool crop_margin = false;  // enable this variable if you want to crop transparent margin
+	Mat mask2 = crop_margin? mask(Region::boundingRect(mask, 0/* tolerance */)): mask;
+	const Size2i source_size(mask2.cols, mask2.rows);
+	
+	for(int i = 0; i < 2; ++i)
+	{
+		const RotatedRect rotated_rect = Feature::calculateBlushRectangle(points, i == 0);
+		// display blush region, enable it for debugging.
+//		venus::rectangle(dst, rotated_rect, Scalar(0, 255, 0));
+
+		const Size2f& target_size = rotated_rect.size;
+		float scale_x = target_size.width / source_size.width;
+		float scale_y = target_size.height/ source_size.height;
+		
+#if 1/* uniform scaling */
+		// android:scaleType="centerInside"
+		float scale_u = std::min(scale_x, scale_y);
+		Vec2f scale(scale_u, scale_u);
+#else
+		// android:scaleType="fitXY".
+		Vec2f scale(scale_x, scale_y);
+#endif
+
+		Size2i  size = source_size;
+		Point2f center((size.width - 1)/2.0F, (size.height - 1)/2.0F);
+		Mat affine = Region::transform(size, center, rotated_rect.angle, scale);
+
+		Mat affined_mask;
+		cv::warpAffine(mask2, affined_mask, affine, size, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
+		
+		Point2i origin = rotated_rect.boundingRect().tl();
+		Mat blush = pack(affined_mask, color);
+		blend(dst, dst, blush, origin, amount);
 	}
 }
 

@@ -118,6 +118,32 @@ float distance(const cv::Point2f& point, const cv::Point2f& A, const cv::Point2f
 float distance(const cv::Point2f& point, const cv::Vec4f& line);
 
 /**
+ * Determine the intersection point of two lines, if this point exists.
+ * Two lines intersect if they are not parallel (Parallel lines intersect at infinity).
+ *
+ * The lines are specified by a pair of points each. If they intersect, then
+ * the function returns true, else it returns false.
+ *
+ * Lines can be specified in the following form:
+ *      A1x + B1x = C1
+ *      A2x + B2x = C2
+ *
+ * If det (= A1*B2 - A2*B1) == 0, then lines are parallel else they intersect
+ *
+ * If they intersect, then let us denote the intersection point with P(x, y) where:
+ *      x = (C1*B2 - C2*B1) / (det)
+ *      y = (C2*A1 - C1*A2) / (det)
+ *
+ * @param a1           First point for determining the first line
+ * @param b1           Second point for determining the first line
+ * @param a2           First point for determining the second line
+ * @param b2           Second point for determining the second line
+ * @param intersection The intersection point, if this point exists. pass nullptr if you don't care about it.
+ * @return whether the two lines -- a1b1 and a2b2 intersects.
+ */
+bool lineIntersection(const cv::Point2f& a1, const cv::Point2f& b1, const cv::Point2f& a2, const cv::Point2f& b2, cv::Point2f* intersection);
+
+/**
  * Triangle ABC Circumscribed_circle https://en.wikipedia.org/wiki/Circumscribed_circle
  */
 cv::Point2f centerOfCircumscribedCircle(const cv::Point2f& A, const cv::Point2f& B, const cv::Point2f& C);
@@ -130,6 +156,9 @@ cv::Mat normalize(const cv::Mat& mat, double* max = nullptr);
  * like cv::line() but draw line that run through whole image, not line segment between pt0 and pt1
  */
 void line(cv::Mat& image, const cv::Point2f& pt0, const cv::Point2f& pt1, const cv::Scalar& color,
+		int thickness = 1, int lineType = cv::LINE_8, int shift = 0);
+
+void rectangle(cv::Mat& image, const cv::RotatedRect& rotated_rect, const cv::Scalar& color,
 		int thickness = 1, int lineType = cv::LINE_8, int shift = 0);
 
 // draw curve p1~p2 with respect to p0, p3

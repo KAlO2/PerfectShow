@@ -127,7 +127,7 @@ public:
 	 * @param[in]     rotation  Angle in radians. Positive value means clockwise rotation.
 	 * @param[in]     scale     Scaling factor in X/Y directions, default to no scaling.
 	 */
-	static cv::Mat transform(cv::Size& size, cv::Point2f& pivot, float angle, const cv::Vec2f& scale = cv::Vec2f(1.0F, 1.0F));
+	static cv::Mat transform(cv::Size& size, cv::Point2f& pivot, const float& angle, const cv::Vec2f& scale = cv::Vec2f(1.0F, 1.0F));
 
 	/**
 	 * Like void cv::transform(InputArray src, OutputArray dst, InputArray m);, but operate on cv::Point2f,

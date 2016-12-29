@@ -1,4 +1,5 @@
 #include "venus/opencv_utility.h"
+#include "venus/scalar.h"
 
 #include <opencv2/imgproc.hpp>
 
@@ -76,6 +77,31 @@ float distance(const cv::Point2f& point, const cv::Vec4f& line)
 	Point2f project = (vector.x * along.x + vector.y * along.y) * along;
 	Point2f normal = vector - project;
 	return std::sqrt(normal.x*normal.x + normal.y*normal.y);
+}
+
+bool lineIntersection(const cv::Point2f& a1, const cv::Point2f& b1, const cv::Point2f& a2, const cv::Point2f& b2,
+		cv::Point2f* intersection)
+{
+	float A1 = b1.y - a1.y;
+    float B1 = a1.x - b1.x;
+    float C1 = a1.x * A1 + a1.y * B1;
+
+    float A2 = b2.y - a2.y;
+    float B2 = a2.x - b2.x;
+    float C2 = a2.x * A2 + a2.y * B2;
+
+    float det = A1*B2 - A2*B1;
+
+	if(isZero(det))
+		return false;
+
+    if(intersection != nullptr)
+	{
+        intersection->x = (C1 * B2 - C2 * B1) / det;
+        intersection->y = (C2 * A1 - C1 * A2) / det;
+    }
+
+    return true;
 }
 
 /*
@@ -193,7 +219,7 @@ cv::Mat normalize(const cv::Mat& mat, double* max/* = nullptr */)
 }
 
 void line(Mat& image, const Point2f& pt0, const Point2f& pt1, const Scalar& color,
-		int thickness/* = 1*/, int lineType/* = cv::LINE_8*/, int shift/* = 0*/)
+		int thickness/* = 1 */, int lineType/* = cv::LINE_8 */, int shift/* = 0 */)
 {
 	assert(pt0.x != pt1.x || pt0.y != pt1.y);  // two points coincide!
 	Point2f delta = pt1 - pt0;
@@ -213,6 +239,19 @@ void line(Mat& image, const Point2f& pt0, const Point2f& pt1, const Scalar& colo
 		bottom.x = reciprocal_k * (bottom.y - pt0.y) + pt0.x;
 	}
 	cv::line(image, p0, p1, color, thickness, lineType, shift);
+}
+
+void rectangle(cv::Mat& image, const cv::RotatedRect& rotated_rect, const cv::Scalar& color,
+		int thickness/* = 1 */, int lineType/* = cv::LINE_8 */, int shift/* = 0 */)
+{
+	constexpr int N = 4;
+	Point2f vertices[N];
+	rotated_rect.points(vertices);
+	for(int j = 0; j < N; ++j)
+		cv::line(image, vertices[j], vertices[(j+1)%N], color, thickness, lineType, shift);
+
+	Rect rect = rotated_rect.boundingRect();
+	cv::rectangle(image, rect, color, thickness, lineType, shift);
 }
 
 void curve(cv::Mat& image, const cv::Point2f& p0, const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3,

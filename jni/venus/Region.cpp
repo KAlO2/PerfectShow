@@ -354,7 +354,7 @@ void Region::overlay(cv::Mat& dst, const cv::Mat& patch, const cv::Point2i& posi
 	patch.copyTo(dst(rect), mask);
 }
 
-cv::Mat Region::transform(cv::Size& size, cv::Point2f& pivot, float angle, const cv::Vec2f& scale/* = cv::Vec2f(1.0f, 1.0f) */)
+cv::Mat Region::transform(cv::Size& size, cv::Point2f& pivot, const float& angle, const cv::Vec2f& scale/* = cv::Vec2f(1.0f, 1.0f) */)
 {
 /*
 	@see http://stackoverflow.com/questions/22041699/rotate-an-image-without-cropping-in-opencv-in-c

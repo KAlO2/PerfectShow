@@ -110,6 +110,18 @@ public:
 	 * @param[in] amount  Blending amount in range [0, 1], 0 being no effect, 1 being fully applied.
 	 */
 	static void applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, BlushShape shape, uint32_t color, float amount);
+	
+	/**
+	 * @copydoc Makeup::applyBlush(cv::Mat&, const cv::Mat&, const std::vector<cv::Point2f>&, BlushShape, uint32_t, float)
+	 *
+	 * @param[out] dst
+	 * @param[in] src     The source image
+	 * @param[in] points  Feature points detected from <code>src</code> image.
+	 * @param[in] mask    Shape of a blush, it must be a <em>grayscale</em> image.
+	 * @param[in] color   0xAABBGGRR, RGB channel will be blush's primary color, and alpha will be premultiplied to blush.
+	 * @param[in] amount  Blending amount in range [0, 1], 0 being no effect, 1 being fully applied.
+	 */
+	static void applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, uint32_t color, float amount);
 
 	/**
 	 * Lip gloss and lipstick can make your lips look fuller, glossier and better! See how to 
