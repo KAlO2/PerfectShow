@@ -671,6 +671,7 @@ void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::
 
 	constexpr bool crop_margin = false;  // enable this variable if you want to crop transparent margin
 	Mat mask2 = crop_margin? mask(Region::boundingRect(mask, 0/* tolerance */)): mask;
+//	mask2 = Effect::grayscale(mask2);  // relaxation can be done here.
 	const Size2i source_size(mask2.cols, mask2.rows);
 	
 	for(int i = 0; i < 2; ++i)
@@ -694,12 +695,12 @@ void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::
 
 		Size2i  size = source_size;
 		Point2f center((size.width - 1)/2.0F, (size.height - 1)/2.0F);
-		Mat affine = Region::transform(size, center, rotated_rect.angle, scale);
+		Mat affine = Region::transform(size, center, deg2rad(rotated_rect.angle), scale);
 
 		Mat affined_mask;
 		cv::warpAffine(mask2, affined_mask, affine, size, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
 		
-		Point2i origin = rotated_rect.boundingRect().tl();
+		Point2i origin = rotated_rect.center - center;
 		Mat blush = pack(affined_mask, color);
 		blend(dst, dst, blush, origin, amount);
 	}
