@@ -686,3 +686,22 @@ void applyBrow(const std::string& image_name)
 #endif
 	cv::imshow(__FUNCTION__, result);
 }
+
+void markBlush(const std::string& image_name)
+{
+	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
+	Mat gray  = Effect::grayscale(image);
+
+	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+
+	Vec4f line = Feature::getSymmetryAxis(points);
+	float angle = std::atan2(line[1], line[0]) - static_cast<float>(M_PI/2);
+	std::cout << __FUNCTION__ << " angle: " << angle << '\n';
+	for(int i = 0; i < 2; ++i)
+	{
+		RotatedRect rotated_rect = Feature::calculateBlushRectangle(points, angle, i == 0);
+		venus::rectangle(image, rotated_rect, Scalar(0, 255, 0));
+	}
+
+	cv::imshow(__FUNCTION__, image);
+}

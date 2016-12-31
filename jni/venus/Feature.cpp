@@ -841,7 +841,7 @@ cv::Mat Feature::maskPolygonSmooth(const cv::Rect2i& rect, const std::vector<cv:
 	const int  num_points[] = { static_cast<int>(tmp_points.size()) };
 	for(int j = 1; j <= level; ++j)
 	{
-		float FACTOR = std::sqrt(1.0f - static_cast<float>(j-1)/level);  // every step shrinks a little bit.
+		float FACTOR = std::sqrt(1.0F - static_cast<float>(j-1)/level);  // every step shrinks a little bit.
 
 		for(size_t i = 0; i < points.size(); ++i)
 			tmp_points[i] = (points[i] - center) * FACTOR + center - origin;
@@ -934,8 +934,8 @@ Region Feature::calculateBrowRegion(const std::vector<cv::Point2f>& points, cons
 
 #if 0
 	Point2f pivot = right?
-		(points[20] + points[21] + points[23] + points[24]) / 4.0f:
-		(points[27] + points[28] + points[30] + points[31]) / 4.0f;
+		(points[20] + points[21] + points[23] + points[24]) / 4:
+		(points[27] + points[28] + points[30] + points[31]) / 4;
 #else
 	Point2f pivot((box[0] + box[2])/2, (box[1] + box[3])/2);
 #endif

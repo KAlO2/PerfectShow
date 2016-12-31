@@ -38,4 +38,6 @@ void applyEyeShadow(const std::string& image_name);
 void applyEyeLash(const std::string& image_name);
 void applyBrow(const std::string& image_name);
 
+void markBlush(const std::string& image_name);
+
 #endif /* EXAMPLE_MAKEUP_ */

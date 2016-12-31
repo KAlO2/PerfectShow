@@ -171,7 +171,7 @@ T colorDifference(const T* color, const T* reference_color, int channel, bool ha
 	// std::is_unsigned also returns true for bool type, so kick it out.
 	static_assert(std::is_floating_point<T>::value ||
 			(std::is_unsigned<T>::value && !std::is_same<T, bool>::value), "limit to integral/floating primitive type");
-
+	assert(criterion == SelectCriterion::COMPOSITE || channel >= 3);  // RGB or HSV mode have 3 channels.
 	constexpr T ZERO(0), FULL(std::is_floating_point<T>::value?T(1):std::numeric_limits<T>::max());
 	assert(0 < channel && channel <= 4);
 	assert(ZERO <= threshold && threshold <= FULL);
@@ -275,13 +275,8 @@ void Region::selectContiguousRegionByColor(cv::Mat& mask, const cv::Mat& image, 
 
 	#pragma omp parallel for
 	for(int i = 0; i < length; ++i)
-	{
-		*mask_color = colorDifference(_image_color, reference_color, nb_channel, has_alpha,
+		mask_color[i] = colorDifference(_image_color + i * nb_channel, reference_color, nb_channel, has_alpha,
 				threshold, criterion, antialias,  select_transparent);
-		
-		_image_color += nb_channel;
-		++mask_color;
-	}
 }
 
 void Region::selectContiguousRegionByColor(cv::Mat& mask, const cv::Mat& image, const cv::Vec4f& color, float threshold, 
@@ -313,13 +308,8 @@ void Region::selectContiguousRegionByColor(cv::Mat& mask, const cv::Mat& image, 
 
 	#pragma omp parallel for
 	for(int i = 0; i < length; ++i)
-	{
-		*mask_color = colorDifference(_image_color, reference_color, nb_channel, has_alpha,
+		mask_color[i] = colorDifference(_image_color + i * nb_channel, reference_color, nb_channel, has_alpha,
 				threshold, criterion, antialias,  select_transparent);
-		
-		_image_color += nb_channel;
-		++mask_color;
-	}
 }
 
 void Region::shrink(cv::Mat& dst, const cv::Mat& src, int offset)

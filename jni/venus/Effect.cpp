@@ -392,7 +392,8 @@ void Effect::gaussianBlurSelective(cv::Mat& dst, const cv::Mat& src, const cv::M
 
 void Effect::unsharpMask(cv::Mat& dst, const cv::Mat& src,  float radius/* = 5.0F*/, int threshold/* = 0*/, float amount/* = 0.5F*/)
 {
-	assert(radius >= 0.0F);
+	assert(1.0F <= radius);
+	assert(0 <= threshold && threshold <= 255);  // threshold = clamp(threshold, 0, 255);
 	assert(0.0F <= amount && amount <= 1.0F);
 
 	cv::Mat blurred;
