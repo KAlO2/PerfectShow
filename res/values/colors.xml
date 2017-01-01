@@ -82,9 +82,9 @@
     <color name="CropImageView_default_dimmed">#8c000000</color>
     <color name="CropImageView_default_logo">#4f212121</color>
     
-    <!-- HorizontalProgressWheelView -->
-    <color name="HorizontalProgressWheelView_line">#808080</color>
-    <color name="widget_selected">#FF6E40</color>
+	<!-- HorizontalProgressWheelView -->
+	<color name="HorizontalProgressWheelView_progressLine">@android:color/white</color>
+	<color name="HorizontalProgressWheelView_middleLine">@android:color/white</color>
     	
 	<!-- NailBar -->
 	<color name="NailBar_lowSideColor">#571A7E</color>

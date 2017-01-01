@@ -93,6 +93,14 @@
 			<item name="android:paddingLeft">10dp</item>
 			<item name="android:paddingRight">10dp</item>
 	</style>
+
+	<style name="Widget.HorizontalProgressWheelView">
+		<item name="progressLineColor">@color/HorizontalProgressWheelView_progressLine</item>
+		<item name="middleLineColor">@color/HorizontalProgressWheelView_middleLine</item>
+		<item name="lineWidth">@dimen/HorizontalProgressWheelView_lineWidth</item>
+		<item name="lineHeight">@dimen/HorizontalProgressWheelView_lineHeight</item>
+		<item name="lineMargin">@dimen/HorizontalProgressWheelView_lineMargin</item>
+	</style>
 	
 	<style name="TitleBar">
 		<item name="android:layout_width">wrap_content</item>

@@ -1,7 +1,6 @@
-package com.cloudream.ishow.view;
+package com.cloudream.ishow.widget;
 
-import com.cloudream.ishow.algorithm.easing.Cubic;
-import com.cloudream.ishow.algorithm.easing.Easing;
+import com.cloudream.ishow.algorithm.CubicEasing;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -67,7 +66,6 @@ public abstract class ImageViewTouchBase extends ImageView
 	private static final boolean LOG_ENABLED = false;
 	public static final float ZOOM_INVALID = -1.0f;
 
-	protected Easing mEasing = new Cubic();
 	protected Matrix mBaseMatrix = new Matrix();
 	protected Matrix mSuppMatrix = new Matrix();
 	protected Matrix mNextMatrix;
@@ -1029,8 +1027,8 @@ public abstract class ImageViewTouchBase extends ImageView
 			{
 				long now = System.currentTimeMillis();
 				float currentMs = Math.min(durationMs, now - startTime);
-				double x = mEasing.easeOut(currentMs, 0, dx, durationMs);
-				double y = mEasing.easeOut(currentMs, 0, dy, durationMs);
+				double x = CubicEasing.easeOut(currentMs, 0, dx, durationMs);
+				double y = CubicEasing.easeOut(currentMs, 0, dy, durationMs);
 				panBy((x - old_x), (y - old_y));
 				old_x = x;
 				old_y = y;
@@ -1073,7 +1071,7 @@ public abstract class ImageViewTouchBase extends ImageView
 			{
 				long now = System.currentTimeMillis();
 				float currentMs = Math.min(durationMs, now - startTime);
-				float newScale = (float) mEasing.easeInOut(currentMs, 0, deltaScale, durationMs);
+				float newScale = (float) CubicEasing.easeInOut(currentMs, 0, deltaScale, durationMs);
 				zoomTo(oldScale + newScale, destX, destY);
 				if(currentMs < durationMs)
 				{

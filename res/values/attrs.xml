@@ -12,6 +12,10 @@
 		
 		<!-- The NailBar style -->
 		<attr name="nailBarStyle" format="reference" />
+		
+		<!-- The HorizontalProgressWheelView style -->
+		<attr name="horizontalProgressWheelViewStyle" format="reference" />
+		
 	</declare-styleable>
 	
 	<declare-styleable name="ColorPicker">
@@ -39,4 +43,13 @@
 		<attr name="circleRadius" format="dimension" />
 		<attr name="nailRadius" format="dimension" />
 	</declare-styleable>
+	
+	<declare-styleable name="HorizontalProgressWheelView">
+		<attr name="progressLineColor" format="color" />
+		<attr name="middleLineColor" format="color" />
+		<attr name="lineWidth" format="dimension" />
+		<attr name="lineHeight" format="dimension" />
+		<attr name="lineMargin" format="dimension" />
+	</declare-styleable>
+	
 </resources>

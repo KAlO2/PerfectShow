@@ -24,6 +24,9 @@
 		
 		<!-- NailBar style -->
 		<item name="nailBarStyle">@style/Widget.NailBar</item>
+		
+		<!-- HorizontalProgressWheelView style -->
+		<item name="horizontalProgressWheelViewStyle">@style/Widget.HorizontalProgressWheelView</item>
 	</style>
 	
 	

@@ -1,4 +1,4 @@
-package com.cloudream.ishow.view;
+package com.cloudream.ishow.widget;
 
 import android.content.Context;
 import android.graphics.Matrix;
