@@ -30,7 +30,7 @@ void detectFace(const cv::Mat& image, const std::string& image_name/* = std::str
 	Mat gray = Effect::grayscale(image);
 
 	bool found = false;
-	std::vector<Point2f> points;
+	std::vector<std::vector<Point2f>> faces;
 
 	// how about checking from -45 degree to 45 degree? And walk from middle to both sides.
 	// 0  1  2  3  4  5  6
@@ -59,11 +59,12 @@ void detectFace(const cv::Mat& image, const std::string& image_name/* = std::str
 		else
 			tag = image_name;
 
-		points = Feature::detectFace(gray2, tag, CLASSIFIER_DIR);
-		if(!points.empty())
+		faces = Feature::detectFace(gray2, tag, CLASSIFIER_DIR);
+		if(!faces.empty())
 		{
 			cv::Mat inverse = Region::invert(affine);
-			cv::transform(points, points, inverse);
+			for(std::vector<Point2f>& face: faces)
+				cv::transform(face, face, inverse);
 
 			found = true;
 			break;  // and finally, we find a face in the image.
@@ -83,8 +84,9 @@ void mark(const std::string& image_name)
 	assert(image.type() == CV_8UC3);
 	
 	Mat gray  = Effect::grayscale(image);
-	const std::vector<cv::Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
-	assert(!points.empty());
+	const std::vector<std::vector<cv::Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!faces.empty());
+	std::vector<cv::Point2f> points = faces[0];
 
 /**************************** getSymmetryAxis ***************************************/
 	// those points are one the vertical line.
@@ -127,8 +129,8 @@ void mark(const std::string& image_name)
 
 	//void drawCross(cv::Mat& image, const cv::Point2f& point, float length);
 	using venus::drawCross;
-	float length = 8.0f;
-	int radius = static_cast<int>(length / std::sqrt(8.0f));
+	float length = 8.0F;
+	int radius = static_cast<int>(length / std::sqrt(8.0F));
 	for(const cv::Point2f& point: points_on_line)
 		drawCross(image, point, radius, CV_RGB(0, 255, 0), 1, LINE_AA);
 
@@ -169,18 +171,12 @@ void detectFaceSkin(const std::string& image_name)
 
 	// use face detector to detect face.
 	// CV_RGB2GRAY for Android Bitmap, CV_BG42GRAY for OpenCV Mat
-	Mat gray;
-	int channel = image.channels();
-#if USE_BGRA_LAYOUT
-	if(channel == 3)      cvtColor(image, gray, CV_BGR2GRAY);
-	else if(channel == 4) cvtColor(image, gray, CV_BGRA2GRAY);
-#else
-	if(channel == 3)      cvtColor(image, gray, CV_RGB2GRAY);
-	else if(channel == 4) cvtColor(image, gray, CV_RGBA2GRAY);
-#endif
+	Mat gray = Effect::grayscale(image);
 
 //	assert(image.channels() == 1);  // gray image
-	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!faces.empty());
+	const std::vector<Point2f> points = faces[0];
 	
 	const Point2f& point = points[56];
 	cv::Vec4b skin_color = image.at<cv::Vec4b>(cvRound(point.y), cvRound(point.x));
@@ -224,7 +220,9 @@ void judgeFaceShape(const std::string& image_name)
 {
 	Mat image = imread(image_name);
 	Mat gray  = Effect::grayscale(image);
-	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!faces.empty());
+	const std::vector<Point2f> points = faces[0];
 
 	float L = 0.0f;  // circumference
 	for(int i = 0; i < 19; ++i)
@@ -429,9 +427,11 @@ void applyLip(const std::string& image_name)
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
 	Mat gray  = Effect::grayscale(image);
 
-	const std::vector<cv::Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!faces.empty());
+	const std::vector<Point2f> points = faces[0];
 
-	float amount = 0.80f;
+	float amount = 0.80F;
 	const uint32_t color = 0x556722BF;
 #if 0
 	RoiInfo lips = calcuateLipsRegionInfo(points);
@@ -462,7 +462,9 @@ void applyBlush(const std::string& image_name)
 	if(image.type() == CV_8UC3)
 		cvtColor(image, image, CV_BGR2BGRA);
 
-	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!faces.empty());
+	const std::vector<Point2f> points = faces[0];
 
 	Mat result;
 	uint32_t color = 0xFEEDBEEF;
@@ -473,10 +475,11 @@ void applyBlush(const std::string& image_name)
 void applyEyeShadow(const std::string& image_name)
 {
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
-	
-	Mat gray;
-	cv::cvtColor(image, gray, CV_BGR2GRAY);
-	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	Mat gray = Effect::grayscale(image);
+
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!faces.empty());
+	const std::vector<Point2f> points = faces[0];
 
 	if(image.channels() == 3)
 		cv::cvtColor(image, image, CV_BGR2BGRA);
@@ -518,7 +521,9 @@ void applyEyeLash(const std::string& image_name)
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
 	Mat gray  = Effect::grayscale(image);
 
-	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!faces.empty());
+	const std::vector<Point2f> points = faces[0];
 
 	if(image.channels() == 3)
 		cv::cvtColor(image, image, CV_BGR2BGRA);  // add alpha channel
@@ -545,7 +550,9 @@ void applyBrow(const std::string& image_name)
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
 	Mat gray  = Effect::grayscale(image);
 
-	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!faces.empty());
+	const std::vector<Point2f> points = faces[0];
 
 	if(image.channels() == 3)
 		cv::cvtColor(image, image, CV_BGR2BGRA);
@@ -692,7 +699,9 @@ void markBlush(const std::string& image_name)
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
 	Mat gray  = Effect::grayscale(image);
 
-	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!faces.empty());
+	const std::vector<Point2f> points = faces[0];
 
 	Vec4f line = Feature::getSymmetryAxis(points);
 	float angle = std::atan2(line[1], line[0]) - static_cast<float>(M_PI/2);

@@ -329,29 +329,32 @@ static cv::Vec2f rotate(const cv::Vec2f& v, float angle)
 	return cv::Vec2f(_x, _y);
 }
 
-std::vector<cv::Point2f> Feature::detectFace(const cv::Mat& image, const std::string& tag, const std::string& classifier_dir)
+std::vector<std::vector<cv::Point2f>> Feature::detectFace(const cv::Mat& image, const std::string& tag, const std::string& classifier_dir)
 {
 	assert(image.channels() == 1);  // single channel required, namely gray image.
+	std::vector<std::vector<cv::Point2f>> faces;
+	
+	if(!stasm_init(classifier_dir.c_str(), 0 /*trace*/))
+		printf("stasm_init failed: %s\n", stasm_lasterr());
 
-	std::vector<Point2f> points;
-
-    int foundface;
-    float landmarks[stasm_NLANDMARKS * 2]; // x, y coords (note the 2)
 	const char* image_path = tag.c_str();
-    if(!stasm_search_single(&foundface, landmarks,
-			reinterpret_cast<const char*>(image.data), image.cols, image.rows,
-			image_path, classifier_dir.c_str()))
-    {
-        printf("Error in stasm_search_single: %s\n", stasm_lasterr());
-        return points;
-    }
+	const char* image_data = reinterpret_cast<const char*>(image.data);
+	int allow_multiple_faces = 1;
+	int min_width_percentage = 10;
+	if(!stasm_open_image(image_data, image.cols, image.rows, image_path, allow_multiple_faces, min_width_percentage))
+		printf("stasm_open_image failed: %s\n", stasm_lasterr());
 
-    if(!foundface)
-		printf("No face found in %s\n", image_path);
-    else
-    {
-        // draw the landmarks on the image as white dots (image is monochrome)
-        stasm_force_points_into_image(landmarks, image.cols, image.rows);
+	float landmarks[stasm_NLANDMARKS * 2]; // x, y coordinates
+	while(true)
+	{
+		int found_face;
+		if(!stasm_search_auto(&found_face, landmarks))
+             printf("stasm_search_auto failed: %s\n", stasm_lasterr());
+
+		if(!found_face)
+			break;
+
+		std::vector<Point2f> points;
 #if 0
 		points.reserve(stasm_NLANDMARKS);
         for(int i = 0; i < stasm_NLANDMARKS; i++)
@@ -361,7 +364,7 @@ std::vector<cv::Point2f> Feature::detectFace(const cv::Mat& image, const std::st
 		}
 
 #else  // add bonus feature points(use Bezier or spline curve) for better subdivision result.
-		const int extra_count = 4;
+		constexpr int extra_count = 4;
 		points.reserve(stasm_NLANDMARKS + extra_count);
 
 		int i = 0;
@@ -410,6 +413,8 @@ std::vector<cv::Point2f> Feature::detectFace(const cv::Mat& image, const std::st
 
 		for(; i < stasm_NLANDMARKS; ++i)
 			points.push_back(Point2f(landmarks[i*2], landmarks[i*2+1]));
+
+		faces.push_back(std::move(points));
 #if 0
 		// add more points for better Delaunay triangulation result.
 		Point2f pm1(points[22]), p0(points[21]), p1(points[20]), p2(points[25]);
@@ -457,18 +462,16 @@ std::vector<cv::Point2f> Feature::detectFace(const cv::Mat& image, const std::st
 #endif
     }
 
-//	correctIris(image, points);
-
-	return points;
+	return faces;
 }
 
-std::vector<cv::Point2f> Feature::detectFace(cv::Size2i* size, const std::string& image_name, const std::string& classifier_dir)
+std::vector<std::vector<cv::Point2f>> Feature::detectFace(cv::Size2i* size, const std::string& image_name, const std::string& classifier_dir)
 {
 	cv::Mat image = cv::imread(image_name, cv::IMREAD_GRAYSCALE);
 	if(!image.data)
     {
         printf("Cannot load %s\n", image_name.c_str());
-        return std::vector<Point2f>();
+		return {};
     }
 
 	if(size != nullptr)

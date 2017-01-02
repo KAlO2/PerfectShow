@@ -23,7 +23,8 @@ jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_Feature_nativeDetectFace
 	cv::cvtColor(image, gray, CV_RGBA2GRAY);
 	unlockJavaBitmap(env, _image);
 
-	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, classifier_dir);
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, classifier_dir);
+	const std::vector<Point2f> points = faces[0];  // TODO expose it to Java side.
 
 	jclass class_PointF = env->FindClass("android/graphics/PointF");
 	assert(class_PointF != nullptr);

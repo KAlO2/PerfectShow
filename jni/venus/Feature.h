@@ -44,7 +44,7 @@ public:
 	 * @param[in] classifier_dir The classifiers (haarcascade_frontalface_alt2.xml and so on) directory.
 	 * @return                   Feature points.
 	 */
-	static std::vector<cv::Point2f> detectFace(const cv::Mat& image, const std::string& tag, const std::string& classifier_dir);
+	static std::vector<std::vector<cv::Point2f>> detectFace(const cv::Mat& image, const std::string& tag, const std::string& classifier_dir);
 
 	/**
 	 * Detect feature points from given path.
@@ -53,7 +53,7 @@ public:
 	 * @param[in] classifier_dir The classifiers (haarcascade_frontalface_alt2.xml and so on) directory.
 	 * @return                   Feature points.
 	 */
-	static std::vector<cv::Point2f> detectFace(cv::Size2i* size, const std::string& image_name, const std::string& classifier_dir);
+	static std::vector<std::vector<cv::Point2f>> detectFace(cv::Size2i* size, const std::string& image_name, const std::string& classifier_dir);
 
 	cv::Mat mark() const;
 	static void mark(cv::Mat& image, const std::vector<cv::Point2f>& points);
