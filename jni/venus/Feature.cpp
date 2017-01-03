@@ -329,6 +329,38 @@ static cv::Vec2f rotate(const cv::Vec2f& v, float angle)
 	return cv::Vec2f(_x, _y);
 }
 
+// sort multiple faces in area descending order
+static void sort(std::vector<std::vector<cv::Point2f>>& faces)
+{
+	const size_t nb_face = faces.size();
+	if(nb_face <= 1U)
+		return;
+
+	using Pair = std::pair<size_t, float>;
+	std::vector<Pair> areas(nb_face);
+	for(size_t i = 0; i < nb_face; ++i)
+	{
+		cv::Vec4f box = venus::boundingBox(faces[i]);
+		float& left = box[0], &top = box[1], &right = box[2], &bottom = box[3];
+		float area = (right - left) * (bottom - top);
+		areas[i] = std::make_pair(i, area);
+	}
+
+	// http://stackoverflow.com/questions/9025084/sorting-a-vector-in-descending-order
+	auto greater = [](const Pair& lhs, const Pair& rhs){ return lhs.second > rhs.second; };
+	std::sort(areas.begin(), areas.end(), greater);
+
+	for(size_t i = 0; i < nb_face; ++i)
+	{
+		size_t j = areas[i].first;
+		if(i != j)
+		{
+			std::swap(faces[i], faces[j]);
+			std::swap(areas[i].first, areas[j].first);
+		}
+	}
+}
+
 std::vector<std::vector<cv::Point2f>> Feature::detectFace(const cv::Mat& image, const std::string& tag, const std::string& classifier_dir)
 {
 	assert(image.channels() == 1);  // single channel required, namely gray image.
@@ -462,6 +494,7 @@ std::vector<std::vector<cv::Point2f>> Feature::detectFace(const cv::Mat& image, 
 #endif
     }
 
+	sort(faces);  // sort multiple faces in area descending order
 	return faces;
 }
 
