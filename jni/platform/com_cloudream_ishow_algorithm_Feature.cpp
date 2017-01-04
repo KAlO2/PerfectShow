@@ -24,18 +24,26 @@ jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_Feature_nativeDetectFace
 	unlockJavaBitmap(env, _image);
 
 	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, classifier_dir);
-	const std::vector<Point2f> points = faces[0];  // TODO expose it to Java side.
 
+	jclass class_PointF_array = env->FindClass("[Landroid/graphics/PointF;");
 	jclass class_PointF = env->FindClass("android/graphics/PointF");
-	assert(class_PointF != nullptr);
+	assert(class_PointF_array != nullptr && class_PointF != nullptr);
 
 	// http://stackoverflow.com/questions/1036666/use-of-array-of-zero-length
-    // if count == 0, return zero length array, so you don't have to check for null situation.
-	const size_t count = points.size();
-	jobjectArray objectArray_points = env->NewObjectArray(count, class_PointF, 0);
-	setJavaPointArray(env, objectArray_points, points);
+	// if count == 0, return zero length array, so you don't have to check for null situation.
+	const size_t face_count = faces.size();
+	jobjectArray objectArray_faces = env->NewObjectArray(face_count, class_PointF_array, 0);
 
-	return objectArray_points;
+	for(size_t i = 0; i < face_count; ++i)
+	{
+		std::vector<Point2f> points = faces[i];
+		const size_t point_count = points.size();
+		jobjectArray objectArray_points = env->NewObjectArray(point_count, class_PointF, 0);
+		setJavaPointArray(env, objectArray_points, points);
+		env->SetObjectArrayElement(objectArray_faces, i, objectArray_points);
+	}
+
+	return objectArray_faces;
 }
 
 jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_Feature_nativeGetSymmetryAxis(JNIEnv* env,

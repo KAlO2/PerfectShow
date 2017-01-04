@@ -60,18 +60,18 @@ public class Feature
 		center_point = down_center[1];
 	}
 	
-	public static PointF[] detectFace(Context context, Bitmap image, @Nullable String image_name)
+	public static PointF[][] detectFace(Context context, Bitmap image, @Nullable String image_name)
 	{
 		if(BuildConfig.DEBUG)
 		{
-	        String fullname = context.getResources().getString(R.raw.haarcascade_frontalface_alt2);
-	        Log.i(TAG, "fullname: " + fullname);
-	        String resName = fullname.substring(fullname.lastIndexOf("/") + 1);
-	        Log.i(TAG, "resName: " + resName);
-	        
-	        // Enter "OpenCV_data", you will get "/data/data/<PACKAGE_NAME>/app_OpenCV_data", why a "app_" prefix?
-	        File resDir = context.getDir("OpenCV_data", Context.MODE_PRIVATE);
-	        Log.i(TAG, "resDir: " + resDir.getAbsolutePath());
+			String fullname = context.getResources().getString(R.raw.haarcascade_frontalface_alt2);
+			Log.i(TAG, "fullname: " + fullname);
+			String resName = fullname.substring(fullname.lastIndexOf("/") + 1);
+			Log.i(TAG, "resName: " + resName);
+			
+			// Enter "OpenCV_data", you will get "/data/data/<PACKAGE_NAME>/app_OpenCV_data", why a "app_" prefix?
+			File resDir = context.getDir("OpenCV_data", Context.MODE_PRIVATE);
+			Log.i(TAG, "resDir: " + resDir.getAbsolutePath());
 		}
 		
 		String path = Utils.exportResource(context, R.raw.haarcascade_frontalface_alt2);
@@ -84,7 +84,7 @@ public class Feature
 		return nativeDetectFace(image, image_name, CLASSIFIER_DIR);
 	}
 	
-	public static PointF[] detectFace(Context context, String image_name)
+	public static PointF[][] detectFace(Context context, String image_name)
 	{
 		Bitmap image = BitmapFactory.decodeFile(image_name, BitmapUtils.OPTION_RGBA8888);
 		return detectFace(context, image, image_name);
@@ -443,8 +443,8 @@ public class Feature
 		return bitmap;
 	}
 	
-	private static native PointF[] nativeDetectFace(Bitmap image, String image_name, String classifier_dir);
-	private static native PointF[] nativeGetSymmetryAxis(PointF points[]);
+	private static native PointF[][] nativeDetectFace(Bitmap image, String image_name, String classifier_dir);
+	private static native PointF[]   nativeGetSymmetryAxis(PointF points[]);
 	
 	static
 	{
