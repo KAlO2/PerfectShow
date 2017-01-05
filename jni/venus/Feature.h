@@ -42,7 +42,7 @@ public:
 	 * @param[in] image          The @p gray image to be detected.
 	 * @param[in] tag            Nullable, for debugging usage, usually the image name.
 	 * @param[in] classifier_dir The classifiers (haarcascade_frontalface_alt2.xml and so on) directory.
-	 * @return                   Feature points.
+	 * @return Faces detected, each face has the same amount of feature points.
 	 */
 	static std::vector<std::vector<cv::Point2f>> detectFace(const cv::Mat& image, const std::string& tag, const std::string& classifier_dir);
 
@@ -51,7 +51,7 @@ public:
 	 * @param[out] size          The image size.
 	 * @param[in] image_name     The image name.
 	 * @param[in] classifier_dir The classifiers (haarcascade_frontalface_alt2.xml and so on) directory.
-	 * @return                   Feature points.
+	 * @return Faces detected, each face has the same amount of feature points.
 	 */
 	static std::vector<std::vector<cv::Point2f>> detectFace(cv::Size2i* size, const std::string& image_name, const std::string& classifier_dir);
 
@@ -100,6 +100,8 @@ public:
 	Region calculateEyeRegion(bool right)  const { return calculateEyeRegion(points, line, right);   }
 	Region calculateLipshRegion()          const { return calculateLipsRegion(points, line); }
 	Region calculateTeethRegion()          const;
+
+	static cv::RotatedRect calculateRectangle(float angle, const cv::Point2f& left, const cv::Point2f& top, const cv::Point2f& right, const cv::Point2f& bottom);
 
 	/**
 	 * Given four points, calculate the intersection point of the two lines (left-right and top-bottom).

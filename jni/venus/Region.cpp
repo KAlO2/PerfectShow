@@ -20,9 +20,9 @@ Region::Region(cv::Point2f& pivot, cv::Size2f& size, cv::Mat& mask):
 cv::Rect Region::getRect(const cv::Point2f& pivot, const cv::Size2f& size)
 {
 	int left = static_cast<int>(pivot.x - size.width/2);
-	int top = static_cast<int>(pivot.y - size.height/2);
-	int width = cvCeil(size.width);
-	int height = cvCeil(size.height);
+	int top  = static_cast<int>(pivot.y - size.height/2);
+	int width = cvRound(size.width);
+	int height = cvRound(size.height);
 	
 	return Rect(left, top, width, height);
 }

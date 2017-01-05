@@ -329,7 +329,6 @@ static cv::Vec2f rotate(const cv::Vec2f& v, float angle)
 	return cv::Vec2f(_x, _y);
 }
 
-// sort multiple faces in area descending order
 static void sort(std::vector<std::vector<cv::Point2f>>& faces)
 {
 	const size_t nb_face = faces.size();
@@ -1048,24 +1047,7 @@ cv::RotatedRect Feature::calculateBlushRectangle(const std::vector<cv::Point2f>&
 	Point2f l = _02;
 	Point2f r = _62;
 	
-	const float cosa = std::cos(angle);
-	const float sina = std::sin(angle);
-	const Point2f h(cosa, sina), v(-sina, cosa);
-
-	Point2f tl, br;
-	lineIntersection(t, t + h, l, l + v, &tl);
-	lineIntersection(b, b + h, r, r + v, &br);
-	
-	Point2f center = (tl + br) / 2;
-	Vec2f direction = br - tl;
-	if(direction.dot(v) < 0)
-		direction = -direction;
-
-	Vec2f along = v.dot(direction) * v;
-	Vec2f normal = direction - along;
-	Size2f size(std::sqrt(normal.dot(normal)), std::sqrt(along.dot(along)));
-
-	return RotatedRect(center, size, rad2deg(angle));
+	return calculateRectangle(angle, l, t, r, b);
 }
 
 std::vector<cv::Point2f> Feature::calculateBlushPolygon(const std::vector<cv::Point2f>& points, bool right)
@@ -1290,6 +1272,28 @@ Region Feature::calculateTeethRegion() const
 	Point2f pivot((box[0] + box[2])/2, (box[1] + box[3])/2);
 
 	return Region(pivot, size, mask);
+}
+
+cv::RotatedRect Feature::calculateRectangle(float angle, const cv::Point2f& left, const cv::Point2f& top, const cv::Point2f& right, const cv::Point2f& bottom)
+{
+	const float cosa = std::cos(angle);
+	const float sina = std::sin(angle);
+	const Point2f horizontal(cosa, sina), vertical(-sina, cosa);
+
+	Point2f tl, br;
+	lineIntersection(top, top + horizontal, left, left + vertical, &tl);
+	lineIntersection(bottom, bottom + horizontal, right, right + vertical, &br);
+	
+	Point2f center = (tl + br) / 2;
+	Vec2f direction = br - tl;
+	if(direction.dot(vertical) < 0)
+		direction = -direction;
+
+	Vec2f along = vertical.dot(direction) * vertical;
+	Vec2f normal = direction - along;
+	Size2f size(std::sqrt(normal.dot(normal)), std::sqrt(along.dot(along)));
+
+	return RotatedRect(center, size, rad2deg(angle));
 }
 
 cv::Vec4f Feature::calcuateDistance(cv::Point2f& pivot, const cv::Point2f& left, const cv::Point2f& top, const cv::Point2f& right, const cv::Point2f& bottom)

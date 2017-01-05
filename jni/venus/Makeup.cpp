@@ -674,9 +674,30 @@ void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::
 //	mask2 = Effect::grayscale(mask2);  // relaxation can be done here.
 	const Size2i source_size(mask2.cols, mask2.rows);
 	
+	Vec4f line = Feature::getSymmetryAxis(points);
+	float angle = std::atan2(line[1], line[0]) - static_cast<float>(M_PI/2);
+	const bool is_square_shape = mask.rows * 2 < mask.cols;
+
+	RotatedRect rotated_rect;
 	for(int i = 0; i < 2; ++i)
 	{
-		const RotatedRect rotated_rect = Feature::calculateBlushRectangle(points, i == 0);
+		const bool is_right = i == 0;
+
+		// BlushShape::SEAGULL is a special case, the blusher goes across the bridge of a nose.
+		// Cosmetic image use rectangle but not square mask to distinguish it.
+		if(is_square_shape)
+			rotated_rect = Feature::calculateBlushRectangle(points, angle, is_right);
+		else
+		{
+			// middle_top and middle_bottom can be tweaked.
+			Point2f middle_top = (points[40] + points[50]) - (points[42] + points[43])/2;  // (points[40] + points[50])/2;
+			Point2f middle_bottom = (points[53] + points[56]*2)/3;  // points[56]; (points[53] + points[56])/2;
+
+			rotated_rect = is_right?
+				Feature::calculateRectangle(angle, points[2], middle_top, middle_bottom, middle_bottom):
+				Feature::calculateRectangle(angle, middle_bottom, middle_top, points[10], middle_bottom);
+		}
+
 		// display blush region, enable it for debugging.
 //		venus::rectangle(dst, rotated_rect, Scalar(0, 255, 0));
 
@@ -684,22 +705,22 @@ void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::
 		float scale_x = target_size.width / source_size.width;
 		float scale_y = target_size.height/ source_size.height;
 		
-#if 1/* uniform scaling */
-		// android:scaleType="centerInside"
-		float scale_u = std::min(scale_x, scale_y);
-		Vec2f scale(scale_u, scale_u);
-#else
-		// android:scaleType="fitXY".
-		Vec2f scale(scale_x, scale_y);
-#endif
+		Vec2f scale;
+		if(is_square_shape)  // android:scaleType="centerInside"
+			scale[1] = scale[0] = std::min(scale_x, scale_y);
+		else  // android:scaleType="fitXY"
+			scale[0] = scale_x, scale[1] = scale_y;
 
-		Size2i  size = source_size;
+		Size2i size = source_size;
 		Point2f center((size.width - 1)/2.0F, (size.height - 1)/2.0F);
 		Mat affine = Region::transform(size, center, deg2rad(rotated_rect.angle), scale);
 
 		Mat affined_mask;
 		cv::warpAffine(mask2, affined_mask, affine, size, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
 		
+		if(is_right)  // mirror mask for the upcomming left side.
+			cv::flip(mask2, mask2, 1/* horizontal */);
+
 		Point2i origin = rotated_rect.center - center;
 		Mat blush = pack(affined_mask, color);
 		blend(dst, dst, blush, origin, amount);
