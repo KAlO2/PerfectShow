@@ -39,4 +39,6 @@
 	<dimen name="HorizontalProgressWheelView_lineHeight">20dp</dimen>
 	<dimen name="HorizontalProgressWheelView_lineMargin">10dp</dimen>
     
+	<!-- AspectRatioTextView -->
+	<dimen name="AspectRatioTextView_dotSize">8dp</dimen>
 </resources>

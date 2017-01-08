@@ -116,4 +116,12 @@
 		<item name="android:layout_height">64dp</item>
 		<item name="android:layout_weight">0.5</item>
 	</style>
+
+	<style name="Widget.AspectRatioTextView" parent="android:Widget.TextView">
+		<item name="android:layout_width">wrap_content</item>
+		<item name="android:layout_height">wrap_content</item>
+		<item name="android:layout_gravity">center</item>
+		<item name="android:duplicateParentState">true</item>	
+		<item name="android:textColor">@color/crop_foreground</item>
+	</style>
 </resources>

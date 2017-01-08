@@ -52,4 +52,10 @@
 		<attr name="lineMargin" format="dimension" />
 	</declare-styleable>
 	
+	<declare-styleable name="AspectRatioTextView">
+		<attr name="android:text"/>
+		<attr name="aspectRatioX" format="integer"/>
+		<attr name="aspectRatioY" format="integer"/>
+	</declare-styleable>
+    
 </resources>

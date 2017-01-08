@@ -72,9 +72,10 @@
 
 	<color name="collage_background">#FFD4B081</color>
 	
-	<!--uCrop Activity-->
+	<!-- ImageCropActivity -->
 
-    <color name="ucrop_color_crop_background">#000</color>
+	<color name="crop_background">@android:color/black</color>
+	<color name="crop_foreground">@android:color/white</color>
     
 	<!-- CropImageView -->
     <color name="CropImageView_default_crop_grid">#80ffffff</color>
@@ -83,8 +84,8 @@
     <color name="CropImageView_default_logo">#4f212121</color>
     
 	<!-- HorizontalProgressWheelView -->
-	<color name="HorizontalProgressWheelView_progressLine">@android:color/white</color>
-	<color name="HorizontalProgressWheelView_middleLine">@android:color/white</color>
+	<color name="HorizontalProgressWheelView_progressLine">@color/crop_foreground</color>
+	<color name="HorizontalProgressWheelView_middleLine">@color/crop_foreground</color>
     	
 	<!-- NailBar -->
 	<color name="NailBar_lowSideColor">#571A7E</color>
