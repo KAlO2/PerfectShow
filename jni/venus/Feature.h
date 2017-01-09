@@ -85,6 +85,13 @@ public:
 	static std::vector<cv::Point2f> calculateLipPolygon  (const std::vector<cv::Point2f>& points, bool upper);
 	static std::vector<cv::Point2f> calculateTeethPolygon(const std::vector<cv::Point2f>& points);
 
+	/**
+	 * @param[in] points feature points
+	 * @param[in] right  right or left side of iris.
+	 * return position(x, y) and radius(r) of iris, previously stored in Vec3f(x, y, r).
+	 */
+	static std::pair<cv::Point2f, float> calculateIrisInfo(const std::vector<cv::Point2f>& points, bool right);
+
 	static cv::RotatedRect calculateBlushRectangle(const std::vector<cv::Point2f>& points, bool right);
 
 	/**

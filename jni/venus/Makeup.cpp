@@ -1,4 +1,5 @@
 #include "venus/blend.h"
+#include "venus/colorspace.h"
 #include "venus/compiler.h"
 #include "venus/Feature.h"
 #include "venus/ImageWarp.h"
@@ -635,6 +636,50 @@ void Makeup::applyEyeShadow(cv::Mat& dst, const cv::Mat& src, const std::vector<
 {
 	Mat eye_shadow = createEyeShadow(mask, color);
 	applyEye(dst, src, points, eye_shadow, amount);
+}
+
+void Makeup::applyIris(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, float amount)
+{
+	if(src.data != dst.data)
+		src.copyTo(dst);
+
+	cv::Mat mask2 = mask.clone();
+	if(mask2.channels() == 3)
+		cvtColor(mask2, mask2, CV_BGR2BGRA);
+	mask2.convertTo(mask2, CV_32FC4, 1/255.0);
+
+	const Vec3f FROM_COLOR(1.0F, 1.0F, 1.0F);  // white
+	const int length = mask.rows * mask.cols;
+	float* mask2_data = mask2.ptr<float>();
+
+	#pragma omp parallel for
+	for(int i = 0; i < length; ++i)
+	{
+		float* p = mask2_data + (i<<2);
+		color2alpha(p, &FROM_COLOR[0], p);
+	}
+	mask2.convertTo(mask2, CV_8UC4, 255.0);
+//	cv::imwrite("color2alpha.png", iris2mask2
+
+	// TODO it seems this value fit every iris image in res/drawable-nodpi/
+	const float iris_image_radius = (84.0F - 12.0F)/2;
+
+	Feature feature(src, points);
+	for(int i = 0; i < 2; ++i)
+	{
+		const bool is_right = i == 0;
+		const std::pair<cv::Point2f, float> iris_info = Feature::calculateIrisInfo(points, is_right);
+		const cv::Point2f& center = iris_info.first;
+		const float& radius = iris_info.second;
+
+		Mat iris;
+		float scale = radius / iris_image_radius;
+		cv::resize(mask2, iris, Size(), scale, scale);
+
+		Point2i iris_position(center.x - (iris.cols >> 1), center.y - (iris.rows >> 1));
+		Region region = feature.calculateEyeRegion(is_right);
+		Makeup::blend(dst, dst, iris, region.mask, iris_position, amount);
+	}
 }
 
 void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, BlushShape shape, uint32_t color, float amount)

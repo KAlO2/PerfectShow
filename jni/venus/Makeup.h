@@ -98,6 +98,8 @@ public:
 	 */
 	static void applyEyeShadow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, cv::Mat mask[3], uint32_t color[3], float amount);
 
+	static void applyIris(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, float amount);
+
 	/**
 	 * http://www.makeupforever.com/us/en-us/learn/how-to/blush-applications
 	 * <a href="https://simple.wikipedia.org/wiki/Blush_(color)">Tones of blush color</a> that used for theatre makeup.

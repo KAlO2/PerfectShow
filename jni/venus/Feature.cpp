@@ -179,7 +179,7 @@ const std::vector<Vec3b> Feature::triangle_indices
 	Vec3b(76, 75, 69),
 };
 
-constexpr HersheyFonts font_face = cv::HersheyFonts::FONT_HERSHEY_SIMPLEX;
+static constexpr HersheyFonts font_face = cv::HersheyFonts::FONT_HERSHEY_SIMPLEX;
 
 static inline std::string to_string(int i)
 {
@@ -649,34 +649,16 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 	bottom.x = k * (bottom.y - eye_left_r.y) + eye_left_r.x;
 	venus::line(image, top, bottom, CV_RGB(0, 255, 0), 1, LINE_AA);
 #endif
-/*
-            36                    46
-         37    35              45    47
-right  38   42   34 -------- 44   43   48  left
-         39    41              51    49
-            40                    50
-*/
-	const Point2f& pupil_r = points[42];
-	const Point2f& pupil_l = points[43];
-	float pupil_r_radius = (
-		distance(pupil_r, points[35]) + 
-		distance(pupil_r, points[37]) + 
-		distance(pupil_r, points[39]) +
-		distance(pupil_r, points[41]))/4;
-
-	float pupil_l_radius = (
-		distance(pupil_l, points[45]) + 
-		distance(pupil_l, points[47]) + 
-		distance(pupil_l, points[49]) +
-		distance(pupil_l, points[51]))/4;
-
-	const Scalar COLOR3 = CV_RGB(255,165,0);  // orange
-	cv::circle(image, pupil_r, static_cast<int>(pupil_r_radius), COLOR3, 1, LINE_AA);
-	cv::circle(image, pupil_l, static_cast<int>(pupil_l_radius), COLOR3, 1, LINE_AA);
-
-	for(int i = 0; i <= 1; ++i)
+	
+	const Scalar COLOR3 = CV_RGB(255, 165, 0);  // orange
+	for(int i = 0; i < 2; ++i)
 	{
 		bool is_right = (i == 0);
+		std::pair<cv::Point2f, float> iris_info = Feature::calculateIrisInfo(points, is_right);
+		cv::Point2f& center = iris_info.first;
+		float& radius = iris_info.second;
+		cv::circle(image, center, static_cast<int>(radius), COLOR3, 1, LINE_AA);
+
 		std::vector<cv::Point2f> polygon = Feature::calculateEyePolygon(points, is_right);
 		const size_t N = polygon.size();
 		for(size_t i = 0; i < N; ++i)
@@ -1016,6 +998,22 @@ std::vector<cv::Point2f> Feature::calculateEyePolygon(const std::vector<cv::Poin
 	}
 #endif
 	return polygon;
+}
+
+std::pair<cv::Point2f, float> Feature::calculateIrisInfo(const std::vector<cv::Point2f>& points, bool right)
+{
+	// TODO tweaking needed
+	const Point2f center = points[right?42:43];
+	float d[4];
+	d[0] = distance(center, points[right?35:45]);
+	d[1] = distance(center, points[right?37:47]);
+	d[2] = distance(center, points[right?39:49]);
+	d[3] = distance(center, points[right?41:51]);
+
+	float radius = (d[0] + d[1] + d[2] + d[3])/4;  // std::accumulate(d, d + 4, 0)/4;
+//	float radius = *std::min_element(d, d + 4);
+
+	return std::make_pair(center, radius);
 }
 
 cv::RotatedRect Feature::calculateBlushRectangle(const std::vector<cv::Point2f>& points, bool right)

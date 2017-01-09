@@ -32,7 +32,7 @@ void cmyk2rgb(const float* cmyk, float* rgb);
  *
  * @param[in]  color  Reference color, 4 channels, and alpha is last.
  * @param[in]  src    Input color
- * @param[out] dst    Output clor
+ * @param[out] dst    Output color
  */
 void color2alpha(const float* color, const float* src, float* dst);
 

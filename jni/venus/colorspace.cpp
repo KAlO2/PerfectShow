@@ -209,11 +209,14 @@ void color2alpha(const float* color, const float* src, float* dst)
 {
 	float alpha[4];
 
+	if(src != dst)
+		for(int i = 0; i < 4; ++i)
+			dst[i] = src[i];
+
 	alpha[3] = dst[3];
 	const float EPS = 0.00001F;
 	for(int i = 0; i < 3; ++i)
 	{
-		dst[i] = color[i];
 		if(color[i] < EPS)
 			alpha[i] = dst[i];
 		else if(dst[i] > color[i] + EPS)
