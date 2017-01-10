@@ -11,29 +11,15 @@
 
 /* 
 	some useful links:
+	https://en.wikipedia.org/wiki/Blend_modes and other valuable references at the bottom page.
+	https://en.wikipedia.org/wiki/Alpha_compositing
+
 	http://stackoverflow.com/questions/5919663/how-does-photoshop-blend-two-images-together
 	http://www.deepskycolors.com/archive/2010/04/21/formulas-for-Photoshop-blending-modes.html
-	https://en.wikipedia.org/wiki/Blend_modes
 	https://helpx.adobe.com/photoshop/using/blending-modes.html
-	https://en.wikipedia.org/wiki/Alpha_compositing
 */
 
 namespace venus {
-
-template <typename T>
-inline T color_round(const T& x)
-{
-	static_assert(std::is_floating_point<T>::value, "limited to floating-point type only");
-	assert(0 <= x && x <= 1);
-	return x;
-}
-
-template <>
-inline uint8_t color_round<uint8_t>(const uint8_t& x)
-{
-	constexpr uint8_t FULL = std::numeric_limits<uint8_t>::max();
-	return (x + (FULL>>1)) / FULL;
-}
 
 template <typename T, int N = 4>
 cv::Vec<T, N> mix(const cv::Vec<T, N>& dst, const cv::Vec<T, N>& src, float amount)
@@ -54,137 +40,78 @@ template<> cv::Vec4f mix<float,   4>(const cv::Vec4f& dst, const cv::Vec4f& src,
  */
 uint32_t mix(const uint32_t& dst, const uint32_t& src, float amount);
 
-/* for other integers type
-template <>
-inline Integer color_divide(const Integer& x)
-{
-	constexpr Integer FULL = std::numeric_limits<Integer>::max();
-	return (x + (FULL>>1)) / FULL;
-}
-*/
+
 
 // gimp/app/actions/layers-commands.c
 // int mode range [0, 255], float mode range [0.0, 1.0]
 
-template<typename T> inline T normal    (const T& dst, const T& src) { return src; }
-template<typename T> inline T lighten   (const T& dst, const T& src) { return std::max(src, dst); }
-template<typename T> inline T darken    (const T& dst, const T& src) { return std::min(src, dst); }
-template<typename T> inline T multiply	(const T& dst, const T& src) { return color_round(src * dst); }
-template<typename T> inline T average	(const T& dst, const T& src) { return (src + dst + std::is_integral<T>::value)/2; }
-template<typename T> inline T add		(const T& dst, const T& src) { return cv::saturate_cast<T>(src + dst); }
-template<typename T> inline T subtract	(const T& dst, const T& src) { constexpr T FULL = std::is_floating_point<T>::value ? static_cast<T>(1):std::numeric_limits<T>::max(); return cv::saturate_cast<T>(src + dst - FULL); }
-template<typename T> inline T difference(const T& dst, const T& src) { return std::abs(src - dst); }
-template<typename T> inline T screen	(const T& dst, const T& src) { return src + dst - color_round(src * dst); }  // 1 - (1-src) * (1-dst) 
-template<typename T> inline T exclusion	(const T& dst, const T& src) { return src + dst - color_round(src * dst * 2); }
-
-template<typename T>
-inline T negation(const T& dst, const T& src)
-{
-	auto sum = src + dst;
-	constexpr T FULL = std::is_floating_point<T>::value ? static_cast<T>(1):std::numeric_limits<T>::max();
-//	return (sum <= FULL) ? sum:(FULL*2 - sum);  // already full, not work for 32 bit int
-	return FULL - std::abs(src + dst - FULL);
-}
-
-template<typename T>
-inline T overlay(const T& dst, const T& src)
-{
-	constexpr T FULL = std::is_floating_point<T>::value ? static_cast<T>(1):std::numeric_limits<T>::max();
-	if(src < FULL/2)
-		return (2 * src * dst);
-	else
-		return (FULL - 2*(FULL - src)*(FULL - dst));
-}
-
-inline float softDodge(float dst, float src) 
-{
-	if(src + dst < 1.0f)
-		return 0.5f*src / (1.0f - dst);
-	else
-		return 1.0f - 0.5f*(1.0f - dst)/src;
-}
 
 
+// blend mode for uint8_t version
+inline uint8_t blendNormal     (uint8_t A, uint8_t B)  { return A; }
+inline uint8_t blendLighten    (uint8_t A, uint8_t B)  { return std::max(A, B); }
+inline uint8_t blendDarken     (uint8_t A, uint8_t B)  { return std::min(A, B); }
+inline uint8_t blendMultiply   (uint8_t A, uint8_t B)  { return (A * B + 127) / 255; }
+inline uint8_t blendAverage    (uint8_t A, uint8_t B)  { return (A + B + 1) / 2; }
+inline uint8_t blendAdd        (uint8_t A, uint8_t B)  { return std::min(255, A + B); }
+inline uint8_t blendSubtract   (uint8_t A, uint8_t B)  { return std::max(0, A + B - 255); }
+inline uint8_t blendDifference (uint8_t A, uint8_t B)  { return std::abs(A - B); }
+inline uint8_t blendNegation   (uint8_t A, uint8_t B)  { return 255 - std::abs(255 - A - B); }
+inline uint8_t blendScreen     (uint8_t A, uint8_t B)  { return 255 - ((255 - A) * (255 - B) + 127) / 255; }
+inline uint8_t blendExclusion  (uint8_t A, uint8_t B)  { return A + B - (2 * A * B + 127)/ 255; }
+inline uint8_t blendOverlay    (uint8_t A, uint8_t B)  { return (uint8_t)((B < 128 ? 2*A*B : (255 - 2*(255 - A)*(255 - B)) + 127)/ 255); }
+inline uint8_t blendSoftLight  (uint8_t A, uint8_t B)  { return (B < 128) ? (2*((A>>1)+64))*(B/255.0F) : (255-(2*(255-((A>>1)+64))*(255-B)/255.0F)); }
+inline uint8_t blendHardLight  (uint8_t A, uint8_t B)  { return blendOverlay(B, A); }
+inline uint8_t blendColorDodge (uint8_t A, uint8_t B)  { return (B == 255) ? 255 : std::min(255, A * 255 / (255 - B)); }
+inline uint8_t blendColorBurn  (uint8_t A, uint8_t B)  { return (B ==   0) ?   0 : std::max(  0, 255 - (255 - A) * 255 / B); }
+inline uint8_t blendLinearDodge(uint8_t A, uint8_t B)  { return blendAdd     (A, B); }
+inline uint8_t blendLinearBurn (uint8_t A, uint8_t B)  { return blendSubtract(A, B); }
+inline uint8_t blendLinearLight(uint8_t A, uint8_t B)  { return (B < 128) ? blendLinearBurn(A, 2 * B) : blendLinearDodge(A, 2 * (B - 128)); }
+inline uint8_t blendVividLight (uint8_t A, uint8_t B)  { return (B < 128) ? blendColorBurn (A, 2 * B) : blendColorDodge (A, 2 * (B - 128)); }
+inline uint8_t blendPinLight   (uint8_t A, uint8_t B)  { return (B < 128) ? blendDarken    (A, 2 * B) : blendLighten    (A, 2 * (B - 128)); }
+inline uint8_t blendHardMix    (uint8_t A, uint8_t B)  { return blendVividLight(A, B) < 128 ? 0:255; }
+inline uint8_t blendReflect    (uint8_t A, uint8_t B)  { return (B == 255) ? 255 : std::min(255, A*A / (255 - B)); }
+inline uint8_t blendGlow       (uint8_t A, uint8_t B)  { return blendReflect(B, A); }
+inline uint8_t blendPhoenix    (uint8_t A, uint8_t B)  { return std::min(A, B) - std::max(A, B) + 255; }
+inline uint8_t blendAlpha      (uint8_t A, uint8_t B, uint8_t O)  { return lerp(B, A, O);/*O * A + (1 - O) * B*/ }
+inline uint8_t blendAlphaF     (uint8_t A, uint8_t B, uint8_t (*F)(uint8_t, uint8_t), uint8_t O)  { return blendAlpha(F(A, B), A, O); }
 
-// specialization for cv::Vec4f color with RGBA layout
-template<>
-inline cv::Vec4f screen<cv::Vec4f>(const cv::Vec4f& src, const cv::Vec4f& dst)
-{
-	cv::Vec4f result;
-	for(int i = 0; i < 3; ++i)  // keep alpha untouched
-		result[i] = screen(src[i], dst[i]);
-	return result;
-}
+// blend mode for float version
+inline float blendNormal     (float A, float B)  { return A; }
+inline float blendLighten    (float A, float B)  { return std::max(A, B); }
+inline float blendDarken     (float A, float B)  { return std::min(A, B); }
+inline float blendMultiply   (float A, float B)  { return A * B; }
+inline float blendAverage    (float A, float B)  { return (A + B) / 2; }
+inline float blendAdd        (float A, float B)  { return std::min(1.0F, A + B); }
+inline float blendSubtract   (float A, float B)  { return std::max(0.0F, A + B - 1.0F); }
+inline float blendDifference (float A, float B)  { return std::abs(A - B); }
+inline float blendNegation   (float A, float B)  { return 1.0F - std::abs(1.0F - A - B); }
+inline float blendScreen     (float A, float B)  { return 1.0F - (1.0F - A) * (1.0F - B); }
+inline float blendExclusion  (float A, float B)  { return A + B - 2*A*B; }
+inline float blendOverlay    (float A, float B)  { return (B <= 0.5F) ? (2*A*B) : (1.0F - 2*(1.0F - A)*(1.0F - B)); }
+inline float blendSoftLight  (float A, float B)  { return (B <= 0.5F) ? (A + 0.5F)*B : (1.0F - (1.5F - A)*(1.0F - B)); }
+inline float blendHardLight  (float A, float B)  { return blendOverlay(B, A); }
+inline float blendColorDodge (float A, float B)  { return fuzzyEqual(B, 1.0F) ? B : std::min(1.0F, A * 1.0F / (1.0F - B)); }
+inline float blendColorBurn  (float A, float B)  { return fuzzyEqual(B, 0.0F) ? B : std::max(0.0F, 1.0F - (1.0F - A) * 1.0F / B); }
+inline float blendLinearDodge(float A, float B)  { return blendAdd     (A, B); }
+inline float blendLinearBurn (float A, float B)  { return blendSubtract(A, B); }
+inline float blendLinearLight(float A, float B)  { return (B <= 0.5F) ? blendLinearBurn(A, 2 * B) : blendLinearDodge(A, 2 * (B - 0.5F)); }
+inline float blendVividLight (float A, float B)  { return (B <= 0.5F) ? blendColorBurn (A, 2 * B) : blendColorDodge (A, 2 * (B - 0.5F)); }
+inline float blendPinLight   (float A, float B)  { return (B <= 0.5F) ? blendDarken    (A, 2 * B) : blendLighten    (A, 2 * (B - 0.5F)); }
+inline float blendHardMix    (float A, float B)  { return blendVividLight(A, B) <= 0.5F ? 0:1.0F; }
+inline float blendReflect    (float A, float B)  { return fuzzyEqual(B, 1.0F) ? B : std::min(1.0F, A*A / (1.0F - B)); }
+inline float blendGlow       (float A, float B)  { return blendReflect(B, A); }
+inline float blendPhoenix    (float A, float B)  { return std::min(A, B) - std::max(A, B) + 1.0F; }
+inline float blendAlpha      (float A, float B, float O)  { return lerp(B, A, O);/*O * A + (1 - O) * B*/ }
+inline float blendAlphaF     (float A, float B, float (*F)(float, float), float O)  { return blendAlpha(F(A, B), A, O); }
+
+void blendHue       (float* T, const float* A, const float* B);
+void blendSaturation(float* T, const float* A, const float* B);
+void blendLuminosity(float* T, const float* A, const float* B);
+void blendColor     (float* T, const float* A, const float* B);
 
 
-// https://developer.android.com/reference/android/graphics/PorterDuffXfermode.html
 
-inline void clear(const cv::Vec4f& src, cv::Vec4f& dst)
-{
-	dst = cv::Vec4f::all(0.0f);
-}
-
-
-
-// PorterDuff.Mode 	SRC 	[Sa, Sc]  
-inline void src(const cv::Vec4f& src, cv::Vec4f& dst)
-{
-	dst = src;
-}
-
-// PorterDuff.Mode 	DST 	[Da, Dc]  
-inline void dst(const cv::Vec4f& _src, cv::Vec4f& dst)
-{
-	
-}
-
-// PorterDuff.Mode 	SRC_IN 	[Sa * Da, Sc * Da]  
-inline void src_in(const cv::Vec4f& src, cv::Vec4f& dst)
-{
-	float alpha = dst[3];
-	dst = alpha * src;
-	//dst[0] = src[0] * dst[3];
-	//dst[1] = src[1] * dst[3];
-	//dst[2] = src[2] * dst[3];
-	//dst[3] = src[3] * dst[3];
-}
-
-// PorterDuff.Mode 	DST_IN 	[Sa * Da, Sa * Dc]  
-inline void dst_in(const cv::Vec4f& src, cv::Vec4f& dst)
-{
-//	dst *= src[3];
-	dst[0] *= src[3];
-	dst[1] *= src[3];
-	dst[2] *= src[3];
-	dst[3] *= src[3];
-}
-
-// PorterDuff.Mode 	SRC_OUT 	[Sa * (1 - Da), Sc * (1 - Da)] 
-inline void src_out(const cv::Vec4f& src, cv::Vec4f& dst)
-{
-	const float ida = 1.0f - dst[3];
-	dst[0] = src[0] * ida;
-	dst[1] = src[1] * ida;
-	dst[2] = src[2] * ida;
-	dst[3] = src[3] * dst[3];
-}
-
-// PorterDuff.Mode 	DST_OUT 	[Da * (1 - Sa), Dc * (1 - Sa)]  
-inline void dst_out(const cv::Vec4f& src, cv::Vec4f& dst)
-{
-	const float ida = 1.0f - src[3];
-	dst = src * ida;
-}
-
-// PorterDuff.Mode 	MULTIPLY 	[Sa * Da, Sc * Dc]  
-inline void multiply(const cv::Vec4f& src, cv::Vec4f& dst)
-{
-//	dst *= src;
-	dst[0] *= src[0];
-	dst[1] *= src[1];
-	dst[2] *= src[2];
-	dst[3] = src[3] * dst[3];
-}
 
 } /* namespace venus */
 #endif /* VENUS_BLEND_H_ */
