@@ -42,10 +42,10 @@ JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyEyeS
 /*
  * Class:     com_cloudream_ishow_algorithm_Makeup
  * Method:    nativeApplyIris
- * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;F)V
+ * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;Landroid/graphics/Bitmap;F)V
  */
 JNIEXPORT void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyIris
-  (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobject, jobject, jfloat);
+  (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobject, jfloat);
 
 /*
  * Class:     com_cloudream_ishow_algorithm_Makeup

@@ -1,7 +1,5 @@
 package com.cloudream.ishow.algorithm;
 
-import com.cloudream.ishow.util.ColorUtils;
-
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -11,7 +9,6 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 public class Makeup extends BitmapWrapper
 {
@@ -112,10 +109,10 @@ public class Makeup extends BitmapWrapper
 			nativeApplyEyeShadow(bmp_step, bmp_stop, points, masks, colors, amount);
 	}
 	
-	public void applyIris(Bitmap iris, Bitmap mask, float amount)
+	public void applyIris(Bitmap iris, float amount)
 	{
 		PointF points[] = feature.getFeaturePoints();
-		nativeApplyIris(bmp_step, bmp_stop, points, iris, mask, amount);
+		nativeApplyIris(bmp_step, bmp_stop, points, iris, amount);
 	}
 	
 	public void applyBlush(BlushShape shape, int color, float amount)
@@ -158,7 +155,7 @@ public class Makeup extends BitmapWrapper
 	private static native void nativeApplyEye      (Bitmap dst, Bitmap src, final PointF points[], Bitmap cosmetic, float amount);
 	private static native void nativeApplyEyeLash  (Bitmap dst, Bitmap src, final PointF points[], Bitmap mask, int color, float amount);
 	private static native void nativeApplyEyeShadow(Bitmap dst, Bitmap src, final PointF points[], Bitmap masks[], int colors[], float amount);
-	private static native void nativeApplyIris     (Bitmap dst, Bitmap src, final PointF points[], Bitmap iris, Bitmap mask, float amount);
+	private static native void nativeApplyIris     (Bitmap dst, Bitmap src, final PointF points[], Bitmap iris, float amount);
 	private static native void nativeApplyBlush    (Bitmap dst, Bitmap src, final PointF points[], int shape, int color, float amount);
 	private static native void nativeApplyLip      (Bitmap dst, Bitmap src, final PointF points[], int color, float amount);
 

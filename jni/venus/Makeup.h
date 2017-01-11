@@ -98,6 +98,12 @@ public:
 	 */
 	static void applyEyeShadow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, cv::Mat mask[3], uint32_t color[3], float amount);
 
+	/**
+	 * @param[out] dst
+	 * @param[in] src     The source image
+	 * @param[in] points  Feature points detected from <code>src</code> image.
+	 * @param[in] amount  controls radius of the iris.
+	 */
 	static void applyIris(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points, const cv::Mat& mask, float amount);
 
 	/**

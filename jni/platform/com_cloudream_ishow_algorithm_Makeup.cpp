@@ -120,11 +120,18 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyEyeShadow(JNIE
 }
 
 void JNICALL Java_com_cloudream_ishow_algorithm_Makeup_nativeApplyIris(JNIEnv* env,
-		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jobject _iris, jobject _mask, jfloat amount)
+		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jobject _iris, jfloat amount)
 {
 	PROLOGUE_ENTER
 
+	AndroidBitmapInfo iris_info;
+	uint32_t* iris_pixels  = lockJavaBitmap(env, _iris, iris_info);
+	assert(iris_pixels != nullptr && iris_info.format == ANDROID_BITMAP_FORMAT_RGBA_8888);
+	Mat iris(iris_info.height, iris_info.width, CV_8UC4, iris_pixels);
 
+	Makeup::applyIris(dst, src, points, iris, amount);
+
+	unlockJavaBitmap(env, _iris);
 	PROLOGUE_EXIT
 }
 

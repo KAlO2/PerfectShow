@@ -1002,6 +1002,8 @@ std::vector<cv::Point2f> Feature::calculateEyePolygon(const std::vector<cv::Poin
 
 std::pair<cv::Point2f, float> Feature::calculateIrisInfo(const std::vector<cv::Point2f>& points, bool right)
 {
+	assert(points.size() == COUNT);
+
 	// TODO tweaking needed
 	const Point2f center = points[right?42:43];
 	float d[4];

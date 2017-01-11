@@ -523,6 +523,10 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		}
 			break;
 		case IRIS:
+		{
+			Bitmap iris = BitmapFactory.decodeResource(context.getResources(), textures[0]);
+			makeup.applyIris(iris, amount);
+		}
 			break;
 		case EYE_LASH:
 		{
