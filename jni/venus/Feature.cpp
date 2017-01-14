@@ -512,13 +512,6 @@ std::vector<std::vector<cv::Point2f>> Feature::detectFace(cv::Size2i* size, cons
 	return detectFace(image, image_name, classifier_dir);
 }
 
-cv::Mat Feature::mark() const
-{
-	Mat image2 = image.clone();
-	mark(image2, points);
-	return image2;
-}
-
 void Feature::mark(Mat& image, const std::vector<Point2f>& points)
 {
 	const cv::Scalar text_color = CV_RGB(0, 255, 0);
@@ -557,13 +550,6 @@ void Feature::mark(Mat& image, const std::vector<Point2f>& points)
 #endif
 }
 
-cv::Mat Feature::markWithIndices() const
-{
-	Mat image2 = image.clone();
-	markWithIndices(image2, points);
-	return image2;
-}
-
 void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& points)
 {
 	const float font_scale = 0.42f;
@@ -575,7 +561,7 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 	{
 		const Point2f& point = points[i];
 		Point2i pt(cvRound(point.x), cvRound(point.y));
-		cv::putText(image, to_string(i), Point2i(pt.x + offset, pt.y), font_face, font_scale, CV_RGB(0, 255, 0), 1, LINE_AA);
+		cv::putText(image, to_string(i), Point2i(pt.x + offset, pt.y), font_face, font_scale, COLOR0, 1, LINE_AA);
 		cv::circle(image, pt, 1, COLOR0, 1, LINE_AA);
 	}
 
@@ -613,7 +599,7 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 		Point2f right(0, 0), left(static_cast<float>(image.cols - 1), static_cast<float>(image.rows - 1));
 		right.y = k * (right.x - point.x) + point.y;
 		left.y = k * (left.x - point.x) + point.y;
-		venus::line(image, right, left, color, 1, LINE_AA);
+		venus::drawLine(image, right, left, color, 1, LINE_AA);
 	};
 
 	// “三庭五眼”中的“三庭”，四条水平线。
@@ -660,15 +646,13 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 		cv::circle(image, center, static_cast<int>(radius), COLOR3, 1, LINE_AA);
 
 		std::vector<cv::Point2f> polygon = Feature::calculateEyePolygon(points, is_right);
-		const size_t N = polygon.size();
-		for(size_t i = 0; i < N; ++i)
-			cv::line(image, polygon[i], polygon[(i+1)%N], COLOR3, 1, LINE_AA);
+		venus::drawPolygon(image, polygon, COLOR3, 1, LINE_AA);
 	}
 
 #endif
 
 	const Scalar COLOR4 = CV_RGB(255, 0, 255);  // purple
-	venus::line(image, center, center + 10 * down, COLOR4);
+	venus::drawLine(image, center, center + 10 * down, COLOR4);
 	
 	// from inner eye corner to lip point where it is close to center top point
 	cv::line(image, points[34], points[65], COLOR4);

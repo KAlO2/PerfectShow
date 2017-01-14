@@ -218,7 +218,7 @@ cv::Mat normalize(const cv::Mat& mat, double* max/* = nullptr */)
 	return mat2;
 }
 
-void line(Mat& image, const Point2f& pt0, const Point2f& pt1, const Scalar& color,
+void drawLine(Mat& image, const Point2f& pt0, const Point2f& pt1, const Scalar& color,
 		int thickness/* = 1 */, int lineType/* = cv::LINE_8 */, int shift/* = 0 */)
 {
 	assert(pt0.x != pt1.x || pt0.y != pt1.y);  // two points coincide!
@@ -241,7 +241,7 @@ void line(Mat& image, const Point2f& pt0, const Point2f& pt1, const Scalar& colo
 	cv::line(image, p0, p1, color, thickness, lineType, shift);
 }
 
-void rectangle(cv::Mat& image, const cv::RotatedRect& rotated_rect, const cv::Scalar& color,
+void drawRotatedRect(cv::Mat& image, const cv::RotatedRect& rotated_rect, const cv::Scalar& color,
 		int thickness/* = 1 */, int lineType/* = cv::LINE_8 */, int shift/* = 0 */)
 {
 	constexpr int N = 4;
@@ -254,7 +254,24 @@ void rectangle(cv::Mat& image, const cv::RotatedRect& rotated_rect, const cv::Sc
 	cv::rectangle(image, rect, color, thickness, lineType, shift);
 }
 
-void curve(cv::Mat& image, const cv::Point2f& p0, const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3,
+void drawPolygon(cv::Mat& image, cv::Point2i* points, int count, const cv::Scalar& color,
+		int thickness/* = 1 */, int lineType/* = cv::LINE_8 */, int shift/* = 0 */)
+{
+	assert(points != nullptr && count >= 2);
+	for(int i = 0; i < count; ++i)
+		cv::line(image, points[i], points[(i+1)%count], color, thickness, lineType, shift);
+}
+
+void drawPolygon(cv::Mat& image, std::vector<cv::Point2f>& points, const cv::Scalar& color,
+		int thickness/* = 1 */, int lineType/* = cv::LINE_8 */, int shift/* = 0 */)
+{
+	if(points.size() >= 2);
+	const size_t N = points.size();
+	for(size_t i = 0; i < N; ++i)
+		cv::line(image, points[i], points[(i+1)%N], color, thickness, lineType, shift);
+}
+
+void drawCurve(cv::Mat& image, const cv::Point2f& p0, const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3,
 		const cv::Scalar& color, int thickness/* = 1 */, int lineType/* = cv::LINE_8 */, int shift/* = 0 */)
 {
 	// TODO use std:map for binary split interval

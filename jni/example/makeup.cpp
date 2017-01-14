@@ -81,13 +81,30 @@ void detectFace(const cv::Mat& image, const std::string& image_name/* = std::str
 void mark(const std::string& image_name)
 {
 	Mat image = cv::imread(image_name);
-	assert(image.type() == CV_8UC3);
 	
 	Mat gray  = Effect::grayscale(image);
 	const std::vector<std::vector<cv::Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
-	assert(!faces.empty());
-	std::vector<cv::Point2f> points = faces[0];
+	if(faces.empty())
+	{
+		std::cout << "no face found\n";
+		return;
+	}
 
+	for(const std::vector<cv::Point2f>& face: faces)
+		mark(image, face);
+
+	cv::imshow(image_name, image);
+/*
+	std::vector<int> params;
+	params.push_back(IMWRITE_JPEG_QUALITY);
+	params.push_back(88);
+	std::string dst_name = "G:/data/mark/" + basename(image_name);
+	cv::imwrite(dst_name, image, params);
+*/
+}
+
+void mark(cv::Mat& image, const std::vector<cv::Point2f>& points)
+{
 /**************************** getSymmetryAxis ***************************************/
 	// those points are one the vertical line.
 	std::vector<cv::Point2f> points_on_line;
@@ -137,7 +154,7 @@ void mark(const std::string& image_name)
  	cv::Vec4f line;
 	cv::fitLine(points_on_line, line, CV_DIST_L1, 0, 10.0, 0.01);
 //	cv::line(image, Point2f(line[2], line[3]), Point2f(line[2] + 100*line[0], line[3] + 100*line[1]),  CV_RGB(0, 255, 0), 1, LINE_AA);
-	venus::line(image, Point2f(line[2], line[3]), Point2f(line[2] + 100*line[0], line[3] + 100*line[1]), CV_RGB(0, 255, 0), 1, LINE_AA);
+	venus::drawLine(image, Point2f(line[2], line[3]), Point2f(line[2] + 100*line[0], line[3] + 100*line[1]), CV_RGB(0, 255, 0), 1, LINE_AA);
 	std::cout << "angle: " << std::atan2(line[1], line[0]) * (180/M_PI) << std::endl;
 
 	radius = 12;
@@ -254,7 +271,7 @@ void createShape()
 
 	// sine law, sin(180° - 108°/2)/R = sin(36°/2)/r
 	// sin(pi - theta) = sin(theta)
-	float r = R * std::sin(M_PI/10) / std::sin(3*M_PI/10);
+	float r = R * static_cast<float>(std::sin(M_PI/10) / std::sin(3*M_PI/10));
 	for(int i = 0; i < N; ++i)
 	{
 		float& L = (i%2 == 0) ? R:r;
@@ -709,7 +726,7 @@ void markBlush(const std::string& image_name)
 	for(int i = 0; i < 2; ++i)
 	{
 		RotatedRect rotated_rect = Feature::calculateBlushRectangle(points, angle, i == 0);
-		venus::rectangle(image, rotated_rect, Scalar(0, 255, 0));
+		venus::drawRotatedRect(image, rotated_rect, Scalar(0, 255, 0));
 	}
 
 	cv::imshow(__FUNCTION__, image);

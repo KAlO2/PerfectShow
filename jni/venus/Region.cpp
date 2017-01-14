@@ -319,8 +319,8 @@ void Region::shrink(cv::Mat& dst, const cv::Mat& src, int offset)
 	if(offset == 0)  // shortcut
 		return;
 
-	int radius  = std::abs(offset);
-	int size    = radius * 2 + 1;
+	int radius = std::abs(offset);
+	int size   = radius * 2 + 1;
 	Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, Size(size, size), Point(radius, radius));
 
 	// Apply the specified morphology operation

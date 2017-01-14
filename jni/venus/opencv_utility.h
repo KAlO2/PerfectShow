@@ -155,15 +155,21 @@ cv::Mat normalize(const cv::Mat& mat, double* max = nullptr);
 /**
  * like cv::line() but draw line that run through whole image, not line segment between pt0 and pt1
  */
-void line(cv::Mat& image, const cv::Point2f& pt0, const cv::Point2f& pt1, const cv::Scalar& color,
+void drawLine(cv::Mat& image, const cv::Point2f& pt0, const cv::Point2f& pt1, const cv::Scalar& color,
 		int thickness = 1, int lineType = cv::LINE_8, int shift = 0);
 
-void rectangle(cv::Mat& image, const cv::RotatedRect& rotated_rect, const cv::Scalar& color,
+void drawRotatedRect(cv::Mat& image, const cv::RotatedRect& rotated_rect, const cv::Scalar& color,
+		int thickness = 1, int lineType = cv::LINE_8, int shift = 0);
+
+void drawPolygon(cv::Mat& image, cv::Point2i* points, int count, const cv::Scalar& color,
+		int thickness = 1, int lineType = cv::LINE_8, int shift = 0);
+
+void drawPolygon(cv::Mat& image, std::vector<cv::Point2f>& points, const cv::Scalar& color,
 		int thickness = 1, int lineType = cv::LINE_8, int shift = 0);
 
 // draw curve p1~p2 with respect to p0, p3
-void curve(cv::Mat& image, const cv::Point2f& p0, const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3,
-		const cv::Scalar& color, int thickness = 1, int lineType = cv::LINE_8, int shift = 0);
+void drawCurve(cv::Mat& image, const cv::Point2f& p0, const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Scalar& color,
+		int thickness = 1, int lineType = cv::LINE_8, int shift = 0);
 
 void drawCross(cv::Mat& image, const cv::Point2f& position, int radius, const cv::Scalar& color,
 		int thickness = 1, int lineType = cv::LINE_8, int shift = 0);

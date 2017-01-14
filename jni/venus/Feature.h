@@ -55,10 +55,8 @@ public:
 	 */
 	static std::vector<std::vector<cv::Point2f>> detectFace(cv::Size2i* size, const std::string& image_name, const std::string& classifier_dir);
 
-	cv::Mat mark() const;
 	static void mark(cv::Mat& image, const std::vector<cv::Point2f>& points);
-	
-	cv::Mat markWithIndices() const;
+
 	static void markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& points);
 
 	/**
