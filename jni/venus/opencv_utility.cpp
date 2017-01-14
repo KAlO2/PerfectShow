@@ -265,8 +265,8 @@ void drawPolygon(cv::Mat& image, cv::Point2i* points, int count, const cv::Scala
 void drawPolygon(cv::Mat& image, std::vector<cv::Point2f>& points, const cv::Scalar& color,
 		int thickness/* = 1 */, int lineType/* = cv::LINE_8 */, int shift/* = 0 */)
 {
-	if(points.size() >= 2);
 	const size_t N = points.size();
+	assert(N >= 2U);
 	for(size_t i = 0; i < N; ++i)
 		cv::line(image, points[i], points[(i+1)%N], color, thickness, lineType, shift);
 }

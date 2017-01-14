@@ -17,11 +17,11 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeApplyWhirlPinch
 	AndroidBitmapInfo info;
 	uint32_t* pixels = lockJavaBitmap(env, _bitmap, info);
 	assert(pixels != nullptr);
-
+/*
 	cv::Mat image(info.height, info.width, CV_8UC4, pixels);
 	cv::Point2f pivot = getNativePoint(env, _pivot);
 //	applyWhirlPinch(image, pivot, whirl, pinch, radius);
-
+*/
 	unlockJavaBitmap(env, _bitmap);
 }
 
@@ -44,12 +44,12 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeDistort
 	AndroidBitmapInfo info;
 	uint32_t* pixels = lockJavaBitmap(env, _bitmap, info);
 	assert(pixels != nullptr);
-
+/*
 	cv::Mat image(info.height, info.width, CV_8UC4, pixels);
 	cv::Point2f point0 = getNativePoint(env, _point0);
 	cv::Point2f point1 = getNativePoint(env, _point1);
 //	distort(image, point0, point1, strength, static_cast<DistortionType>(type));
-
+*/
 	unlockJavaBitmap(env, _bitmap);
 }
 
@@ -132,32 +132,6 @@ void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeGrayToAlpha(JNIEnv*
 //		dst_pixels[i] = (i%2==0)?0x10304050:0x20304050;  // 16 fbfcfd  32 73fe7f
 //		dst_pixels[i] = gray * 0x01010100 + alpha;
 	}
-
-	unlockJavaBitmap(env, _dst_bitmap);
-	unlockJavaBitmap(env, _src_bitmap);
-}
-
-void JNICALL Java_com_cloudream_ishow_algorithm_Effect_nativeColorToAlpha
-	(JNIEnv* env, jclass clazz, jint _color, jobject _src_bitmap, jobject _dst_bitmap)
-{
-	AndroidBitmapInfo src_info, dst_info;
-	uint32_t* src_pixels = lockJavaBitmap(env, _src_bitmap, src_info);
-	uint32_t* dst_pixels = lockJavaBitmap(env, _dst_bitmap, dst_info);
-	assert(src_pixels != nullptr && dst_pixels != nullptr);
-
-	float color[4];  // RGBA format
-	color[0] = ((_color >> 16) & 0xff) / 255.0f;
-	color[1] = ((_color >>  8) & 0xff) / 255.0f;
-	color[2] = ((_color >>  0) & 0xff) / 255.0f;
-	color[3] = ((_color >> 24) & 0xff) / 255.0f;
-
-	assert(false);  // TODO float type uint8_t modification
-//	for(int i = 0; i < height * stride; ++i)
-//	{
-//		colorToAlpha (color, src_pixels, dst_pixels);
-//		src_pixels += 4;
-//		dst_pixels += 4;
-//	}
 
 	unlockJavaBitmap(env, _dst_bitmap);
 	unlockJavaBitmap(env, _src_bitmap);
