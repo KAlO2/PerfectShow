@@ -198,6 +198,24 @@ cv::Point2f bezier3(float t, const cv::Point2f& p0, const cv::Point2f& p1, const
  */
 cv::Mat susan(const cv::Mat& image, int radius, int tolerance);
 
+/**
+ * Numerical <a href="https://cn.mathworks.com/help/matlab/ref/gradient.html">gradient</a> function from MATLAB,
+ * OpenCV doesn't come with a straight function likewise, and it use operators like cv::Sobel(), so I implement one.
+ *
+ * @param[in] image  The source image, 2 dimensional array.
+ * @param[out] dx    Like FX = gradient(F) in MATLAB
+ * @param[out] dy    Like [FX, FY] = gradient(F) in MATLAB
+ */
+void gradient(const cv::Mat& image, cv::Mat* dx, cv::Mat* dy = nullptr);
+
+/**
+ * <a href="https://cn.mathworks.com/help/matlab/ref/interp2.html">interp2</a> function from MATLAB,
+ * Interpolation for 2-D gridded data in meshgrid format.
+ * @param[in] image  The source image, 2 dimensional array.
+ * @param[in] point  The point in the image.
+ * @return interpolated value.
+ */
+float interp2(const cv::Mat1f& image, const cv::Point2f& point);
 
 } /* namespace venus */
 #endif /* VENUS_OPENCV_UTILITY_H_ */

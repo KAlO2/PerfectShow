@@ -380,6 +380,78 @@ cv::Mat susan(const cv::Mat& image, int radius, int tolerance)
 	return result;
 }
 
+void gradient(const cv::Mat& image, cv::Mat* dx, cv::Mat* dy/* = nullptr */)
+{
+	assert(image.type() == CV_32FC1 && dx != nullptr);
+	const int rows = image.rows, cols = image.cols;
+	dx->create(rows, cols, CV_32FC1);
 
+	for(int r = 0; r < rows; ++r)
+	for(int c = 0; c < cols; ++c)
+	{
+		int c0 = c - 1, c2 = c + 1;
+		if(c0 < 0)
+			c0 = 0;
+		if(c2 >= cols)
+			c2 = cols - 1;
+
+		float diff = image.at<float>(r, c2) - image.at<float>(r, c0);
+		switch(c2 - c0)
+		{
+		case 2:  dy->at<float>(r, c) = diff / 2;
+		case 1:  dy->at<float>(r, c) = diff;
+		case 0:  dy->at<float>(r, c) = 0;
+		default: assert(false);
+		}
+	}
+
+	if(dy == nullptr)
+		return;
+
+	dy->create(rows, cols, CV_32FC1);
+	for(int r = 0; r < rows; ++r)
+	{
+		int r0 = r - 1, r2 = r + 1;
+		if(r0 < 0)
+			r0 = 0;
+		if(r2 >= rows)
+			r2 = rows - 1;
+
+		for(int c = 0; c < cols; ++c)
+		{
+			float diff = image.at<float>(r2, c) - image.at<float>(r0, c);
+			switch(r2 - r0)
+			{
+			case 2:  dy->at<float>(r, c) = diff / 2;
+			case 1:  dy->at<float>(r, c) = diff;
+			case 0:  dy->at<float>(r, c) = 0;
+			default: assert(false);
+			}
+		}
+	}
+}
+
+float interp2(const cv::Mat1f& image, const cv::Point2f& point)
+{
+	assert(0 <= point.x && point.x <= static_cast<float>(image.rows - 1));
+	assert(0 <= point.y && point.y <= static_cast<float>(image.cols - 1));
+//	float x0, y0;  // integral part
+//	float wx = modf(point.x, &x0);
+//	float wy = modf(point.y, &y0);
+
+	int x0 = static_cast<int>(point.x);
+	int y0 = static_cast<int>(point.y);
+	int x1 = std::min(x0 + 1, image.cols - 1);
+	int y1 = std::min(y0 + 1, image.rows - 1);
+
+	const float wx = point.x - x0;
+	const float wy = point.y - y0;
+
+	float c0 = image.at<float>(y0, x0) * wx + image.at<float>(y0, x1) * (1.0F - wx);
+	float c1 = image.at<float>(y1, x0) * wx + image.at<float>(y1, x1) * (1.0F - wx);
+	float c = c0 * wy + c1 * (1.0F - wy);
+
+	return c;
+}
 
 } /* namespace venus */
