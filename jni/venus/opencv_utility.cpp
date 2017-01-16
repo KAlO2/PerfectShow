@@ -398,10 +398,10 @@ void gradient(const cv::Mat& image, cv::Mat* dx, cv::Mat* dy/* = nullptr */)
 		float diff = image.at<float>(r, c2) - image.at<float>(r, c0);
 		switch(c2 - c0)
 		{
-		case 2:  dy->at<float>(r, c) = diff / 2;
-		case 1:  dy->at<float>(r, c) = diff;
-		case 0:  dy->at<float>(r, c) = 0;
-		default: assert(false);
+		case 2:  dx->at<float>(r, c) = diff / 2;  break;
+		case 1:  dx->at<float>(r, c) = diff;      break;
+		case 0:  dx->at<float>(r, c) = 0;         break;
+		default: assert(false);                   break;
 		}
 	}
 
@@ -422,10 +422,10 @@ void gradient(const cv::Mat& image, cv::Mat* dx, cv::Mat* dy/* = nullptr */)
 			float diff = image.at<float>(r2, c) - image.at<float>(r0, c);
 			switch(r2 - r0)
 			{
-			case 2:  dy->at<float>(r, c) = diff / 2;
-			case 1:  dy->at<float>(r, c) = diff;
-			case 0:  dy->at<float>(r, c) = 0;
-			default: assert(false);
+			case 2:  dy->at<float>(r, c) = diff / 2;  break;
+			case 1:  dy->at<float>(r, c) = diff;      break;
+			case 0:  dy->at<float>(r, c) = 0;         break;
+			default: assert(false);                   break;
 			}
 		}
 	}
@@ -433,8 +433,8 @@ void gradient(const cv::Mat& image, cv::Mat* dx, cv::Mat* dy/* = nullptr */)
 
 float interp2(const cv::Mat1f& image, const cv::Point2f& point)
 {
-	assert(0 <= point.x && point.x <= static_cast<float>(image.rows - 1));
-	assert(0 <= point.y && point.y <= static_cast<float>(image.cols - 1));
+	assert(0 <= point.y && point.y <= static_cast<float>(image.rows - 1));
+	assert(0 <= point.x && point.x <= static_cast<float>(image.cols - 1));
 //	float x0, y0;  // integral part
 //	float wx = modf(point.x, &x0);
 //	float wy = modf(point.y, &y0);

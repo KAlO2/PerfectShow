@@ -145,6 +145,19 @@ public:
 	 */
 	static cv::Mat invert(const cv::Mat& mat);
 
+	/**
+	 * @param[in] image         The source image, of type CV_32FC1
+	 * @param[in] points        The initial snake coordinates
+	 * @param[in] alpha         Controls tension
+	 * @param[in] beta          Controls rigidity
+	 * @param[in] gamma         Step size
+	 * @param[in] kappa         Controls enegry term
+	 * @param[in] weight        Vec3f(wl, we, wt), Weights for line, edge and terminal enegy components
+	 * @param[in] nb_iteration  Number of iteration for which snake is to be moved
+	 */
+	static void snake(const cv::Mat1f& image, std::vector<cv::Point2f>& points, float alpha, float beta, float gamma, float kappa,
+			const cv::Vec3f& weight, int nb_iteration);
+
 };
 
 

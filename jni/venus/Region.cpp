@@ -1,3 +1,5 @@
+#include "venus/Effect.h"
+#include "venus/opencv_utility.h"
 #include "venus/Region.h"
 
 #include <stdint.h>
@@ -415,6 +417,109 @@ cv::Mat Region::invert(const cv::Mat& mat)
 	cv::Mat result;
 	cv::invertAffineTransform(mat, result);
 	return result;
+}
+
+void Region::snake(const cv::Mat1f& image, std::vector<cv::Point2f>& points, float alpha, float beta, float gamma, float kappa, const cv::Vec3f& weight, int nb_iteration)
+{
+	assert(image.type() == CV_32FC1);
+
+	Mat e_line = image;  // e_line is simply the image intensities
+	Mat e_edge = Mat::ones(image.rows, image.cols, CV_32FC1);
+	Mat e_term = Mat::ones(image.rows, image.cols, CV_32FC1);
+
+	for(int r = 1, r_end = image.rows - 1; r < r_end; ++r)
+	for(int c = 1, c_end = image.cols - 1; c < c_end; ++c)
+	{
+		// (r-1, c-1)  (r-1, c)  (r-1, c+1)  ||  _00  _01  _02
+		// (r  , c-1)  (r  , c)  (r  , c+1)  ||  _10  _11  _12
+		// (r+1, c-1)  (r+1, c)  (r+1, c+1)  ||  _20  _21  _22
+		const float& _00 = image.at<float>(r-1, c-1), &_01 = image.at<float>(r-1, c), &_02 = image.at<float>(r-1, c+1);
+		const float& _10 = image.at<float>(r  , c-1), &_11 = image.at<float>(r  , c), &_12 = image.at<float>(r  , c+1);
+		const float& _20 = image.at<float>(r+1, c-1), &_21 = image.at<float>(r+1, c), &_22 = image.at<float>(r+1, c+1);
+
+		float gradient_x = _12 - _10;
+		float gradient_y = _21 - _01;
+		e_edge.at<float>(r, c) = std::sqrt(gradient_x * gradient_x + gradient_y *gradient_y);
+
+		float dx = _12 - _11;  // [-1, 1]
+		float dy = _21 - _11;  // [-1; 1]
+		float dxx= (_12 - _11) - (_11 - _10);  // [-1, -2, 1]
+		float dyy= (_21 - _11) - (_11 - _01);  // [-1; -2; 1]
+//		float dxy= (_11 - _12) + (_22 - _21);  // [1 -1; -1 1]
+		float dxy= (_22 - _02 - _20 + _00)/4;
+
+		float dx_dx = dx * dx;
+		float dy_dy = dy * dy;
+		e_term.at<float>(r, c) = (dx_dx * dyy - 2*dxy*dx*dy + dy_dy * dxx) / std::pow(1 + dx_dx + dy_dy, 1.5F);
+	}
+
+	Mat e_ext;
+	e_ext = (weight[0] * e_line + weight[1] * e_edge + weight[2] * e_term);
+
+//	e_ext.convertTo(_e_ext, CV_8UC1, 255.0F);
+//	cv::imshow("e_ext", _e_ext);
+
+	Mat gradient_x, gradient_y;
+	gradient(e_ext, &gradient_x, &gradient_y);
+
+	// initializing the snake
+
+	// populating the penta diagonal matrix
+	// x″[i] = x[i-1] - 2*x[i] + x[i+1]
+	// x″″[i] = x[i-2] - 4*x[i-1] + 6*x[i] - 4*x[i+1] + x[i+2]
+
+	// ∂xt[i] / ∂t = α * x″[i] - β * x″″[i] + fx(xt[i], yt[i])
+	// ∂yt[i] / ∂t = α * y″[i] + β * y″″[i] + fy(xt[i], yt[i])
+	float b[3] = { 2*alpha + 6 *beta, -(alpha + 4*beta), beta };
+	const int N = static_cast<int>(points.size());
+
+	// Toeplitz matrix, or diagonal-constant matrix.
+	Mat brow = Mat::zeros(N, N, CV_32FC1);
+	float* brow_data = brow.ptr<float>();
+	for(int i = 0; i < N; ++i)
+	{
+		const int _0 = i, _1  = i+1, _2 = i+2;
+		brow_data[_0 % N] = b[_0 % 3];
+		brow_data[_1 % N] = b[_1 % 3];
+		brow_data[_2 % N] = b[_2 % 3];
+		// ZERO ZERO ZERO
+		brow_data[N - (_2 % N)] = b[_2 % 3];
+		brow_data[N - (_1 % N)] = b[_1 % 3];
+		
+		brow_data += N;
+
+		brow_data[i] += gamma;
+	}
+
+	// [L, U] = lu(brow);
+	// inv_brow = inv(U) * inv(L);
+	Mat inv_brow;
+	cv::invert(brow, inv_brow, cv::DECOMP_CHOLESKY);
+
+	Mat temp(N, 2, CV_32FC1, points.data());
+
+	// moving the snake in each iteration
+	for(int j = 0; j < nb_iteration; ++j)
+	{
+		// ssx = gamma*xs - kappa*interp2(grad_x, xs, ys);
+		// ssy = gamma*ys - kappa*interp2(grad_y, xs, ys);
+	
+		for(int i = 0; i < N; ++i)
+		{
+			Point2f& point = points[i];
+			float x = interp2(gradient_x, point);
+			float y = interp2(gradient_y, point);
+
+			point = gamma * point - kappa * Point2f(x, y);
+			//float i_x, i_y;  // integral part
+			//float t_x = modf(points[i].x, &i_x);
+			//float t_y = modf(points[i].y, &i_y);
+		}
+
+		// calculating the new position of snake
+		Mat product = inv_brow * temp;
+		temp = product;//inv_brow * temp;
+	}
 }
 
 } /* namespace venus */
