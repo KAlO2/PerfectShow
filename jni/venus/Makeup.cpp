@@ -1,6 +1,7 @@
 #include "venus/blend.h"
 #include "venus/colorspace.h"
 #include "venus/compiler.h"
+#include "venus/Effect.h"
 #include "venus/Feature.h"
 #include "venus/ImageWarp.h"
 #include "venus/Makeup.h"
@@ -335,6 +336,7 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 	Vec4f line = feature.getSymmetryAxis();
 	float angle = std::atan2(line[1], line[0]) - static_cast<float>(M_PI/2);
 //	std::cout << __FUNCTION__ << " angle: " << rad2deg(angle) << '\n';
+	float cosa = std::abs(std::cos(angle));
 
 	const Mat&   makeup_mask = mask;
 	const Rect2i makeup_rect = Region::boundingRect(makeup_mask, 4);  // mask image is not so good, so allow some tolerance.
@@ -344,7 +346,6 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 	Point2f makeup_center(static_cast<float>(makeup_moment.m10 / makeup_moment.m00),
 	                      static_cast<float>(makeup_moment.m01 / makeup_moment.m00));
 
-	constexpr int offset = 8;  // TODO, tweak offset according to the eye brow size?
 	const bool has_alpha = src.channels() > 3;
 
 	for(int i = 0; i < 2; ++i)
@@ -357,38 +358,78 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 
 		const Rect rect = cv::boundingRect(polygon);
 		Rect rect_with_margin = rect;
+		int offset = rect.height / cosa;
 		Region::inset(rect_with_margin, -offset);
 
 		Mat roi = dst(rect_with_margin).clone();
 		if(has_alpha)
 			cv::cvtColor(roi, roi, CV_RGBA2RGB);  // or CV_BGRA2BGR, just strip alpha.
-
 		Mat roi_mask = Feature::createMask(polygon);
-		Mat roi_mask_with_margin(rect_with_margin.height, rect_with_margin.width, CV_8UC1, Scalar::all(0));
-		roi_mask.copyTo(roi_mask_with_margin(Rect(offset, offset, roi_mask.cols, roi_mask.rows)));
 
+		Mat target_mask(rect_with_margin.height, rect_with_margin.width, CV_8UC1, Scalar::all(0));
+		roi_mask.copyTo(target_mask(Rect(offset, offset, roi_mask.cols, roi_mask.rows)));
+		Region::grow(target_mask, target_mask, offset/4);
+
+		// TODO related to feature points, better move it to Feature class.
+		int bottom = points[right?33:32].y - rect_with_margin.y;
+		if(bottom > target_mask.rows - 1)
+			bottom = target_mask.rows - 1;
+
+		for(int c = 0; c < target_mask.cols; ++c)
+		{
+			int r0 = 0;
+			while(r0 < target_mask.rows && target_mask.at<uint8_t>(r0, c) == 0)
+				++r0;
+			if(r0 >= target_mask.rows)
+				continue;
+
+			int r1 = r0;
+			while(r1 < target_mask.rows && target_mask.at<uint8_t>(r1, c) != 0)
+				++r1;
+
+			for(int r = r0; r < r1; ++r)
+			{
+				int r0_outter = r0 * 2 - r;
+				if(r0_outter < 0)
+					r0_outter = 0;
+				int r1_outter = r1 * 2 - r;
+				if(r1_outter > bottom)
+					r1_outter = bottom;
+
+				float weight = static_cast<float>(r1 - r)/(r1 - r0);
+				weight = smoothStep(0.50F, 1.00F, weight);  // prefer to use skin of eyes above than below.
+				roi.at<Vec3b>(r, c) = mix(roi.at<Vec3b>(r0_outter, c), roi.at<Vec3b>(r1_outter, c), weight);
+			}
+		}
+
+/*
 #if USE_OPENCV_INPAINT
-		constexpr double inpaint_radius = 10.0;  // TODO, make it adaptive, or tune it for a fine result.
+		constexpr double inpaint_radius = offset/4;  // TODO, make it self-adaptive, or tune it for a fine result.
 
 		// tested with Navier-Stokes algorithm and A. Telea algorithm, and no obvious difference found.
-		cv::inpaint(roi, roi_mask_with_margin, roi, inpaint_radius, cv::INPAINT_TELEA);
+		cv::inpaint(roi, target_mask, roi, inpaint_radius, cv::INPAINT_TELEA);
 #else
 		Mat source_mask;
-		cv::bitwise_not(roi_mask_with_margin, source_mask);
+		cv::bitwise_not(target_mask, source_mask);
 
 		Inpainter inpainter;
 		inpainter.setSourceImage(roi);
 		inpainter.setSourceMask(source_mask);
-		inpainter.setTargetMask(roi_mask_with_margin);
-		inpainter.setPatchSize(4);
+		inpainter.setTargetMask(target_mask);
+		inpainter.setPatchSize(8);
 		inpainter.initialize();
 	
 		while(inpainter.hasMoreSteps())
 			inpainter.step();
-
-		inpainter.image().copyTo(roi);
+		Mat inpaint_image = inpainter.image();
+		inpaint_image.copyTo(roi);
 #endif
-
+*/
+		target_mask.convertTo(target_mask, target_mask.depth(), 0.6F);
+		for(int k = 0; k < 3; ++k)
+			Effect::gaussianBlur(target_mask, offset/4);
+//		cv::imshow("target_mask", target_mask);
+		
 #if 0
 		// This branch will overwrite alpha channel value if @p src is not opaque(255).
 		if(has_alpha)
@@ -399,7 +440,7 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 		for(int r = 0; r < rect.height; ++r)
 		for(int c = 0; c < rect.width;  ++c)
 		{
-			uint8_t alpha = roi_mask_with_margin.at<uint8_t>(r + offset, c + offset);
+			uint8_t alpha = target_mask.at<uint8_t>(r + offset, c + offset);
 			if(alpha == 0)  // shortcut
 				continue;
 

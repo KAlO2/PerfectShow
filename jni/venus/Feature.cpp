@@ -799,8 +799,6 @@ cv::Mat Feature::createMask(const std::vector<cv::Point2f>& points, float blur_r
 	return mask;
 }
 
-
-
 cv::Mat Feature::maskPolygon(const cv::Rect2i& rect, const std::vector<cv::Point2f>& points, int start, int length)
 {
 	assert(0 <= start && start < static_cast<int>(points.size()));
@@ -826,7 +824,7 @@ cv::Mat Feature::maskPolygon(const cv::Rect2i& rect, const std::vector<cv::Point
 
 cv::Mat Feature::maskPolygonSmooth(const cv::Rect2i& rect, const std::vector<cv::Point2f>& points, const int level/* = 8 */)
 {
-	assert(level > 0);
+	assert(points.size() == COUNT && level > 0);
 
 	Point2f sum(0.0f, 0.0f);
 	for(const Point2f& point : points)
@@ -866,6 +864,7 @@ cv::Mat Feature::maskPolygonSmooth(const cv::Rect2i& rect, const std::vector<cv:
 
 std::vector<cv::Point2f> Feature::calculateBrowPolygon(const std::vector<cv::Point2f>& points, bool right)
 {
+	assert(points.size() == COUNT);
 /*
 	Below are eye brow feature point indices:
 
@@ -1036,6 +1035,8 @@ cv::RotatedRect Feature::calculateBlushRectangle(const std::vector<cv::Point2f>&
 
 std::vector<cv::Point2f> Feature::calculateBlushPolygon(const std::vector<cv::Point2f>& points, bool right)
 {
+	assert(points.size() == COUNT);
+
 	// symmetric point
 	const Point2f& _54 = points[right? 54:52];
 	const Point2f& _00 = points[right?  0:12];
@@ -1069,6 +1070,7 @@ std::vector<cv::Point2f> Feature::calculateBlushPolygon(const std::vector<cv::Po
 
 std::vector<cv::Point2f> Feature::calculateNosePolygon(const std::vector<cv::Point2f>& points)
 {
+	assert(points.size() == COUNT);
 	return std::vector<Point2f>
 	{
 		catmullRomSpline(1.0f/3, points[18], points[25], points[54], points[62]),
@@ -1091,6 +1093,7 @@ std::vector<cv::Point2f> Feature::calculateNosePolygon(const std::vector<cv::Poi
 
 std::vector<cv::Point2f> Feature::calculateLipPolygon(const std::vector<cv::Point2f>& points, bool upper)
 {
+	assert(points.size() == COUNT);
 /*
 	Below are lips feature point indices:
 	
@@ -1133,11 +1136,11 @@ std::vector<cv::Point2f> Feature::calculateLipPolygon(const std::vector<cv::Poin
 		polygon.push_back(points[63]);
 
 		polygon.push_back(points[73]);
-		polygon.push_back(catmullRomSpline(1.0f/3, points[63], points[73], points[74], points[75]));
-		polygon.push_back(catmullRomSpline(2.0f/3, points[63], points[73], points[74], points[75]));
+		polygon.push_back(catmullRomSpline(1.0F/3, points[63], points[73], points[74], points[75]));
+		polygon.push_back(catmullRomSpline(2.0F/3, points[63], points[73], points[74], points[75]));
 		polygon.push_back(points[74]);
-		polygon.push_back(catmullRomSpline(1.0f/3, points[73], points[74], points[75], points[69]));
-		polygon.push_back(catmullRomSpline(2.0f/3, points[73], points[74], points[75], points[69]));
+		polygon.push_back(catmullRomSpline(1.0F/3, points[73], points[74], points[75], points[69]));
+		polygon.push_back(catmullRomSpline(2.0F/3, points[73], points[74], points[75], points[69]));
 		polygon.push_back(points[75]);
 
 		polygon.push_back(points[69]);
@@ -1149,8 +1152,8 @@ std::vector<cv::Point2f> Feature::calculateLipPolygon(const std::vector<cv::Poin
 			int i1 = i;
 			int i2 = i + 1;
 			int i3 = i == 79 ? 63 : i+2;
-			polygon.push_back(catmullRomSpline(1.0f/3, points[i0], points[i1], points[i2], points[i3]));
-			polygon.push_back(catmullRomSpline(2.0f/3, points[i0], points[i1], points[i2], points[i3]));
+			polygon.push_back(catmullRomSpline(1.0F/3, points[i0], points[i1], points[i2], points[i3]));
+			polygon.push_back(catmullRomSpline(2.0F/3, points[i0], points[i1], points[i2], points[i3]));
 			polygon.push_back(points[i2]);
 		}
 
@@ -1162,6 +1165,7 @@ std::vector<cv::Point2f> Feature::calculateLipPolygon(const std::vector<cv::Poin
 
 std::vector<cv::Point2f> Feature::calculateTeethPolygon(const std::vector<cv::Point2f>& points)
 {
+	assert(points.size() == COUNT);
 	return std::vector<Point2f>
 	{
 		points[63], points[72], points[71], points[70], points[69],  // upper lip
