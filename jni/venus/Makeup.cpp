@@ -225,7 +225,7 @@ void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, cons
 		{
 			const cv::Vec4b& src_color = src.at<cv::Vec4b>(r - origin.y, c - origin.x);
 			cv::Vec3b& dst_color = result.at<cv::Vec3b>(r, c);
-			dst_color = venus::mix(dst_color, *reinterpret_cast<const cv::Vec3b*>(&src_color), src_color[3]/255.0F * amount);
+			dst_color = mix(dst_color, *reinterpret_cast<const cv::Vec3b*>(&src_color), src_color[3]/255.0F * amount);
 		}
 		break;
 	case CV_8UC4:
@@ -234,7 +234,7 @@ void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, cons
 		{
 			const cv::Vec4b& src_color = src.at<cv::Vec4b>(r - origin.y, c - origin.x);
 			cv::Vec4b& dst_color = result.at<cv::Vec4b>(r, c);
-			dst_color = venus::mix(dst_color, src_color, amount);
+			dst_color = mix(dst_color, src_color, amount);
 		}
 		break;
 #if 0  // currently unused case
@@ -244,7 +244,7 @@ void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, cons
 		{
 			const cv::Vec3f& src_color = src.at<cv::Vec3f>(r - origin.y, c - origin.x);
 			cv::Vec3f& dst_color = result.at<cv::Vec3f>(r, c);
-			dst_color = venus::mix(dst_color, src_color, amount);
+			dst_color = mix(dst_color, src_color, amount);
 		}
 		break;
 	case CV_32FC4:
@@ -253,7 +253,7 @@ void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, cons
 		{
 			const cv::Vec4f& src_color = src.at<cv::Vec4f>(r - origin.y, c - origin.x);
 			cv::Vec4f& dst_color = result.at<cv::Vec4f>(r, c);
-			dst_color = venus::mix(dst_color, src_color, amount);
+			dst_color = mix(dst_color, src_color, amount);
 		}
 		break;
 #endif
@@ -292,14 +292,14 @@ void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, cons
 		{
 			const cv::Vec4b& src_color = src.at<cv::Vec4b>(src_r, src_c);
 			cv::Vec3b& dst_color = result.at<cv::Vec3b>(r, c);
-			dst_color = venus::mix(dst_color, *reinterpret_cast<const cv::Vec3b*>(&src_color), src_color[3]/255.0F * amount);
+			dst_color = mix(dst_color, *reinterpret_cast<const cv::Vec3b*>(&src_color), src_color[3]/255.0F * amount);
 		}
 			break;
 		case CV_8UC4:
 		{
 			const cv::Vec4b& src_color = src.at<cv::Vec4b>(src_r, src_c);
 			cv::Vec4b& dst_color = result.at<cv::Vec4b>(r, c);
-			dst_color = venus::mix(dst_color, src_color, amount);
+			dst_color = mix(dst_color, src_color, amount);
 		}
 			break;
 #if 0  // currently unused case
@@ -307,14 +307,14 @@ void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, cons
 		{
 			const cv::Vec4f& src_color = src.at<cv::Vec4f>(src_r, src_c);
 			cv::Vec3f& dst_color = result.at<cv::Vec3f>(r, c);
-			dst_color = venus::mix(dst_color, *reinterpret_cast<const cv::Vec3f*>(&src_color), src_color[3] * amount);
+			dst_color = mix(dst_color, *reinterpret_cast<const cv::Vec3f*>(&src_color), src_color[3] * amount);
 		}
 			break;
 		case CV_32FC4:
 		{
 			const cv::Vec4f& src_color = src.at<cv::Vec4f>(src_r, src_c);
 			cv::Vec4f& dst_color = result.at<cv::Vec4f>(r, c);
-			dst_color = venus::mix(dst_color, src_color, amount);
+			dst_color = mix(dst_color, src_color, amount);
 		}
 			break;
 #endif
@@ -358,7 +358,7 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 
 		const Rect rect = cv::boundingRect(polygon);
 		Rect rect_with_margin = rect;
-		int offset = rect.height / cosa;
+		int offset = cvRound(rect.height / cosa);
 		Region::inset(rect_with_margin, -offset);
 
 		Mat roi = dst(rect_with_margin).clone();
@@ -371,10 +371,11 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 		Region::grow(target_mask, target_mask, offset/4);
 
 		// TODO related to feature points, better move it to Feature class.
-		int bottom = points[right?33:32].y - rect_with_margin.y;
+		int bottom = cvRound(points[right?33:32].y - rect_with_margin.y);
 		if(bottom > target_mask.rows - 1)
 			bottom = target_mask.rows - 1;
 
+		#pragma omp parallel for
 		for(int c = 0; c < target_mask.cols; ++c)
 		{
 			int r0 = 0;
@@ -392,12 +393,13 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 				int r0_outter = r0 * 2 - r;
 				if(r0_outter < 0)
 					r0_outter = 0;
+
 				int r1_outter = r1 * 2 - r;
 				if(r1_outter > bottom)
 					r1_outter = bottom;
 
-				float weight = static_cast<float>(r1 - r)/(r1 - r0);
-				weight = smoothStep(0.50F, 1.00F, weight);  // prefer to use skin of eyes above than below.
+				float weight = static_cast<float>(r - r0)/(r1 - r0);
+				weight = smoothStep(0.42F, 0.78F, weight);  // prefer to use skin of eyes above than below.
 				roi.at<Vec3b>(r, c) = mix(roi.at<Vec3b>(r0_outter, c), roi.at<Vec3b>(r1_outter, c), weight);
 			}
 		}
@@ -430,11 +432,11 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 			Effect::gaussianBlur(target_mask, offset/4);
 //		cv::imshow("target_mask", target_mask);
 		
-#if 0
+#if 1
 		// This branch will overwrite alpha channel value if @p src is not opaque(255).
 		if(has_alpha)
 			cv::cvtColor(roi, roi, CV_RGB2RGBA);  // recover alpha with full value(255).
-		roi.copyTo(dst(rect_with_margin), roi_mask_with_margin);
+		roi.copyTo(dst(rect_with_margin), target_mask);
 #else
 		// This branch keeps alpha channel untouched, so it's preferable.
 		for(int r = 0; r < rect.height; ++r)

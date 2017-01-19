@@ -38,7 +38,7 @@ template<> cv::Vec4f mix<float,   4>(const cv::Vec4f& dst, const cv::Vec4f& src,
 /**
  * It's like lerp but use uint32_t for 4 channels.
  */
-uint32_t mix(const uint32_t& dst, const uint32_t& src, float amount);
+uint32_t mix(const uint32_t& from, const uint32_t& to, float amount);
 
 
 
@@ -60,7 +60,7 @@ inline uint8_t blendNegation   (uint8_t A, uint8_t B)  { return 255 - std::abs(2
 inline uint8_t blendScreen     (uint8_t A, uint8_t B)  { return 255 - ((255 - A) * (255 - B) + 127) / 255; }
 inline uint8_t blendExclusion  (uint8_t A, uint8_t B)  { return A + B - (2 * A * B + 127)/ 255; }
 inline uint8_t blendOverlay    (uint8_t A, uint8_t B)  { return (uint8_t)((B < 128 ? 2*A*B : (255 - 2*(255 - A)*(255 - B)) + 127)/ 255); }
-inline uint8_t blendSoftLight  (uint8_t A, uint8_t B)  { return (B < 128) ? (2*((A>>1)+64))*(B/255.0F) : (255-(2*(255-((A>>1)+64))*(255-B)/255.0F)); }
+inline uint8_t blendSoftLight  (uint8_t A, uint8_t B)  { return (B < 128) ? ((2*((A>>1)+64)) * B + 127)/255 : (255 - (2*(255-((A>>1)+64))*(255-B) + 127)/255); }
 inline uint8_t blendHardLight  (uint8_t A, uint8_t B)  { return blendOverlay(B, A); }
 inline uint8_t blendColorDodge (uint8_t A, uint8_t B)  { return (B == 255) ? 255 : std::min(255, A * 255 / (255 - B)); }
 inline uint8_t blendColorBurn  (uint8_t A, uint8_t B)  { return (B ==   0) ?   0 : std::max(  0, 255 - (255 - A) * 255 / B); }

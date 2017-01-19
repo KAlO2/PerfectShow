@@ -4,15 +4,15 @@
 
 namespace venus {
 
-uint32_t mix(const uint32_t& dst, const uint32_t& src, float amount)
+uint32_t mix(const uint32_t& from, const uint32_t& to, float amount)
 {
-	assert(0 <= amount && amount <= 1.0f);
-	uint32_t r = lerp(src & 0xff,         dst & 0xff, amount);
-	uint32_t g = lerp((src >>  8) & 0xff, (dst >>  8) & 0xff, amount);
-	uint32_t b = lerp((src >> 16) & 0xff, (dst >> 16) & 0xff, amount);
-//	uint32_t a = lerp((src >> 24) & 0xff, (dst >> 24) & 0xff, amount);
-//	return (r & 0xff) | ((g & 0xff) << 8) | ((b & 0xff) << 16) || ((a & 0xff) << 24);
-	return (r & 0xff) | ((g & 0xff) << 8) | ((b & 0xff) << 16) || (src & 0xff000000);
+	assert(0 <= amount && amount <= 1.0F);
+	uint8_t _0 = lerp<uint8_t>((from      ) & 0xFF, (to      ) & 0xFF, amount);
+	uint8_t _1 = lerp<uint8_t>((from >>  8) & 0xFF, (to >>  8) & 0xFF, amount);
+	uint8_t _2 = lerp<uint8_t>((from >> 16) & 0xFF, (to >> 16) & 0xFF, amount);
+//	uint8_t _3 = lerp<uint8_t>((from >> 24) & 0xFF, (to >> 24) & 0xFF, amount);
+//	return _0 | (_1 << 8) | (_2 << 16) || (_3  << 24);
+	return _0 | (_1 << 8) | (_2 << 16) || (from & 0xFF000000);
 }
 
 template <>
@@ -29,7 +29,7 @@ template <>
 cv::Vec4b mix<uint8_t, 4>(const cv::Vec4b& dst, const cv::Vec4b& src, float amount)
 {
 	cv::Vec4b result;
-	int src_a = static_cast<int>(src[3] * amount);
+	int src_a = cvRound(src[3] * amount);
 	int l_src_a = 255 - src_a;
 
 	for(int i = 0; i < 3; ++i)
