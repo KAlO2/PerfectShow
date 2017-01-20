@@ -150,6 +150,11 @@ cv::Point2f centerOfCircumscribedCircle(const cv::Point2f& A, const cv::Point2f&
 
 cv::Mat merge(const cv::Mat& rgb, const cv::Mat& alpha);
 
+/**
+ * It's like cv::split() but only cares alpha channel.
+ */
+cv::Mat splitAlpha(const cv::Mat& image);
+
 cv::Mat normalize(const cv::Mat& mat, double* max = nullptr);
 
 /**

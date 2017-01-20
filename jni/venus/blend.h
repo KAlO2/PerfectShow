@@ -20,19 +20,36 @@
 */
 
 namespace venus {
-
-template <typename T, int N = 4>
-cv::Vec<T, N> mix(const cv::Vec<T, N>& dst, const cv::Vec<T, N>& src, float amount)
+/*
+template <typename T, int N = 3>
+cv::Vec<T, N> mix(const cv::Vec<T, N>& from, const cv::Vec<T, N>& to, float amount)
 {
 	cv::Vec<T, N> result;
 	for(int i = 0; i < N; ++i)
-		result[i] = lerp<T>(dst[i], src[i], amount);
+		result[i] = lerp<T>(from[i], to[i], amount);
 	return result;
 }
 
-template<> cv::Vec3f mix<float,   3>(const cv::Vec3f& dst, const cv::Vec3f& src, float amount);
-template<> cv::Vec4b mix<uint8_t, 4>(const cv::Vec4b& dst, const cv::Vec4b& src, float amount);
-template<> cv::Vec4f mix<float,   4>(const cv::Vec4f& dst, const cv::Vec4f& src, float amount);
+template <typename T>
+cv::Vec<T, 4> mix(const cv::Vec<T, 4>& from, const cv::Vec<T, 4>& to, float amount)
+{
+	cv::Vec<T, 4> result;
+	if(std::is_floating_point<T>::value)
+		amount *= to[3];
+	else
+		amount *= static_cast<float>(to[3]) / std::numeric_limits<T>::max();
+
+	for(int i = 0; i < 3; ++i)
+		result[i] = lerp<T>(from[i], to[i], amount);
+	result[3] = from[3];  // keep alpha untouched
+	return result;
+}
+*/
+
+cv::Vec3b mix(const cv::Vec3b& from, const cv::Vec3b& to, float amount);
+cv::Vec3f mix(const cv::Vec3f& from, const cv::Vec3f& to, float amount);
+cv::Vec4b mix(const cv::Vec4b& from, const cv::Vec4b& to, float amount);
+cv::Vec4f mix(const cv::Vec4f& from, const cv::Vec4f& to, float amount);
 
 
 /**

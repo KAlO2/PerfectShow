@@ -10,13 +10,17 @@
 
 #include <opencv2/imgproc.hpp>
 
-// OpenCV's inpaint algorithm is lame, needs an alternative.
-#define USE_OPENCV_INPAINT 0
-#if USE_OPENCV_INPAINT
-#  include <opencv2/photo.hpp>
-#else
-#  include "venus/inpaint.h"
-#endif
+// OpenCV's inpainting algorithm is lame, needs an alternative.
+// 0: disable inpainting algorithm
+// 1: OpenCV's inpainting algorithm
+// 2: Criminisi's inpainting algorithm
+#define USE_INPAINTING 0
+
+#if(USE_INPAINTING == 1)
+#	include <opencv2/photo.hpp>
+#elif(USE_INPAINTING == 2)
+#	include "venus/inpaint.h"
+#endif /* USE_INPAINTING */
 
 using namespace cv;
 
@@ -326,9 +330,10 @@ void Makeup::blend(cv::Mat& result, const cv::Mat& dst, const cv::Mat& src, cons
 }
 
 void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points,
-		const cv::Mat& mask, uint32_t color, float amount, float offsetY/* = 0.0F */)
+		const cv::Mat& brow, uint32_t color, float amount, float offsetY/* = 0.0F */)
 {
-	assert(src.type() == CV_8UC4 && mask.type() == CV_8UC1);
+	assert(src.type() == CV_8UC4 && points.size() == Feature::COUNT);
+	assert(brow.type() == CV_8UC1 || brow.type() == CV_8UC4);
 	if(src.data != dst.data)
 		src.copyTo(dst);
 
@@ -338,11 +343,13 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 //	std::cout << __FUNCTION__ << " angle: " << rad2deg(angle) << '\n';
 	float cosa = std::abs(std::cos(angle));
 
-	const Mat&   makeup_mask = mask;
-	const Rect2i makeup_rect = Region::boundingRect(makeup_mask, 4);  // mask image is not so good, so allow some tolerance.
+	const bool is_mask = brow.channels() == 1;
+	Mat makeup_mask = is_mask ? brow : splitAlpha(brow);
+	// If mask image is not so good (transparent with value close to 0), you can allow some tolerance here.
+	const Rect2i makeup_rect = Region::boundingRect(makeup_mask, 4/* tolerance */);
 
 	// centroid @see http://docs.opencv.org/2.4/doc/tutorials/imgproc/shapedescriptors/moments/moments.html
-	Moments makeup_moment = cv::moments(mask);
+	Moments makeup_moment = cv::moments(makeup_mask);
 	Point2f makeup_center(static_cast<float>(makeup_moment.m10 / makeup_moment.m00),
 	                      static_cast<float>(makeup_moment.m01 / makeup_moment.m00));
 
@@ -370,6 +377,7 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 		roi_mask.copyTo(target_mask(Rect(offset, offset, roi_mask.cols, roi_mask.rows)));
 		Region::grow(target_mask, target_mask, offset/4);
 
+#if(USE_INPAINTING == 0)
 		// TODO related to feature points, better move it to Feature class.
 		int bottom = cvRound(points[right?33:32].y - rect_with_margin.y);
 		if(bottom > target_mask.rows - 1)
@@ -404,13 +412,12 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 			}
 		}
 
-/*
-#if USE_OPENCV_INPAINT
+#elif(USE_INPAINTING == 1)  // OpenCV's inpainting algorithm
 		constexpr double inpaint_radius = offset/4;  // TODO, make it self-adaptive, or tune it for a fine result.
 
 		// tested with Navier-Stokes algorithm and A. Telea algorithm, and no obvious difference found.
 		cv::inpaint(roi, target_mask, roi, inpaint_radius, cv::INPAINT_TELEA);
-#else
+#elif(USE_INPAINTING == 2)  // Criminisi's inpainting algorithm
 		Mat source_mask;
 		cv::bitwise_not(target_mask, source_mask);
 
@@ -425,11 +432,14 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 			inpainter.step();
 		Mat inpaint_image = inpainter.image();
 		inpaint_image.copyTo(roi);
-#endif
-*/
-		target_mask.convertTo(target_mask, target_mask.depth(), 0.6F);
+#else
+#error "invalid macro integer"
+#endif /* USE_INPAINTING */
+
+//		target_mask.convertTo(target_mask, target_mask.depth(), 1.0F);
 		for(int k = 0; k < 3; ++k)
-			Effect::gaussianBlur(target_mask, offset/4);
+			Effect::gaussianBlur(target_mask, offset/4.0F);
+//		cv::imshow("roi" + std::to_string(i), roi);
 //		cv::imshow("target_mask", target_mask);
 		
 #if 1
@@ -471,11 +481,10 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 		Mat affine = Region::transform(target_size, target_center, angle, scale);
 		cv::Mat affined_mask;
 		cv::warpAffine(makeup_mask, affined_mask, affine, target_size, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
+		Mat affined_brow = is_mask ? Makeup::pack(affined_mask, color) : brow;
 
 		// need to move X coordinate with respect to the 1/slant.
 		Point2f translation(offsetY/line[1] * line[0], offsetY);
-
-		Mat affined_brow = Makeup::pack(affined_mask, color);
 		Point2f origin = center - target_center + translation;
 		Makeup::blend(dst, dst, affined_brow, origin, amount);
 	}

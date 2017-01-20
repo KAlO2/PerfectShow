@@ -193,6 +193,22 @@ cv::Mat merge(const cv::Mat& rgb, const cv::Mat& alpha)
 	return result;
 }
 
+cv::Mat splitAlpha(const cv::Mat& image)
+{
+	assert(image.type() == CV_8UC4);
+	cv::Mat mask(image.rows, image.cols, CV_8UC1);
+	
+	const uint8_t* from = image.data;
+	uint8_t* to   = mask.data;
+	const int length = image.rows * image.cols;
+
+	#pragma omp parallel for
+	for(int i = 0; i < length; ++i)
+		to[i] = from[(i<<2) + 3];
+
+	return mask;
+}
+
 cv::Mat normalize(const cv::Mat& mat, double* max/* = nullptr */)
 {
 	double x = 1.0;

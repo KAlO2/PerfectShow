@@ -15,40 +15,47 @@ uint32_t mix(const uint32_t& from, const uint32_t& to, float amount)
 	return _0 | (_1 << 8) | (_2 << 16) || (from & 0xFF000000);
 }
 
-template <>
-cv::Vec3f mix<float, 3>(const cv::Vec3f& dst, const cv::Vec3f& src, float amount)
+cv::Vec3b mix(const cv::Vec3b& from, const cv::Vec3b& to, float amount)
+{
+	cv::Vec3b result;
+	int a = cvRound(255 * amount);
+	int l_a = 255 - a;
+
+	for(int i = 0; i < 3; ++i)
+		result[i] = (from[i] * l_a + to[i] * a + 127) / 255;
+	return result;
+}
+
+cv::Vec3f mix(const cv::Vec3f& from, const cv::Vec3f& to, float amount)
 {
 	cv::Vec3f result;
-	const float l_amount = 1 - amount;
+	float l_amount = 1.0F - amount;
 	for(int i = 0; i < 3; ++i)
-		result[i] = dst[i] * l_amount + src[i] * amount;
+		result[i] = from[i] * l_amount + to[i] * amount;
 	return result;
 }
 
-template <>
-cv::Vec4b mix<uint8_t, 4>(const cv::Vec4b& dst, const cv::Vec4b& src, float amount)
+cv::Vec4b mix(const cv::Vec4b& from, const cv::Vec4b& to, float amount)
 {
 	cv::Vec4b result;
-	int src_a = cvRound(src[3] * amount);
-	int l_src_a = 255 - src_a;
+	int a = cvRound(to[3] * amount);
+	int l_a = 255 - a;
 
 	for(int i = 0; i < 3; ++i)
-		result[i] = (dst[i] * l_src_a + src[i] * src_a + 127) / 255;
-	result[3] = dst[3];
-	
+		result[i] = (from[i] * l_a + to[i] * a + 127) / 255;
+	result[3] = from[3];
 	return result;
 }
 
-template <>
-cv::Vec4f mix<float, 4>(const cv::Vec4f& dst, const cv::Vec4f& src, float amount)
+cv::Vec4f mix(const cv::Vec4f& from, const cv::Vec4f& to, float amount)
 {
 	cv::Vec4f result;
-	float src_a = src[3] * amount;
-	float l_src_a = 1.0f - src_a;
+	float a = to[3] * amount;
+	float l_a = 1.0F - a;
 
 	for(int i = 0; i < 3; ++i)
-		result[i] = (dst[i] * l_src_a + src[i] * src_a);
-	result[3] = dst[3];
+		result[i] = (from[i] * l_a + to[i] * a);
+	result[3] = from[3];
 	return result;
 }
 
