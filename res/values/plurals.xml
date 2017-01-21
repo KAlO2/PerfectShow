@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<!--
+	https://developer.android.com/guide/topics/resources/string-resource.html#Plurals
+	
+	As a developer, you should always supply "one" and "other"
+	strings. Your translators will know which strings are actually
+	needed for their language. Always include %d in "one" because
+	translators will need to use %d for languages where "one"
+	doesn't mean 1 (as explained above).
+-->
+<plurals name="picture_selection_info">
+	<item quantity="one">%1$d picture selected (maximum %2$d)</item>
+	<item quantity="other">%1$d pictures selected (maximum %2$d)</item>
+</plurals>
+
+</resources>

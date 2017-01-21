@@ -27,6 +27,10 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".app.ImageCropActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
             android:name=".app.MakeupActivity"
             android:screenOrientation="portrait" >
         </activity>

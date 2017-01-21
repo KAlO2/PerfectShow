@@ -1,5 +1,16 @@
 <resources>
 
+
+	<style name="Widget.RadioButton.Horizontal">
+		<item name="android:layout_weight">1.0</item>
+		<item name="android:layout_width">0dp</item>
+		<item name="android:layout_height">wrap_content</item>
+		<item name="android:button">@null</item>
+		<item name="android:gravity">center</item>
+		<item name="android:textColor">@color/selector_radio_button</item>
+		<item name="android:padding">10dp</item>
+		<item name="android:textSize">@dimen/text_size_small</item>
+	</style>
 	<style name="Widget" parent="@android:style/Widget">
 		<item name="android:textAppearance">?android:attr/textAppearance</item>
 		<item name="android:layout_width">wrap_content</item>
@@ -38,25 +49,40 @@
 	</style>
 	
 	<style name="Widget.CompoundButton">
-	    
-	</style>
-	<style name="Widget.CompoundButton.CheckBox">
-	
+		<item name="android:focusable">true</item>
+		<item name="android:clickable">true</item>
+		<item name="android:textAppearance">?android:attr/textAppearance</item>
+		<item name="android:textColor">?android:attr/textColorPrimaryDisableOnly</item>
 	</style>
 
-	<style name="Widget.SeekBar" parent="@android:style/Widget.SeekBar">
-		<item name="android:paddingLeft">15.0dp</item>
-		<item name="android:paddingRight">15.0dp</item>
-		<item name="android:layout_width">fill_parent</item>
+	<style name="Widget.CheckBox" parent="@style/Widget.CompoundButton">
+		<item name="android:button">?android:attr/listChoiceIndicatorMultiple</item>
+	</style>
+
+	<style name="Widget.RadioButton" parent="@style/Widget.CompoundButton">
+		<item name="android:button">?android:attr/listChoiceIndicatorSingle</item>
+		<item name="android:layout_width">match_parent</item>
 		<item name="android:layout_height">wrap_content</item>
-		<item name="android:layout_marginTop">5.0dp</item>
-		<item name="android:layout_marginBottom">5.0dp</item>
-		<item name="android:maxHeight">@dimen/seekbar_progress_height</item>
-		<item name="android:progressDrawable">@drawable/seekbar_progress</item>
-		<item name="android:minHeight">@dimen/seekbar_progress_height</item>
-		<item name="android:thumb">@drawable/seekbar_thumb</item>
-		<item name="android:isScrollContainer">true</item>
-		<item name="android:fadeScrollbars">true</item>
+		<item name="android:gravity">left|center_vertical</item>
+		<item name="android:paddingTop">0dp</item>
+		<item name="android:paddingBottom">0dp</item>
+<!--
+		<item name="android:onClick">onRadioButtonClicked</item>
+-->
+	</style>
+
+	<style name="Widget.ImageView">
+		<item name="android:layout_width">wrap_content</item>
+		<item name="android:layout_height">wrap_content</item>
+		<item name="android:layout_gravity">center</item>
+		<item name="android:scaleType">fitCenter</item>
+		<item name="android:duplicateParentState">true</item>
+	</style>
+
+	<style name="Widget.Button.MainActivity">
+		<item name="android:layout_width">0dp</item>
+		<item name="android:layout_height">64dp</item>
+		<item name="android:layout_weight">0.5</item>
 	</style>
 	
 	<style name="Widget.ImageWithTextBelowIt">
@@ -111,12 +137,22 @@
 		<item name="android:textSize">@dimen/text_size_big</item>
 	</style>
 	
-	<style name="Widget.Button.MainActivity">
-		<item name="android:layout_width">0dp</item>
-		<item name="android:layout_height">64dp</item>
-		<item name="android:layout_weight">0.5</item>
-	</style>
 
+	<style name="ImageCropActivity_transformationState">
+		<item name="android:layout_width">0dp</item>
+		<item name="android:layout_height">match_parent</item>
+		<item name="android:layout_weight">1.0</item>
+		<item name="android:background">@color/crop_background</item>
+		<item name="android:clickable">true</item>
+	</style>
+	
+	<style name="CropActivity_WrapperRotateButton">
+		<item name="android:layout_width">@dimen/CropActivity_wrapper_rotate_button_size</item>
+		<item name="android:layout_height">@dimen/CropActivity_wrapper_rotate_button_size</item>
+		<item name="android:background">@color/crop_background</item>
+		<item name="android:clickable">true</item>
+	</style>
+	
 	<style name="Widget.AspectRatioTextView" parent="android:Widget.TextView">
 		<item name="android:layout_width">wrap_content</item>
 		<item name="android:layout_height">wrap_content</item>

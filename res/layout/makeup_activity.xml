@@ -65,7 +65,7 @@
 			/>
 		<CheckBox
 			android:id="@+id/mark"
-			style="@style/Widget.CompoundButton.CheckBox"
+			style="@style/Widget.CheckBox"
 			android:paddingLeft="10dp"
 			android:paddingRight="10dp"
 			android:text="@string/mark"

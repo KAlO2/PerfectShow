@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto" >
+
+	<item
+		android:id="@+id/crop"
+		android:icon="@drawable/done"
+		android:title="@string/crop"/>
+	<item
+		android:id="@+id/loader"
+		android:enabled="false"
+		android:icon="@drawable/vector_loader_animated"
+		android:title=""/>
+
+</menu>

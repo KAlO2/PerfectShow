@@ -178,5 +178,14 @@
 	<string name="image_saved">Image saved</string>
 	<string name="image_saved_click_to_preview">Image saved, click to preview.</string>
 	<string name="original">Original</string>
-    
+	<string name="free">Free</string>
+	
+	<string name="ratio_1_1" translatable="false">1:1</string>
+	<string name="ratio_2_3" translatable="false">2:3</string>
+	<string name="ratio_3_4" translatable="false">3:4</string>
+	<string name="ratio_9_16" translatable="false">9:16</string>
+	<string name="ratio_3_2" translatable="false">3:2</string>
+	<string name="ratio_4_3" translatable="false">4:3</string>
+	<string name="ratio_16_9" translatable="false">16:9</string>
+	
 </resources>

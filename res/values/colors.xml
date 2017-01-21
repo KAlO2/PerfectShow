@@ -73,7 +73,11 @@
 	<color name="collage_background">#FFD4B081</color>
 	
 	<!-- ImageCropActivity -->
-
+	<color name="crop_toolbar">#FF6E40</color>
+	<color name="crop_statusbar">#CC5833</color>
+	<color name="crop_toolbar_widget">#fff</color>
+	<color name="crop_widget">#000</color>
+	<color name="crop_widget_active">#FF6E40</color>
 	<color name="crop_background">@android:color/black</color>
 	<color name="crop_foreground">@android:color/white</color>
     

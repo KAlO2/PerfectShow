@@ -8,13 +8,13 @@ import com.cloudream.ishow.App;
 import com.cloudream.ishow.R;
 import com.cloudream.ishow.adapter.GalleryAdapter;
 import com.cloudream.ishow.adapter.GalleryAdapter.GalleryItem;
-import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiscCache;
+import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiskCache;
 import com.nostra13.universalimageloader.cache.memory.impl.WeakMemoryCache;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
-import com.nostra13.universalimageloader.core.assist.PauseOnScrollListener;
+import com.nostra13.universalimageloader.core.listener.PauseOnScrollListener;
 import com.nostra13.universalimageloader.utils.StorageUtils;
 
 import android.app.Activity;
@@ -105,7 +105,7 @@ public class GalleryActivity extends Activity
 			DisplayImageOptions defaultOptions = new DisplayImageOptions.Builder().cacheOnDisc(true)
 					.imageScaleType(ImageScaleType.EXACTLY).bitmapConfig(Bitmap.Config.RGB_565).build();
 			ImageLoaderConfiguration.Builder builder = new ImageLoaderConfiguration.Builder(getBaseContext())
-					.defaultDisplayImageOptions(defaultOptions).discCache(new UnlimitedDiscCache(cacheDir))
+					.defaultDisplayImageOptions(defaultOptions).discCache(new UnlimitedDiskCache(cacheDir))
 					.memoryCache(new WeakMemoryCache());
 
 			ImageLoaderConfiguration config = builder.build();

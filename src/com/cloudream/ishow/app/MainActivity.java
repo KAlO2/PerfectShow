@@ -29,6 +29,7 @@ public class MainActivity extends Activity implements View.OnClickListener
 		setContentView(R.layout.main_activity);
 
 
+		findViewById(R.id.crop).setOnClickListener(this);
 		findViewById(R.id.makeup).setOnClickListener(this);
 	}
 
@@ -42,6 +43,9 @@ public class MainActivity extends Activity implements View.OnClickListener
 	{
 		switch(view.getId())
 		{
+		case R.id.crop:
+			startActivityForResult(gotoGallery(1), RequestFrom.CROP_IMAGE_ACTIVITY.ordinal());
+			break;
 		case R.id.makeup:
 			startActivityForResult(gotoGallery(1), RequestFrom.MAKEUP_ACTIVITY.ordinal());
 			break;
@@ -66,6 +70,10 @@ public class MainActivity extends Activity implements View.OnClickListener
 		RequestFrom request = values[requestCode];
 		switch(request)
 		{
+		case CROP_IMAGE_ACTIVITY:
+			intent.setClass(this, ImageCropActivity.class);
+			startActivity(intent);
+			break;
 		case MAKEUP_ACTIVITY:
 			intent.setClass(this, MakeupActivity.class);
 			startActivity(intent);

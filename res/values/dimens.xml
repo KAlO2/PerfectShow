@@ -1,25 +1,20 @@
 <resources>
-
-    <!-- Default screen margins, per the Android Design guidelines. -->
-    <dimen name="activity_horizontal_margin">16dp</dimen>
-    <dimen name="activity_vertical_margin">16dp</dimen>
-
-	<dimen name="text_size_small">16sp</dimen>
-    <dimen name="text_size_normal">20sp</dimen>
-    <dimen name="text_size_big">24sp</dimen>
+	<!-- Default screen margins, per the Android Design guidelines. -->
+	<dimen name="activity_horizontal_margin">12dp</dimen>
+	<dimen name="activity_vertical_margin">12dp</dimen>
     
 	<dimen name="seekbar_progress_height">3.0dip</dimen> 
 	<dimen name="seekbar_thumb_offset">6.0dip</dimen>
 	<dimen name="seekbar_button_height">60.0dip</dimen>
-    <dimen name="seekbar_gradient_seek_bar_line_width">12.0px</dimen>
-    <dimen name="seekbar_layout_height">220.0dip</dimen>
-    <dimen name="seekbar_line_width">2.0px</dimen>
-    <dimen name="seekbar_margin_left">34.0dip</dimen>
-    <dimen name="seekbar_margin_right">34.0dip</dimen>
-    <dimen name="seekbar_nail_radius">8.0px</dimen>
-    <dimen name="seekbar_nail_stroke_width">2.0px</dimen>
-    <dimen name="seekbar_thumb_radius">24.0px</dimen>
-    
+	<dimen name="seekbar_gradient_seek_bar_line_width">12.0px</dimen>
+	<dimen name="seekbar_layout_height">220.0dip</dimen>
+	<dimen name="seekbar_line_width">2.0px</dimen>
+	<dimen name="seekbar_margin_left">34.0dip</dimen>
+	<dimen name="seekbar_margin_right">34.0dip</dimen>
+	<dimen name="seekbar_nail_radius">8.0px</dimen>
+	<dimen name="seekbar_nail_stroke_width">2.0px</dimen>
+	<dimen name="seekbar_thumb_radius">24.0px</dimen>
+	
 	<!-- Color Picker -->
 	<dimen name="color_picker_height">360dp</dimen>
 	<dimen name="color_picker_band_width">40dp</dimen>
@@ -33,6 +28,16 @@
 	<dimen name="NailBar_circleRadius">5dp</dimen>
 	<dimen name="NailBar_nailRadius">8dp</dimen>
 	
+	<dimen name="text_size_small">16sp</dimen>
+	<dimen name="text_size_normal">20sp</dimen>
+	<dimen name="text_size_big">24sp</dimen>
+    
+	<!-- CropImageView -->
+	<dimen name="CropImageView_default_crop_grid_stoke_width">1dp</dimen>
+	<dimen name="CropImageView_default_crop_frame_stoke_width">1dp</dimen>
+	<dimen name="CropImageView_default_crop_rect_corner_touch_threshold">30dp</dimen>
+	<dimen name="CropImageView_default_crop_rect_min_size">100dp</dimen>
+	<dimen name="CropImageView_default_crop_rect_corner_touch_area_line_length">10dp</dimen>
     
 	<!-- HorizontalProgressWheelView -->
 	<dimen name="HorizontalProgressWheelView_lineWidth">2dp</dimen>
@@ -41,4 +46,11 @@
     
 	<!-- AspectRatioTextView -->
 	<dimen name="AspectRatioTextView_dotSize">8dp</dimen>
+	
+	<dimen name="CropImage_divider_shadow_height">3dp</dimen>
+	<dimen name="CropImage_wrapper_controls_height">64dp</dimen>
+	<dimen name="CropImage_wrapper_states_height">72dp</dimen>
+	<dimen name="CropActivity_wrapper_rotate_button_size">52dp</dimen>
+	<dimen name="crop_frame_padding">16dp</dimen>
+	<dimen name="progress_size">30dp</dimen>
 </resources>

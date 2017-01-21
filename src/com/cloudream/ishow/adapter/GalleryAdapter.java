@@ -3,8 +3,9 @@ package com.cloudream.ishow.adapter;
 import java.util.ArrayList;
 
 import com.cloudream.ishow.R;
+import com.cloudream.ishow.app.GalleryActivity;
 import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.assist.SimpleImageLoadingListener;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 
 import android.app.Activity;
 import android.content.Context;

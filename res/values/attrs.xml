@@ -17,7 +17,63 @@
 		<attr name="horizontalProgressWheelViewStyle" format="reference" />
 		
 	</declare-styleable>
-	
+
+
+	<attr name="pointerRadius" format="dimension" />
+	<attr name="pointerHaloRadius" format="dimension" />
+	<declare-styleable name="CropImageView">
+		<attr name="guideline">
+			<enum name="off" value="0"/>
+			<enum name="onTouch" value="1"/>
+			<enum name="on" value="2"/>
+		</attr>
+		<attr name="guidelineType">
+			<enum name="centerLine" value="0"/>
+			<enum name="diagonalLine" value="1"/>
+			<enum name="goldenSection" value="2"/>
+			<enum name="ruleOfThirds" value="3"/>
+			<enum name="ruleOfFifths" value="4"/>
+		</attr>
+		<attr name="guidelineThickness" format="dimension"/>
+		<attr name="guidelineColor" format="color"/>
+		<attr name="cropScaleType">
+			<enum name="fitCenter" value="0"/>
+			<enum name="center" value="1"/>
+			<enum name="centerCrop" value="2"/>
+			<enum name="centerInside" value="3"/>
+		</attr>
+		<attr name="cropShape">
+			<enum name="rectangle" value="0"/>
+			<enum name="oval" value="1"/>
+			<enum name="diamond" value="2"/>
+			<enum name="star" value="3"/>
+		</attr>
+		<attr name="autoZoomEnabled" format="boolean"/>
+		<attr name="maxZoom" format="integer"/>
+		<attr name="aspectRatioFixed" format="boolean"/>
+		<attr name="cropAspectRatioX" format="integer"/>
+		<attr name="cropAspectRatioY" format="integer"/>
+		<attr name="cropInitialCropWindowPaddingRatio" format="float"/>
+		<attr name="cropBorderLineThickness" format="dimension"/>
+		<attr name="cropBorderLineColor" format="color"/>
+		<attr name="cropBorderCornerThickness" format="dimension"/>
+		<attr name="cropBorderCornerOffset" format="dimension"/>
+		<attr name="cropBorderCornerLength" format="dimension"/>
+		<attr name="cropBorderCornerColor" format="color"/>
+
+		<attr name="backgroundColor" format="color"/>
+		<attr name="cropSnapRadius" format="dimension"/>
+		<attr name="cropTouchRadius" format="dimension"/>
+		<attr name="cropShowCropOverlay" format="boolean"/>
+		<attr name="cropShowProgressBar" format="boolean"/>
+		<attr name="cropMinCropWindowWidth" format="dimension"/>
+		<attr name="cropMinCropWindowHeight" format="dimension"/>
+		<attr name="cropMinCropResultWidthPX" format="float"/>
+		<attr name="cropMinCropResultHeightPX" format="float"/>
+		<attr name="cropMaxCropResultWidthPX" format="float"/>
+		<attr name="cropMaxCropResultHeightPX" format="float"/>
+	</declare-styleable>
+
 	<declare-styleable name="ColorPicker">
 		<attr name="layout" format="reference" />
 		<attr name="mode" format="enum">
@@ -52,6 +108,22 @@
 		<attr name="lineMargin" format="dimension" />
 	</declare-styleable>
 	
+	<declare-styleable name="CropView">
+		<attr name="showOvalCropFrame" format="boolean"/>
+		<attr name="ovalDimmedLayer" format="boolean"/>
+		<attr name="dimmedColor" format="color"/>
+		
+		<attr name="gridStrokeSize" format="dimension"/>
+		<attr name="gridColor" format="color"/>
+		<attr name="gridRowCount" format="integer"/>
+		<attr name="gridColumnCount" format="integer"/>
+		<attr name="showGrid" format="boolean"/>
+		
+		<attr name="frameStrokeSize" format="dimension"/>
+		<attr name="frameColor" format="color"/>
+		<attr name="showFrame" format="boolean"/>
+	</declare-styleable>
+
 	<declare-styleable name="AspectRatioTextView">
 		<attr name="android:text"/>
 		<attr name="aspectRatioX" format="integer"/>
