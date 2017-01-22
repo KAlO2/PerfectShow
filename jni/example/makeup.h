@@ -6,6 +6,7 @@
 #include <opencv2/core/mat.hpp>
 
 void detectFace(const cv::Mat& image, const std::string& image_name = std::string());
+void mark(cv::Mat& image, const std::vector<cv::Point2f>& points);
 void mark(const std::string& image_name);
 
 void detectFaceSkin(const std::string& image_name);
@@ -37,6 +38,7 @@ void applyBlush(const std::string& image_name);
 void applyEyeShadow(const std::string& image_name);
 void applyEyeLash(const std::string& image_name);
 void applyBrow(const std::string& image_name);
+void applyIris(const std::string& image_name);
 
 void markBlush(const std::string& image_name);
 

@@ -574,24 +574,34 @@ void applyBrow(const std::string& image_name)
 	if(image.channels() == 3)
 		cv::cvtColor(image, image, CV_BGR2BGRA);
 	
+#if 0
 	int index = 6;  // 0 ~ 15
 	std::ostringstream stream;
 	stream << PROJECT_DIR << "res/drawable-nodpi/eye_brow_mask_" << std::setw(2) << std::setfill('0') << index << ".png";
 	std::string target_brow_filename = stream.str();
 
-	std::cout << target_brow_filename << std::endl;
 	Mat mask = cv::imread(target_brow_filename, cv::IMREAD_UNCHANGED);
 //	assert(!target_brow.empty() && target_brow.channels() == 4);
 	uint32_t color = 0xEE070909;
 	Mat target_brow = Makeup::pack(mask, color);
 
-	// Sighs, OpenCV doesn't handle alpha channel correctly in cv::inshow, I've got to use other image viewers to see the result.
-	cv::imshow("target_brow", target_brow);
-	cv::imwrite(PROJECT_DIR + "target_brow.png", target_brow);
+	// Sighs, OpenCV doesn't handle alpha channel correctly in cv::imshow, I've got to use other image viewers to check the result.
+//	cv::imshow("target_brow", target_brow);
+//	cv::imwrite(PROJECT_DIR + "target_brow.png", target_brow);
 
 	Rect rect = Region::boundingRect(target_brow);
 	std::cout << "left: " << rect.x << ", right: " << (rect.x + rect.width)  << '\n'
 	          << "top: "  << rect.y << ", bottom: "<< (rect.y + rect.height) << '\n';
+#else
+	int index = 5;  // 0 ~ 15
+	std::ostringstream stream;
+	stream << PROJECT_DIR << "res/drawable-nodpi/eye_brow_" << std::setw(2) << std::setfill('0') << index << ".png";
+	std::string target_brow_filename = stream.str();
+
+	Mat mask = cv::imread(target_brow_filename, cv::IMREAD_UNCHANGED);
+	uint32_t color = 0;  // useless paramter
+#endif
+	std::cout << target_brow_filename << std::endl;
 
 	Feature feature(image, points);
 	Vec4f line = feature.getSymmetryAxis();
@@ -711,6 +721,56 @@ void applyBrow(const std::string& image_name)
 	cv::imshow(__FUNCTION__, result);
 }
 
+void applyIris(const std::string& image_name)
+{
+	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
+	Mat gray  = Effect::grayscale(image);
+	std::cout << "channels: " << image.channels() << '\n';
+
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!faces.empty());
+	const std::vector<Point2f> points = faces[0];
+
+	Mat mask[2];
+	std::string filename[2];
+	int index = 7;  // 0 ~ 15
+	index *= 10;
+	for(int i = 0; i < 2; ++i)
+	{
+		std::ostringstream stream;
+		stream << PROJECT_DIR << "res/drawable-nodpi/iris_" << std::setw(3) << std::setfill('0') << index+i << ".png";
+		std::string filename = stream.str();
+		mask[i] = imread(filename, IMREAD_UNCHANGED);
+		assert(mask[i].type() == CV_8UC4 && mask[i].rows == mask[i].cols);
+	}
+	cv::imshow("mask", mask[0]);
+	Feature feature(image, points);
+
+#if 1
+	Makeup::applyIris(image, image, points, mask[0], 0.0F);
+#else
+	for(int i = 0; i < 2; ++i)
+	{
+		bool is_right = (i == 0);
+		const std::pair<cv::Point2f, float> iris_info = Feature::calculateIrisInfo(points, is_right);
+		const cv::Point2f& center = iris_info.first;
+		const float& radius = iris_info.second;
+//		cv::circle(image, center, radius, CV_RGB(0, 255, 0), 1, LINE_AA);
+		Mat scaled;
+		printf("radius: %f, image: %d\n", radius, mask[0].rows);
+		float scale = radius*2 / mask[0].rows;
+		cv::resize(mask[0], scaled, cv::Size(/*cvRound(radius), cvRound(radius)*/), scale, scale, cv::INTER_LINEAR);
+//		cv::imshow("scaled" + std::to_string(i), scaled);
+
+		// blend color
+		Point2f origin = center - Point2f(scaled.cols, scaled.rows)/2;
+		
+		Region region = feature.calculateEyeRegion(is_right);
+		Makeup::blend(image, image, scaled, region.mask, origin, 1.0F);
+	}
+#endif
+	cv::imshow(__FUNCTION__, image);
+}
 void markBlush(const std::string& image_name)
 {
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);

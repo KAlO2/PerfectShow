@@ -10,6 +10,16 @@
 extern const std::string PROJECT_DIR;
 extern const std::string CLASSIFIER_DIR;
 
+/*
+	path      dirname  basename
+	/usr/lib  /usr     lib
+	/usr/     /        usr
+	usr       .        usr
+	/         /        /
+	.         .        .
+	..        .        ..
+*/
+std::string basename(const std::string& path);
 std::string dirname(const std::string& path);
 
 /**
