@@ -5,7 +5,7 @@ Welcome to PerfectShow, an image processing application for Android platform.
 Up until now, I release functionalities about make-up.
 
 Currently I use Eclipse project instead of Android Studio project, since the former IDE has a shallow directory hierarchy, and NDK building is easier to use.
-This project mainly use OpenCV library for image processing, so you might as well have a good grasp of this field.
+This project mainly use [stasm](http://www.milbo.users.sonic.net/stasm/) for face detecting, [dlib](http://dlib.net/) can be more superior and robust, and it use [OpenCV](http://opencv.org/) for color blending and image processing, so you might as well have a good grasp of this field.
 
 # Usage
 1. Download Android OpenCV SDK from official site of [OpenCV](http://opencv.org/downloads.html), extract the archived package to somewhere *&lt;OpenCV-android-sdk&gt;*, then import the project under *&lt;OpenCV-android-sdk&gt;/sdk/java/* into Eclipse (Suppose you've got an Android development environment) and build it. For detailed steps, [this thread](http://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/dev_with_OCV_on_Android.html) walks you through how to do Android development with OpenCV.
@@ -34,12 +34,12 @@ $ make -j4
 
 # Contact
 If you like this project, share your appreciation by following me in [GitHub](https://github.com/KAlO2).
-If you have any problems about this project, you can file an issue [here](https://github.com/KAlO2/PerfectShow/issues) or join QQ group 571444731 for consulting.
+If you have any problems about this project, you can file an issue [here](https://github.com/KAlO2/PerfectShow/issues).
 
 
 # License
 ```
-Copyright© 2016  Martin Taylor
+Copyright© 2016-2017  Martin Taylor
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
