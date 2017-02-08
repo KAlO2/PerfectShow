@@ -437,7 +437,8 @@ float Effect::mapColorBalance(float value, float lightness, float shadows, float
 	 */
 	const float a = 0.25F, b = 1.00F/3, scale = 0.70F;
 	
-	constexpr auto clamp_01 = [](float x) -> float { return clamp<float>(x, 0, 1); };
+//	constexpr // g++ pass, but clang fails with error: constexpr variable 'clamp_01' must be initialized by a constant expression.
+	auto clamp_01 = [](float x) -> float { return clamp<float>(x, 0, 1); };
 
 	shadows = shadows * clamp_01((lightness - b) / -a + 0.5F) * scale;
 	midtones = midtones * clamp_01((lightness - b) /  a + 0.5F) *

@@ -6,7 +6,7 @@
 #include "venus/ImageWarp.h"
 #include "venus/Makeup.h"
 #include "venus/opencv_utility.h"
-#include "venus/Scalar.h"
+#include "venus/scalar.h"
 
 #include <opencv2/imgproc.hpp>
 

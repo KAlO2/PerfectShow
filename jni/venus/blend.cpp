@@ -1,6 +1,6 @@
 #include "venus/blend.h"
 #include "venus/colorspace.h"
-#include "venus/Scalar.h"
+#include "venus/scalar.h"
 
 namespace venus {
 

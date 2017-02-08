@@ -7,7 +7,6 @@
 
 #include <assert.h>
 
-#include <android/Bitmap.h>
 
 using namespace venus;
 

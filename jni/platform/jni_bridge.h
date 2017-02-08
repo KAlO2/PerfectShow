@@ -9,7 +9,7 @@
 #include <opencv2/core.hpp>
 
 #ifdef ANDROID
-#include <android/Bitmap.h>
+#include <android/bitmap.h>
 #endif
 
 #ifndef NDEBUG
