@@ -50,7 +50,7 @@ cv::Mat Makeup::pack(const cv::Mat& mask, uint32_t color)
 	return image;
 }
 
-std::vector<cv::Point2f> Makeup::createHeartShape(const cv::Point2f& center, float radius, float angle/* = 0.0F*/)
+std::vector<cv::Point2f> Makeup::createHeartPolygon(const cv::Point2f& center, float radius, float angle/* = 0.0F*/)
 {
 	const int N = 32;  // can be tweaked!
 	std::vector<Point2f> heart(N);
@@ -168,7 +168,7 @@ std::vector<cv::Point2f> Makeup::createPolygon(const std::vector<cv::Point2f>& p
 		
 		float angle = std::atan2(down.y, down.x) - static_cast<float>(M_PI/2);
 
-		return createHeartShape(center, radius, angle);
+		return createHeartPolygon(center, radius, angle);
 	}
 		break;
 
@@ -777,7 +777,7 @@ void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::
 	
 	Vec4f line = Feature::getSymmetryAxis(points);
 	float angle = std::atan2(line[1], line[0]) - static_cast<float>(M_PI/2);
-	const bool is_square_shape = mask.rows * 2 < mask.cols;
+	const bool is_square_shape = mask.rows == mask.cols;
 
 	RotatedRect rotated_rect;
 	for(int i = 0; i < 2; ++i)

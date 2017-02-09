@@ -33,9 +33,21 @@ private:
 	static Region calculateLipsRegion(const std::vector<cv::Point2f>& points, const cv::Vec4f& line);
 
 	static cv::Vec4f calcuateEyeRadius(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right);
+
 public:
 	Feature(const cv::Mat& image, const std::vector<cv::Point2f>& points);
 	
+	/**
+	 * When you are positive that there will be only one face (or dominant face, namely has the biggest size) in the @p image,
+	 * consider use this function for faster speed.
+	 *
+	 * @param[in] image          The @p gray image to be detected.
+	 * @param[in] tag            Nullable, for debugging usage, usually the image name.
+	 * @param[in] classifier_dir The classifiers (haarcascade_frontalface_alt2.xml and so on) directory.
+	 * @return feature points of the face detected.
+	 */
+	static std::vector<cv::Point2f> detectFace(const cv::Mat& image, const std::string& tag, const std::string& classifier_dir);
+
 	/**
 	 * Detect feature points from an image if there are face(s) in the image.
 	 *
@@ -44,7 +56,7 @@ public:
 	 * @param[in] classifier_dir The classifiers (haarcascade_frontalface_alt2.xml and so on) directory.
 	 * @return Faces detected, each face has the same amount of feature points.
 	 */
-	static std::vector<std::vector<cv::Point2f>> detectFace(const cv::Mat& image, const std::string& tag, const std::string& classifier_dir);
+	static std::vector<std::vector<cv::Point2f>> detectFaces(const cv::Mat& image, const std::string& tag, const std::string& classifier_dir);
 
 	/**
 	 * Detect feature points from given path.
@@ -53,7 +65,7 @@ public:
 	 * @param[in] classifier_dir The classifiers (haarcascade_frontalface_alt2.xml and so on) directory.
 	 * @return Faces detected, each face has the same amount of feature points.
 	 */
-	static std::vector<std::vector<cv::Point2f>> detectFace(cv::Size2i* size, const std::string& image_name, const std::string& classifier_dir);
+	static std::vector<std::vector<cv::Point2f>> detectFaces(cv::Size2i* size, const std::string& image_name, const std::string& classifier_dir);
 
 	static void mark(cv::Mat& image, const std::vector<cv::Point2f>& points);
 

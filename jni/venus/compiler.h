@@ -35,11 +35,6 @@ constexpr long double operator "" _deg(unsigned long long int degree)
 }
 #endif
 
-template<typename Enumeration>
-constexpr auto int_cast(const Enumeration value) -> typename std::underlying_type<Enumeration>::type
-{
-	return static_cast<typename std::underlying_type<Enumeration>::type>(value);
-}
 
 } /* namespace venus */
 #endif /* VENUS_COMPILER_H_ */

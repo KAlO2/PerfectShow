@@ -288,7 +288,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		setContentView(R.layout.makeup_activity);
 		
 		final Bitmap image;
-		final PointF faces[][];
+		final PointF points[];
 //		name = String.format("%s/example/example%d.jpg", App.WORKING_DIRECTORY, (int) (Math.random() * 8) + 1);
 		Intent intent = getIntent();
 		String name = intent.getStringExtra(GalleryActivity.EXTRA_PICTURE_PATH);
@@ -296,7 +296,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		{
 			Log.i(TAG, "image name: " + name);
 			image = BitmapUtils.decodeFile(name, BitmapUtils.OPTION_RGBA8888);
-			faces = Feature.detectFace(this, image, name);
+			points = Feature.detectFace(this, image, name);
 			
 			boolean temporary = intent.getBooleanExtra(GalleryActivity.EXTRA_TEMPORARY, false);
 			if(temporary)
@@ -317,17 +317,16 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 				return;
 			}
 			
-			faces = Feature.detectFace(this, image, name);
+			points = Feature.detectFace(this, image, name);
 		}
 		
-		if(faces.length <= 0)
+		if(points.length <= 0)
 		{
 			Toast.makeText(this, R.string.no_face_detected, Toast.LENGTH_LONG).show();
 			finish();
 			return;
 		}
 
-		PointF points[] = faces[0];
 		iv_image = (ImageViewTouch) findViewById(R.id.image);
 //		iv_image.setGestureListener(iv_image.new GestureListener());
 		iv_image.setScrollEnabled(true);

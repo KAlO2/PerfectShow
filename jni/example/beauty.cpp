@@ -45,7 +45,7 @@ void detectSkin(const cv::Mat& image)
 void redEyeRemoval_CLI(const cv::Mat& image, float threshold)
 {
 	Mat gray = Effect::grayscale(image);
-	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, __FUNCTION__, CLASSIFIER_DIR);
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFaces(gray, __FUNCTION__, CLASSIFIER_DIR);
 	// TODO detectFace only detect one face, multiple faces support will be added later.
 
 	Mat processed = image.clone();
@@ -76,7 +76,7 @@ void redEyeRemoval_CLI(const cv::Mat& image, float threshold)
 void redEyeRemoval_GUI(const cv::Mat& image)
 {
 	Mat gray = Effect::grayscale(image);
-	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, __FUNCTION__, CLASSIFIER_DIR);
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFaces(gray, __FUNCTION__, CLASSIFIER_DIR);
 	assert(!faces.empty());  // ensure an face is found.
 	const std::vector<Point2f>& points = faces[0];
 

@@ -50,8 +50,7 @@ static bool isSkinColor_RGB(const uint8_t* color)
 	return false;
 }
 
-using IsSkinColor = bool(*)(const uint8_t*);
-static cv::Mat calculateSkinRegion(const cv::Mat& image, const IsSkinColor& pred)
+static cv::Mat calculateSkinRegion(const cv::Mat& image, bool(*predicate)(const uint8_t*))
 {
 	// an RGB/RGBA image is required
 	assert(image.depth() == CV_8U && image.isContinuous());
@@ -66,7 +65,7 @@ static cv::Mat calculateSkinRegion(const cv::Mat& image, const IsSkinColor& pred
 
 	#pragma omp parallel for
 	for(int i = 0; i < length; ++i)
-		mask_data[i] = pred(image_data + i * channel) ? 255 : 0;
+		mask_data[i] = predicate(image_data + i * channel) ? 255 : 0;
 	
 	return mask;
 }

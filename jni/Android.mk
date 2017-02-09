@@ -8,7 +8,7 @@ OPENCV_INSTALL_MODULES  := off
 OPENCV_LIB_TYPE         := STATIC
 
 # change the paths below to meet your own project
-OPENCV_ANDROID_SDK_HOME := /home/martin/Downloads/OpenCV-android-sdk
+OPENCV_ANDROID_SDK_HOME := G:/OpenCV-android-sdk
 
 include $(OPENCV_ANDROID_SDK_HOME)/sdk/native/jni/OpenCV.mk
 OPENCV_INCLUDE_DIR        := $(OPENCV_ANDROID_SDK_HOME)/sdk/native/jni/include
@@ -30,11 +30,19 @@ VENUS_HEADER := $(wildcard venus/*.h)
 VENUS_SOURCE := $(wildcard venus/*.cpp)
 
 LOCAL_MODULE    := venus
-LOCAL_CPPFLAGS  := -DUSE_BGRA_LAYOUT=0
+LOCAL_CPPFLAGS  := -fopenmp -DUSE_BGRA_LAYOUT=0
 LOCAL_SRC_FILES := $(PLATFORM_SOURCE) $(STASM_SOURCE) $(VENUS_SOURCE)
 
 LOCAL_LDFLAGS := -llog -ljnigraphics -L$(OPENCV_LIBS_DIR)
-LOCAL_STATIC_LIBRARIES += -lgomp
+
+# -fopenmp flag will causes link error on *nix platforms: cannot find -lrt
+# There is no separate libpthread, libresolv, or librt on Android ¨C the functionality is all in libc. 
+ifeq ($(OS),Windows_NT)
+    LOCAL_LDFLAGS += -fopenmp
+else
+    LOCAL_STATIC_LIBRARIES += -lgomp
+endif
+
 LOCAL_SHARED_LIBRARIES += opencv_java3_prebuilt
 #LOCAL_WHOLE_STATIC_LIBRARIES +=
 #LOCAL_STATIC_LIBRARIES += \

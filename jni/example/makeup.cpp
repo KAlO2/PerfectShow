@@ -59,7 +59,7 @@ void detectFace(const cv::Mat& image, const std::string& image_name/* = std::str
 		else
 			tag = image_name;
 
-		faces = Feature::detectFace(gray2, tag, CLASSIFIER_DIR);
+		faces = Feature::detectFaces(gray2, tag, CLASSIFIER_DIR);
 		if(!faces.empty())
 		{
 			cv::Mat inverse = Region::invert(affine);
@@ -83,7 +83,7 @@ void mark(const std::string& image_name)
 	Mat image = cv::imread(image_name);
 	
 	Mat gray  = Effect::grayscale(image);
-	const std::vector<std::vector<cv::Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	const std::vector<std::vector<cv::Point2f>> faces = Feature::detectFaces(gray, image_name, CLASSIFIER_DIR);
 	if(faces.empty())
 	{
 		std::cout << "no face found\n";
@@ -191,7 +191,7 @@ void detectFaceSkin(const std::string& image_name)
 	Mat gray = Effect::grayscale(image);
 
 //	assert(image.channels() == 1);  // gray image
-	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFaces(gray, image_name, CLASSIFIER_DIR);
 	assert(!faces.empty());
 	const std::vector<Point2f> points = faces[0];
 	
@@ -237,9 +237,8 @@ void judgeFaceShape(const std::string& image_name)
 {
 	Mat image = imread(image_name);
 	Mat gray  = Effect::grayscale(image);
-	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
-	assert(!faces.empty());
-	const std::vector<Point2f> points = faces[0];
+	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!points.empty());
 
 	float L = 0.0f;  // circumference
 	for(int i = 0; i < 19; ++i)
@@ -275,7 +274,7 @@ void createShape()
 	for(int i = 0; i < N; ++i)
 	{
 		float& L = (i%2 == 0) ? R:r;
-		float t = i * static_cast<float>(2*M_PI/N) - M_PI/2;
+		float t = static_cast<float>(i * 2*M_PI/N - M_PI/2);
 		star[i] = Point2f(R + L * std::cos(t), R + L * std::sin(t));
 	}
 
@@ -444,9 +443,8 @@ void applyLip(const std::string& image_name)
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
 	Mat gray  = Effect::grayscale(image);
 
-	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
-	assert(!faces.empty());
-	const std::vector<Point2f> points = faces[0];
+	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!points.empty());
 
 	float amount = 0.80F;
 	const uint32_t color = 0x556722BF;
@@ -462,7 +460,7 @@ void applyLip(const std::string& image_name)
 	Region region = feature.calculateLipshRegion();
 	Mat& mask = region.mask;
 	cv::imshow("lips", region.mask);
-	Point2i origin = static_cast<Point2i>(region.pivot - Point2f(mask.cols, mask.rows)/2);
+	Point2i origin = static_cast<Point2i>(region.pivot - Point2f(mask.cols, mask.rows)/2.0F);
 	Mat result;
 	Makeup::applyLip(result, image, points, color, amount);
 //	imwrite(PROJECT_DIR + "lip.png", result);
@@ -479,9 +477,8 @@ void applyBlush(const std::string& image_name)
 	if(image.type() == CV_8UC3)
 		cvtColor(image, image, CV_BGR2BGRA);
 
-	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
-	assert(!faces.empty());
-	const std::vector<Point2f> points = faces[0];
+	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!points.empty());
 
 	Mat result;
 	uint32_t color = 0xFEEDBEEF;
@@ -494,9 +491,8 @@ void applyEyeShadow(const std::string& image_name)
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
 	Mat gray = Effect::grayscale(image);
 
-	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
-	assert(!faces.empty());
-	const std::vector<Point2f> points = faces[0];
+	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!points.empty());
 
 	if(image.channels() == 3)
 		cv::cvtColor(image, image, CV_BGR2BGRA);
@@ -538,9 +534,8 @@ void applyEyeLash(const std::string& image_name)
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
 	Mat gray  = Effect::grayscale(image);
 
-	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
-	assert(!faces.empty());
-	const std::vector<Point2f> points = faces[0];
+	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!points.empty());
 
 	if(image.channels() == 3)
 		cv::cvtColor(image, image, CV_BGR2BGRA);  // add alpha channel
@@ -567,9 +562,8 @@ void applyBrow(const std::string& image_name)
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
 	Mat gray  = Effect::grayscale(image);
 
-	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
-	assert(!faces.empty());
-	const std::vector<Point2f> points = faces[0];
+	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!points.empty());
 
 	if(image.channels() == 3)
 		cv::cvtColor(image, image, CV_BGR2BGRA);
@@ -727,9 +721,8 @@ void applyIris(const std::string& image_name)
 	Mat gray  = Effect::grayscale(image);
 	std::cout << "channels: " << image.channels() << '\n';
 
-	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
-	assert(!faces.empty());
-	const std::vector<Point2f> points = faces[0];
+	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!points.empty());
 
 	Mat mask[2];
 	std::string filename[2];
@@ -776,9 +769,8 @@ void markBlush(const std::string& image_name)
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);
 	Mat gray  = Effect::grayscale(image);
 
-	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
-	assert(!faces.empty());
-	const std::vector<Point2f> points = faces[0];
+	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, CLASSIFIER_DIR);
+	assert(!points.empty());
 
 	Vec4f line = Feature::getSymmetryAxis(points);
 	float angle = std::atan2(line[1], line[0]) - static_cast<float>(M_PI/2);

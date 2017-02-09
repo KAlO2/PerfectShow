@@ -4,7 +4,6 @@
 
 #include <algorithm>
 
-static constexpr float HSV_UNDEFINED = -1.0F;
 static constexpr float HSL_UNDEFINED = -1.0F;
 
 namespace venus {

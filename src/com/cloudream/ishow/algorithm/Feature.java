@@ -45,7 +45,7 @@ public class Feature
 	private final PointF points[];
 	
 	private PointF center_point;  // face center
-	private PointF down_vector;     // face up direction, note that Y axis is top down.
+	private PointF down_vector;   // face up direction, note that Y axis is top down.
 	
 	public Feature(Bitmap image, final PointF points[])
 	{
@@ -60,7 +60,7 @@ public class Feature
 		center_point = down_center[1];
 	}
 	
-	public static PointF[][] detectFace(Context context, Bitmap image, @Nullable String image_name)
+	private static String loadClassifier(Context context)
 	{
 		if(BuildConfig.DEBUG)
 		{
@@ -78,16 +78,28 @@ public class Feature
 		Utils.exportResource(context, R.raw.haarcascade_mcs_lefteye);
 		Utils.exportResource(context, R.raw.haarcascade_mcs_mouth);
 		Utils.exportResource(context, R.raw.haarcascade_mcs_righteye);
-		String CLASSIFIER_DIR = path.substring(0, path.lastIndexOf('/'));
-		Log.d(TAG, "cascade data directory: " + CLASSIFIER_DIR);
+		String classifier_dir = path.substring(0, path.lastIndexOf('/'));
+		Log.d(TAG, "cascade data directory: " + classifier_dir);
 		
+		return classifier_dir;
+	}
+	
+	public static PointF[] detectFace(Context context, Bitmap image, @Nullable String image_name)
+	{
+		String CLASSIFIER_DIR = loadClassifier(context);
 		return nativeDetectFace(image, image_name, CLASSIFIER_DIR);
+	}
+	
+	public static PointF[][] detectFaces(Context context, Bitmap image, @Nullable String image_name)
+	{
+		String CLASSIFIER_DIR = loadClassifier(context);
+		return nativeDetectFaces(image, image_name, CLASSIFIER_DIR);
 	}
 	
 	public static PointF[][] detectFace(Context context, String image_name)
 	{
 		Bitmap image = BitmapFactory.decodeFile(image_name, BitmapUtils.OPTION_RGBA8888);
-		return detectFace(context, image, image_name);
+		return detectFaces(context, image, image_name);
 	}
 	
 	public final PointF[] getFeaturePoints()
@@ -443,12 +455,13 @@ public class Feature
 		return bitmap;
 	}
 	
-	private static native PointF[][] nativeDetectFace(Bitmap image, String image_name, String classifier_dir);
+	private static native PointF[]   nativeDetectFace(Bitmap image, String image_name, String classifier_dir);
+	private static native PointF[][] nativeDetectFaces(Bitmap image, String image_name, String classifier_dir);
 	private static native PointF[]   nativeGetSymmetryAxis(PointF points[]);
 	
 	static
 	{
-//		System.loadLibrary("c++_shared");
+//		System.loadLibrary("gnustl_shared");
 		System.loadLibrary("opencv_java3");
 		System.loadLibrary("venus");
 	}

@@ -423,7 +423,7 @@ void Region::snake(const cv::Mat1f& image, std::vector<cv::Point2f>& points, flo
 {
 	assert(image.type() == CV_32FC1);
 
-	Mat e_line = image;  // e_line is simply the image intensities
+	Mat e_line = image;  // e_line is simply the image's intensity
 	Mat e_edge = Mat::ones(image.rows, image.cols, CV_32FC1);
 	Mat e_term = Mat::ones(image.rows, image.cols, CV_32FC1);
 

@@ -19,6 +19,14 @@ JNIEXPORT jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_Feature_native
 
 /*
  * Class:     com_cloudream_ishow_algorithm_Feature
+ * Method:    nativeDetectFaces
+ * Signature: (Landroid/graphics/Bitmap;Ljava/lang/String;Ljava/lang/String;)[[Landroid/graphics/PointF;
+ */
+JNIEXPORT jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_Feature_nativeDetectFaces
+  (JNIEnv *, jclass, jobject, jstring, jstring);
+
+/*
+ * Class:     com_cloudream_ishow_algorithm_Feature
  * Method:    nativeGetSymmetryAxis
  * Signature: ([Landroid/graphics/PointF;)[Landroid/graphics/PointF;
  */

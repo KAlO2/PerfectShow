@@ -29,11 +29,11 @@ private:
 
 	static std::vector<cv::Point2f> createPolygon(const std::vector<cv::Point2f>& points, BlushShape shape, bool right);
 
-	static std::vector<cv::Point2f> createHeartShape(const cv::Point2f& center, float radius, float angle = 0.0F);
+public:
+
+	static std::vector<cv::Point2f> createHeartPolygon(const cv::Point2f& center, float radius, float angle = 0.0F);
 
 	static cv::Mat createEyeShadow(cv::Mat mask[3], uint32_t color[3]/*, const int& COUNT = 3*/);
-
-public:
 
 	/**
 	 * composite mask and color (RGBA) into a colored bitmap
@@ -61,13 +61,14 @@ public:
 	 * @param[out] dst
 	 * @param[in] src     The source image
 	 * @param[in] points  Feature points detected from <code>src</code> image.
-	 * @param[in] mask    Mask of eye brow image, a gray image.
-	 * @param[in] color   Eye brow's color, 0xAABBGGRR or RGBA memory layout.
+	 * @param[in] brow    An RGBA image (alpha used to determine boundary), or a gray image as mask of eye brow image.
+	 * @param[in] color   Eye brow's color, 0xAABBGGRR or RGBA memory layout. It's used to combine with gray @p brow,
+	                      useless if @p brow is colored, and pass value 0 would be fine.
 	 * @param[in] amount  Blending amount in range [0, 1], The larger the value, the thicker/heavier the eyebrow will looks.
 	 * @param[in] offsetY Tweak eye brow's height by pixel, since a litter upper(negative value) or lower(positive value) may look better.
 	 */
 	static void applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Point2f>& points,
-			const cv::Mat& mask, uint32_t color, float amount, float offsetY = 0.0F);
+			const cv::Mat& brow, uint32_t color, float amount, float offsetY = 0.0F);
 
 	/**
 	 * @param[in] cosmetic makeup about eyes

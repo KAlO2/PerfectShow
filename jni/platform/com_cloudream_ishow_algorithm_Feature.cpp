@@ -23,7 +23,35 @@ jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_Feature_nativeDetectFace
 	cv::cvtColor(image, gray, CV_RGBA2GRAY);
 	unlockJavaBitmap(env, _image);
 
-	const std::vector<std::vector<Point2f>> faces = Feature::detectFace(gray, image_name, classifier_dir);
+	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, classifier_dir);
+
+	jclass class_PointF_array = env->FindClass("[Landroid/graphics/PointF;");
+	jclass class_PointF = env->FindClass("android/graphics/PointF");
+	assert(class_PointF_array != nullptr && class_PointF != nullptr);
+
+	const size_t point_count = points.size();
+	jobjectArray objectArray_points = env->NewObjectArray(point_count, class_PointF, 0);
+	setJavaPointArray(env, objectArray_points, points);
+
+	return objectArray_points;
+}
+
+jobjectArray JNICALL Java_com_cloudream_ishow_algorithm_Feature_nativeDetectFaces(JNIEnv* env,
+		jclass clazz, jobject _image, jstring _image_name, jstring _classifier_dir)
+{
+	AndroidBitmapInfo image_info;
+	uint32_t* pixels = lockJavaBitmap(env, _image, image_info);
+	assert(pixels != nullptr);
+
+	cv::Mat image(image_info.height, image_info.width, CV_8UC4, pixels);
+	std::string image_name = getNativeString(env, _image_name);
+	std::string classifier_dir = getNativeString(env, _classifier_dir);
+
+	cv::Mat gray;
+	cv::cvtColor(image, gray, CV_RGBA2GRAY);
+	unlockJavaBitmap(env, _image);
+
+	const std::vector<std::vector<Point2f>> faces = Feature::detectFaces(gray, image_name, classifier_dir);
 
 	jclass class_PointF_array = env->FindClass("[Landroid/graphics/PointF;");
 	jclass class_PointF = env->FindClass("android/graphics/PointF");
