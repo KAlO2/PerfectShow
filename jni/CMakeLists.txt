@@ -113,7 +113,25 @@ source_group("Stasm Source" FILES ${STASM_SOURCE})
 source_group("Venus Header" FILES ${VENUS_HEADER})
 source_group("Venus Source" FILES ${VENUS_SOURCE})
 
-#file(GLOB PLATFORM_SOURCE PLATFORM/*.cpp)
+
+set(USE_INPAINTING None CACHE STRING None FORCE)
+set_property(CACHE USE_INPAINTING PROPERTY STRINGS None OpenCV Criminisi)
+# None: disable inpainting algorithm
+# OpenCV: OpenCV's inpainting algorithm
+# Criminisi: Criminisi's inpainting algorithm
+
+if(${USE_INPAINTING} STREQUAL None)
+	add_definitions(-DUSE_INPAINTING=0)
+elseif(${USE_INPAINTING} STREQUAL OpenCV)
+	add_definitions(-DUSE_INPAINTING=1)
+elseif(${USE_INPAINTING} STREQUAL Criminisi)
+	add_definitions(-DUSE_INPAINTING=2)
+endif()
+
+if(NOT ${USE_INPAINTING} STREQUAL Criminisi)
+	list(REMOVE_ITEM VENUS_HEADER venus/inpaint.h)
+	list(REMOVE_ITEM VENUS_SOURCE venus/inpaint.cpp)
+endif()
 
 if(NOT MSVC)
 	add_definitions(-std=c++11)

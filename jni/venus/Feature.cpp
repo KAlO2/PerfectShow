@@ -329,11 +329,6 @@ static cv::Vec2f rotate(const cv::Vec2f& v, float angle)
 	return cv::Vec2f(_x, _y);
 }
 
-static void correctIris(const Mat& image, std::vector<Point2f>& points)
-{
-
-}
-
 static void sort(std::vector<std::vector<cv::Point2f>>& faces)
 {
 	const size_t nb_face = faces.size();
@@ -539,7 +534,7 @@ std::vector<std::vector<cv::Point2f>> Feature::detectFaces(const cv::Mat& image,
 		correctIris(image, points);
     }
 
-//	sort(faces);  // sort multiple faces in area descending order
+	sort(faces);  // sort multiple faces in area descending order
 	return faces;
 }
 
@@ -870,7 +865,7 @@ cv::Mat Feature::maskPolygon(const cv::Rect2i& rect, const std::vector<cv::Point
 
 cv::Mat Feature::maskPolygonSmooth(const cv::Rect2i& rect, const std::vector<cv::Point2f>& points, const int level/* = 8 */)
 {
-	assert(points.size() == COUNT && level > 0);
+	assert(level > 0);
 
 	Point2f sum(0.0f, 0.0f);
 	for(const Point2f& point : points)
@@ -1426,7 +1421,7 @@ cv::Mat Feature::maskSkinRegion(int width, int height, const std::vector<cv::Poi
 		polygon[j] = Point(cvRound(points[i].x), cvRound(points[i].y));
 	cv::fillConvexPoly(mask, polygon, j, TRANSPARENT);
 
-
+//	Rect rect = cv::boundingRect(points);
 #if 0
 	float radius = std::max(width, height) * 0.01F;
 	Effect::gaussianBlur(mask, mask, radius);

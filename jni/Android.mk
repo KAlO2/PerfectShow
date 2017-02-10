@@ -36,7 +36,7 @@ LOCAL_SRC_FILES := $(PLATFORM_SOURCE) $(STASM_SOURCE) $(VENUS_SOURCE)
 LOCAL_LDFLAGS := -llog -ljnigraphics -L$(OPENCV_LIBS_DIR)
 
 # -fopenmp flag will causes link error on *nix platforms: cannot find -lrt
-# There is no separate libpthread, libresolv, or librt on Android ¨C the functionality is all in libc. 
+# There is no separate libpthread, libresolv, or librt on Android, the functionality is all in libc.
 ifeq ($(OS),Windows_NT)
     LOCAL_LDFLAGS += -fopenmp
 else
