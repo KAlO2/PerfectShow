@@ -30,7 +30,7 @@ VENUS_HEADER := $(wildcard venus/*.h)
 VENUS_SOURCE := $(wildcard venus/*.cpp)
 
 LOCAL_MODULE    := venus
-LOCAL_CPPFLAGS  := -fopenmp -DUSE_BGRA_LAYOUT=0
+LOCAL_CPPFLAGS  := -fopenmp -DUSE_BGRA_LAYOUT=0 -DUSE_INPAINTING=0
 LOCAL_SRC_FILES := $(PLATFORM_SOURCE) $(STASM_SOURCE) $(VENUS_SOURCE)
 
 LOCAL_LDFLAGS := -llog -ljnigraphics -L$(OPENCV_LIBS_DIR)

@@ -14,7 +14,9 @@
 // 0: disable inpainting algorithm
 // 1: OpenCV's inpainting algorithm
 // 2: Criminisi's inpainting algorithm
-//#define USE_INPAINTING 0 /* this macro's moved to CMakeLists.txt */
+#ifndef USE_INPAINTING /* this macro's moved to makefile */
+#define USE_INPAINTING 0
+#endif
 
 #if(USE_INPAINTING == 1)
 #	include <opencv2/photo.hpp>
