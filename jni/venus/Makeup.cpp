@@ -57,8 +57,6 @@ std::vector<cv::Point2f> Makeup::createHeartPolygon(const cv::Point2f& center, f
 	const int N = 32;  // can be tweaked!
 	std::vector<Point2f> heart(N);
 
-	constexpr float y_min = -0.745203257F, y_max = 1.062500000;
-	Point2f origin(center.x, center.y + (y_max + y_min));
 	const float cosa = std::cos(angle), sina = std::sin(angle);
 	
 	// http://mathworld.wolfram.com/HeartCurve.html
@@ -84,7 +82,7 @@ std::vector<cv::Point2f> Makeup::createHeartPolygon(const cv::Point2f& center, f
 		// rotate (x, y) by angle:
 		// (x + y*i)*(cosa + sina * i) = (x*cosa - y*sina) + (x*sina + y*cosa)*i
 		Point2f rotated(x*cosa - y*sina, x*sina + y*cosa);
-		heart[i] = origin + radius * rotated;
+		heart[i] = center + radius * rotated;
 	}
 	
 	return heart;
@@ -157,48 +155,63 @@ std::vector<cv::Point2f> Makeup::createPolygon(const std::vector<cv::Point2f>& p
 
 	case BlushShape::HEART:
 	{
-		Point2f _x = (_62 + _02)/2;
-		Point2f _y = (points[53] + points[56]*2)/3;
-
 		Vec4f line = Feature::getSymmetryAxis(points);
-		float radius = std::abs(distance(_62, line) - distance(_02, line));
-		
 		Point2f down(line[0], line[1]);
-		float d = distance(_x, line);
-		Point2f N = right?Point2f(line[1], -line[0]):Point2f(-line[1], line[0]);
-		Point2f center = _y + d * N;
+
 		
 		float angle = std::atan2(down.y, down.x) - static_cast<float>(M_PI/2);
 
+		RotatedRect rotated_rect = Feature::calculateBlushRectangle(points, angle, right);
+		const Point2f& center = rotated_rect.center;
+		const Size2f& size = rotated_rect.size;
+		float radius = std::min(size.width, size.height)/2;
 		return createHeartPolygon(center, radius, angle);
 	}
 		break;
 
 	case BlushShape::SEAGULL:
 	{
-		const uint8_t knot_r[5] = { 42, 22, 23, 24, 25 };
-		const uint8_t knot_l[5] = { 43, 29, 30, 31, 26 };
-		const uint8_t* knot = right? knot_r:knot_l;
-		
-		// Feature::getSymmetryAxis() is expensive
-		Point2f down = points[56] - points[53];
-		down /= std::sqrt(down.x*down.x + down.y*down.y);
+		Vec4f line = Feature::getSymmetryAxis(points);
+		const Point2f down(line[0], line[1]);
+//		Point2f down = points[56] - points[53];
+//		down /= std::sqrt(down.x*down.x + down.y*down.y);
 
-		const int N = 10;
+		// { 22, 23, 24, 25 } | { 26, 31, 30, 29 }
+		//  / 4 - 3 - 2 - 1 - 0 - 19 -18 -17 -16 \  
+		//  5                                    15 
+		//  \ 6 - 7 - 8 - 9 -10 - 11 -12 -13 -14 /  
+		const int N = 20;
 		std::vector<Point2f> seagull(N);
-		seagull[0] = _01;
-		seagull[5] = points[right?54:52];
 
-		const Point2f& carriage = points[knot[0]];
-		for(int i = 1; i < 5; ++i)
-		{
-			const Point2f& point = points[knot[i]];
-			Point2f d = carriage - point;
-			float dot = d.x * down.x + d.y * down.y;  // project on vector down
-			seagull[i]    = point + 3*(dot * down);
-			seagull[10-i] = point + 2*(dot * down);
-		}
+//		Point2f nose_t = (points[34] + points[44] + points[53])/3;
+		Point2f nose_t = ((points[34] + points[44])/2 + points[53])/2;
+		Point2f nose_b = points[53];
+
+		seagull[0]   = nose_t;
+		seagull[N/2] = nose_b;
 		
+		int knot_r[] = { 25, 24, 23, 22 };
+		for(int i = 0; i < 4; ++i)
+		{
+			const Point2f& point = points[knot_r[i]];
+			Point2f d = points[42] - point;
+			float dot = d.x * down.x + d.y * down.y;
+			seagull[i + 1] = point + 2*(dot * down);
+			seagull[9 - i] = point + 3*(dot * down);
+		}
+		seagull[5] = points[1];
+		
+		int knot_l[] = { 26, 31, 30, 29 };
+		for(int i = 0; i < 4; ++i)
+		{
+			const Point2f& point = points[knot_l[i]];
+			Point2f d = points[43] - point;
+			float dot = d.x * down.x + d.y * down.y;
+			seagull[11 + i] = point + 3*(dot * down);
+			seagull[19 - i] = point + 2*(dot * down);
+		}
+		seagull[15] = points[11];
+
 		return seagull;
 	}
 		break;
@@ -760,6 +773,9 @@ void Makeup::applyBlush(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::
 		Mat blush = pack(mask, color);
 //		cv::imshow(std::string("blush mask ") + (i == 0 ? "right":"left"), mask);
 		blend(dst, dst, blush, rect.tl(), amount);
+
+		if(shape == BlushShape::SEAGULL)  // apply seagull shape in one go
+			break;
 	}
 }
 
