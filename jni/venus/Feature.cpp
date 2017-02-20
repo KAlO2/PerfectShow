@@ -530,8 +530,8 @@ std::vector<std::vector<cv::Point2f>> Feature::detectFaces(const cv::Mat& image,
 		std::vector<cv::Point2f> points = process(landmarks);
 		faces.push_back(std::move(points));
 #endif
-		// Stasm doesn't detect iris pricisely, post-processing feature points for fine result.
-		correctIris(image, points);
+		// Stasm doesn't detect iris precisely, post-processing feature points for fine result.
+//		correctIris(image, points);
     }
 
 	sort(faces);  // sort multiple faces in area descending order
