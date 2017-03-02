@@ -78,6 +78,19 @@ public:
 	static cv::Mat grayscale(const cv::Mat& image);
 
 	/**
+	 * Adds color to a monochrome image, unlike <href a="http://www.cs.huji.ac.il/~yweiss/Colorization/">Colorization Using Optimization</a>,
+	 * it doesn't solve differential equations, which is a time-consuming job. This simple method operates pixel by pixel, so it can run in 
+	 * parallel. You can segment image into several distinct parts, then colorize them with differenct parameters, lastly, merge the parts into
+	 * a beautiful colored image.
+	 * @param[out] dst         The output image.
+	 * @param[in]  src         The input image, only handles image of CV_32FC4 type.
+	 * @param[in]  hue         Range [0.0, 1.0]
+	 * @param[in]  saturation  Range [0.0, 1.0]
+	 * @param[in]  lightness   Range [-1.0, 1.0]
+	 */
+	static void colorize(cv::Mat& dst, const cv::Mat& src, float hue = 0.0F, float saturation = 0.5F, float lightness = 0.0F);
+
+	/**
 	 * Note that @p dst can be same as @p src image.
 	 *
 	 * @param[out] dst    The output image.

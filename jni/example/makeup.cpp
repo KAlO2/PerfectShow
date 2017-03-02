@@ -764,6 +764,7 @@ void applyIris(const std::string& image_name)
 #endif
 	cv::imshow(__FUNCTION__, image);
 }
+
 void markBlush(const std::string& image_name)
 {
 	Mat image = cv::imread(image_name, cv::IMREAD_UNCHANGED);

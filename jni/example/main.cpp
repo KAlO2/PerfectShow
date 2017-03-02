@@ -4,6 +4,9 @@
 
 #include <opencv2/imgcodecs.hpp>
 
+using namespace cv;
+using namespace venus;
+
 int main()
 {
 	// 000.jpg 001.jpg 044.jpg 110.jpg
@@ -22,6 +25,8 @@ int main()
 //	skinDermabrasion(image);
 
 //	judgeFaceShape(image_name);
+	
+//	colorize(image_name);
 	
 //	createShape();
 //	transform(image);

@@ -254,6 +254,55 @@ cv::Mat Effect::grayscale(const cv::Mat& image)
 	return gray;
 }
 
+void Effect::colorize(cv::Mat& dst, const cv::Mat& src, float hue/* = 0.0F */, float saturation/* = 0.5F */, float lightness/* = 0.0F*/)
+{
+	assert(src.type() == CV_32FC4 && src.data != dst.data);
+	assert(0.0F <= hue && hue <= 1.0F);
+	assert(0.0F <= saturation && saturation <= 1.0F);
+	assert(-1.0F <= lightness && lightness <= 1.0F);
+	src.copyTo(dst);
+
+	float hsl[3];
+	hsl[0] = hue;
+	hsl[1] = saturation;
+
+	const int length = src.rows * src.cols * 4;
+	const float* src_color = src.ptr<float>();
+	float* dst_color = dst.ptr<float>();
+	
+	constexpr float LUMINANCE_R = 0.22248840F;
+	constexpr float LUMINANCE_G = 0.71690369F;
+	constexpr float LUMINANCE_B = 0.06060791F;
+
+#if USE_BGRA_LAYOUT
+	constexpr int _0 = 2, _1 = 1, _2 = 0;
+#else
+	constexpr int _0 = 0, _1 = 1, _2 = 2;
+#endif
+	for(int i = 0; i < length; i += 4)
+	{
+		float luminance = LUMINANCE_R * src_color[_0] + LUMINANCE_G * src_color[_1] + LUMINANCE_B * src_color[_2];
+
+		if(lightness > 0)
+			luminance = (1.0F - lightness) * luminance + lightness;
+		else
+			luminance*= (1.0F + lightness);
+
+		hsl[2] = luminance;
+
+		float rgb[3];
+		hsl2rgb(hsl, rgb);
+
+		dst_color[_0] = rgb[0];
+		dst_color[_1] = rgb[1];
+		dst_color[_2] = rgb[2];
+//		dst_color[3]  = src_color[3];  // already copied
+
+		src_color += 4;
+		dst_color += 4;
+	}
+}
+
 void Effect::gaussianBlur(cv::Mat& dst, const cv::Mat& src, float radius)
 {
 	assert(radius >= 0);

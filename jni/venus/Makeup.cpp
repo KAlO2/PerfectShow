@@ -176,10 +176,12 @@ std::vector<cv::Point2f> Makeup::createPolygon(const std::vector<cv::Point2f>& p
 //		Point2f down = points[56] - points[53];
 //		down /= std::sqrt(down.x*down.x + down.y*down.y);
 
-		// { 22, 23, 24, 25 } | { 26, 31, 30, 29 }
-		//  / 4 - 3 - 2 - 1 - 0 - 19 -18 -17 -16 \  
-		//  5                                    15 
-		//  \ 6 - 7 - 8 - 9 -10 - 11 -12 -13 -14 /  
+/*
+		{ 22, 23, 24, 25 } | { 26, 31, 30, 29 }
+		 / 4 - 3 - 2 - 1 - 0 - 19 -18 -17 -16 \  
+		 5                                    15 
+		 \ 6 - 7 - 8 - 9 -10 - 11 -12 -13 -14 /  
+*/
 		const int N = 20;
 		std::vector<Point2f> seagull(N);
 
