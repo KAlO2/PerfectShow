@@ -1,4 +1,5 @@
 #include "venus/blend.h"
+#include "venus/blur.h"
 #include "venus/colorspace.h"
 #include "venus/compiler.h"
 #include "venus/Effect.h"
@@ -111,7 +112,7 @@ std::vector<cv::Point2f> Makeup::createPolygon(const std::vector<cv::Point2f>& p
 	{
 		Point2f center((_62.x + _02.x)/2, _62.y);
 		float radius = std::abs(_62.x - _02.x)/2;
-		const int N = 12;  // can be tuned
+		const int N = 44;  // It can be tuned, but some values can produce undesired effect.
 		std::vector<Point2f> circle(N);
 		for(int i = 0; i < N; ++i)
 		{
@@ -157,8 +158,6 @@ std::vector<cv::Point2f> Makeup::createPolygon(const std::vector<cv::Point2f>& p
 	{
 		Vec4f line = Feature::getSymmetryAxis(points);
 		Point2f down(line[0], line[1]);
-
-		
 		float angle = std::atan2(down.y, down.x) - static_cast<float>(M_PI/2);
 
 		RotatedRect rotated_rect = Feature::calculateBlushRectangle(points, angle, right);
@@ -178,9 +177,9 @@ std::vector<cv::Point2f> Makeup::createPolygon(const std::vector<cv::Point2f>& p
 
 /*
 		{ 22, 23, 24, 25 } | { 26, 31, 30, 29 }
-		 / 4 - 3 - 2 - 1 - 0 - 19 -18 -17 -16 \  
-		 5                                    15 
-		 \ 6 - 7 - 8 - 9 -10 - 11 -12 -13 -14 /  
+		 / 4 - 3 - 2 - 1 - 0 - 19 -18 -17 -16 \
+		 5                                    15
+		 \ 6 - 7 - 8 - 9 -10 - 11 -12 -13 -14 /
 */
 		const int N = 20;
 		std::vector<Point2f> seagull(N);
@@ -455,7 +454,7 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 
 //		target_mask.convertTo(target_mask, target_mask.depth(), 1.0F);
 		for(int k = 0; k < 3; ++k)
-			Effect::gaussianBlur(target_mask, offset/4.0F);
+			venus::gaussianBlur(target_mask, target_mask, offset/4.0F);
 //		cv::imshow("roi" + std::to_string(i), roi);
 //		cv::imshow("target_mask", target_mask);
 		

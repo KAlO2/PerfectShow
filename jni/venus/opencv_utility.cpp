@@ -27,6 +27,28 @@ cv::Vec4f cast(uint32_t color)
 #endif
 }
 
+uint32_t cast(const cv::Vec4f& color)
+{
+	union
+	{
+		uint8_t a[4];
+		uint32_t c;
+	};
+	
+	for(int i = 0; i < 4; ++i)
+	{
+		assert(0.0F <= color[i] && color[i] <= 1.0F);
+		a[i] = static_cast<uint8_t>(color[i] * 256);
+	}
+
+#if USE_BGRA_LAYOUT
+	std::swap(a[0], a[2]);
+#else
+	// nothing
+#endif
+	return c;
+}
+
 cv::Rect2i box2Rect(const cv::Vec4f& box)
 {
 	cv::Rect2i rect;
@@ -310,6 +332,20 @@ void drawCurve(cv::Mat& image, const cv::Point2f& p0, const cv::Point2f& p1, con
 		cv::line(image, pm, pr, color, thickness, lineType, shift);
 		cv::line(image, pr, p2, color, thickness, lineType, shift);
 	}
+}
+
+void drawCrossHair(cv::Mat& image, const cv::Point2f& position, int radius/* = 20 */, const cv::Scalar& color/* = cv::Scalar(0, 255, 0, 255) */, int gap/* = 2 */,
+		int thickness/* = 1 */, int lineType/* = cv::LINE_8 */, int shift/* = 0 */)
+{
+	cv::Point2f l(position.x - radius, position.y), r(position.x + radius, position.y);
+	cv::Point2f t(position.x, position.y - radius), b(position.x, position.y + radius);
+
+	cv::Point2f cl(position.x - gap, position.y), cr(position.x + gap, position.y);
+	cv::Point2f ct(position.x, position.y - gap), cb(position.x, position.y + gap);
+	cv::line(image, l, cl, color, thickness, lineType, shift);
+	cv::line(image, r, cr, color, thickness, lineType, shift);
+	cv::line(image, t, ct, color, thickness, lineType, shift);
+	cv::line(image, b, cb, color, thickness, lineType, shift);
 }
 
 void drawCross(cv::Mat& image, const cv::Point2f& position, int radius, const Scalar& color,

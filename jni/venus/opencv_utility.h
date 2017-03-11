@@ -90,6 +90,7 @@ std::vector<cv::Point2i> cast(const std::vector<cv::Point2f>& points);
  * is defined as 1.
  */
 cv::Vec4f cast(uint32_t color);
+uint32_t cast(const cv::Vec4f& color);
 
 cv::Rect2i box2Rect(const cv::Vec4f& box);
 
@@ -174,6 +175,9 @@ void drawPolygon(cv::Mat& image, std::vector<cv::Point2f>& points, const cv::Sca
 
 // draw curve p1~p2 with respect to p0, p3
 void drawCurve(cv::Mat& image, const cv::Point2f& p0, const cv::Point2f& p1, const cv::Point2f& p2, const cv::Point2f& p3, const cv::Scalar& color,
+		int thickness = 1, int lineType = cv::LINE_8, int shift = 0);
+
+void drawCrossHair(cv::Mat& image, const cv::Point2f& position, int radius = 20, const cv::Scalar& color = cv::Scalar(0, 255, 0, 255), int gap = 4,
 		int thickness = 1, int lineType = cv::LINE_8, int shift = 0);
 
 void drawCross(cv::Mat& image, const cv::Point2f& position, int radius, const cv::Scalar& color,

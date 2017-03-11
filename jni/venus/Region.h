@@ -122,10 +122,10 @@ public:
 	 * first translating, then rotating, last scaling.
 	 * matrix = scale * rotation * translation * position;
 	 *
-	 * @param[in,out] size      Source image size.
-	 * @param[in,out] pivot     Center of the rotation in the source image, and transformed image pivot after transformed.
-	 * @param[in]     rotation  Angle in radians. Positive value means clockwise rotation.
-	 * @param[in]     scale     Scaling factor in X/Y directions, default to no scaling.
+	 * @param[in,out] size   Source image size.
+	 * @param[in,out] pivot  Center of the rotation in the source image, and transformed image pivot after transformed.
+	 * @param[in]     angle  Angle in radians. Positive value means clockwise rotation.
+	 * @param[in]     scale  Scaling factor in X/Y directions, default to no scaling.
 	 */
 	static cv::Mat transform(cv::Size& size, cv::Point2f& pivot, const float& angle, const cv::Vec2f& scale = cv::Vec2f(1.0F, 1.0F));
 

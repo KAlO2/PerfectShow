@@ -1,5 +1,6 @@
 #include <opencv2/imgcodecs.hpp>
 
+#include "venus/blur.h"
 #include "venus/Effect.h"
 #include "venus/Feature.h"
 #include "venus/opencv_utility.h"
@@ -835,7 +836,7 @@ cv::Mat Feature::createMask(const std::vector<cv::Point2f>& points, float blur_r
 	cv::fillPoly(mask, polygon_data, point_count, 1, Scalar(255));
 
 	if(enable_blur)
-		Effect::gaussianBlur(mask, blur_radius);
+		venus::gaussianBlur(mask, mask, blur_radius);
 	
 	return mask;
 }
@@ -899,7 +900,7 @@ cv::Mat Feature::maskPolygonSmooth(const cv::Rect2i& rect, const std::vector<cv:
 	measure /= points.size();
 	measure = std::sqrt(measure);
 
-	Effect::gaussianBlur(mask, measure/level);
+	venus::gaussianBlur(mask, mask, measure/level);
 	return mask;
 }
 
@@ -1050,7 +1051,7 @@ cv::RotatedRect Feature::calculateBlushRectangle(const std::vector<cv::Point2f>&
 	return calculateBlushRectangle(points, angle, right);
 }
 
-cv::RotatedRect Feature::calculateBlushRectangle(const std::vector<cv::Point2f>& points,float angle, bool right)
+cv::RotatedRect Feature::calculateBlushRectangle(const std::vector<cv::Point2f>& points, float angle, bool right)
 {
 	// symmetric point
 	const Point2f& _54 = points[right? 54:52];
@@ -1114,21 +1115,21 @@ std::vector<cv::Point2f> Feature::calculateNosePolygon(const std::vector<cv::Poi
 	assert(points.size() == COUNT);
 	return std::vector<Point2f>
 	{
-		catmullRomSpline(1.0f/3, points[18], points[25], points[54], points[62]),
-		catmullRomSpline(2.0f/3, points[18], points[25], points[54], points[62]),
+		catmullRomSpline(1.0F/3, points[18], points[25], points[54], points[62]),
+		catmullRomSpline(2.0F/3, points[18], points[25], points[54], points[62]),
 		                                                 points[54], points[62],
-		catmullRomSpline(1.0f/3,                         points[54], points[62], points[61], points[55]),
-		catmullRomSpline(2.0f/3,                         points[54], points[62], points[61], points[55]),
+		catmullRomSpline(1.0F/3,                         points[54], points[62], points[61], points[55]),
+		catmullRomSpline(2.0F/3,                         points[54], points[62], points[61], points[55]),
 		                                                                         points[61], points[55],
 		
 		points[60],  // middle point
 		
 		                         points[57], points[59],
-		catmullRomSpline(1.0f/3, points[57], points[59], points[58], points[52]),
-		catmullRomSpline(2.0f/3, points[57], points[59], points[58], points[52]),
+		catmullRomSpline(1.0F/3, points[57], points[59], points[58], points[52]),
+		catmullRomSpline(2.0F/3, points[57], points[59], points[58], points[52]),
 		                                                 points[58], points[52],
-		catmullRomSpline(1.0f/3,                         points[58], points[52], points[26], points[14]),
-		catmullRomSpline(2.0f/3,                         points[58], points[52], points[26], points[14]),
+		catmullRomSpline(1.0F/3,                         points[58], points[52], points[26], points[14]),
+		catmullRomSpline(2.0F/3,                         points[58], points[52], points[26], points[14]),
 	};
 }
 
@@ -1212,11 +1213,11 @@ std::vector<cv::Point2f> Feature::calculateTeethPolygon(const std::vector<cv::Po
 		points[63], points[72], points[71], points[70], points[69],  // upper lip
 
 		points[75],
-		catmullRomSpline(2.0f/3, points[73], points[74], points[75], points[69]),
-		catmullRomSpline(1.0f/3, points[73], points[74], points[75], points[69]),
+		catmullRomSpline(2.0F/3, points[73], points[74], points[75], points[69]),
+		catmullRomSpline(1.0F/3, points[73], points[74], points[75], points[69]),
 		points[74],
-		catmullRomSpline(2.0f/3, points[63], points[73], points[74], points[75]),
-		catmullRomSpline(1.0f/3, points[63], points[73], points[74], points[75]),
+		catmullRomSpline(2.0F/3, points[63], points[73], points[74], points[75]),
+		catmullRomSpline(1.0F/3, points[63], points[73], points[74], points[75]),
 		points[73], 
 	};
 }

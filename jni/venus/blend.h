@@ -122,10 +122,16 @@ inline float blendPhoenix    (float A, float B)  { return std::min(A, B) - std::
 inline float blendAlpha      (float A, float B, float O)  { return lerp(B, A, O);/*O * A + (1 - O) * B*/ }
 inline float blendAlphaF     (float A, float B, float (*F)(float, float), float O)  { return blendAlpha(F(A, B), A, O); }
 
-void blendHue       (float* T, const float* A, const float* B);
-void blendSaturation(float* T, const float* A, const float* B);
-void blendLuminosity(float* T, const float* A, const float* B);
-void blendColor     (float* T, const float* A, const float* B);
+/*
+ * @p target can be written directly to @p rgbA or @p rgbB. So you can write code like this:
+ * <code>
+ * blendColor(dst, src, dst);
+ * </code>
+ */
+void blendHue       (float* target, const float* rgbA, const float* rgbB);
+void blendSaturation(float* target, const float* rgbA, const float* rgbB);
+void blendLuminosity(float* target, const float* rgbA, const float* rgbB);
+void blendColor     (float* target, const float* rgbA, const float* rgbB);
 
 
 

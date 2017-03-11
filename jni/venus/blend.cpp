@@ -64,19 +64,20 @@ cv::Vec4f mix(const cv::Vec4f& from, const cv::Vec4f& to, float amount)
 	rgb2hsl(rgbA, hslA);     \
 	rgb2hsl(rgbB, hslB);     \
 	hslA[i] = hslB[i];       \
-	hsl2rgb(hslA, T);        \
+	hsl2rgb(hslA, target);   \
 
-void blendHue       (float* T, const float* rgbA, const float* rgbB)  { blendHSL(0) }
-void blendSaturation(float* T, const float* rgbA, const float* rgbB)  { blendHSL(1) }
-void blendLuminosity(float* T, const float* rgbA, const float* rgbB)  { blendHSL(2) }
-void blendColor     (float* T, const float* rgbA, const float* rgbB)
+
+void blendHue       (float* target, const float* rgbA, const float* rgbB)  { blendHSL(0) }
+void blendSaturation(float* target, const float* rgbA, const float* rgbB)  { blendHSL(1) }
+void blendLuminosity(float* target, const float* rgbA, const float* rgbB)  { blendHSL(2) }
+void blendColor     (float* target, const float* rgbA, const float* rgbB)
 {
 	float hslA[3], hslB[3];
 	rgb2hsl(rgbA, hslA);
 	rgb2hsl(rgbB, hslB);
 	hslB[0] = hslA[0];
 	hslB[1] = hslA[1];
-	hsl2rgb(hslB, T);
+	hsl2rgb(hslB, target);
 }
 
 } /* namespace venus */
