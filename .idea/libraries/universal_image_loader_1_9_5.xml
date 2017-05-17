@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="universal-image-loader-1.9.5">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/iShow/libs/universal-image-loader-1.9.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

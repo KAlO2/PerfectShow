@@ -1,0 +1,3 @@
+[submodule "OpenCV"]
+	path = OpenCV
+	url = https://github.com/KAlO2/OpenCV.git
