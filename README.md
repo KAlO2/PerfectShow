@@ -4,22 +4,17 @@ Welcome to PerfectShow, an image processing application for Android platform.
 
 Up until now, I release functionalities about make-up.
 
-Currently I use Eclipse project instead of Android Studio project, since the former IDE has a shallow directory hierarchy, and NDK building is easier to use.
 This project mainly use [stasm](http://www.milbo.users.sonic.net/stasm/) for face detecting, [dlib](http://dlib.net/) can be more superior and robust, and it use [OpenCV](http://opencv.org/) for color blending and image processing, so you might as well have a good grasp of this field.
 
 # Usage
-1. Download Android OpenCV SDK from official site of [OpenCV](http://opencv.org/downloads.html), extract the archived package to somewhere *&lt;OpenCV-android-sdk&gt;*, then import the project under *&lt;OpenCV-android-sdk&gt;/sdk/java/* into Eclipse (Suppose you've got an Android development environment) and build it. For detailed steps, [this thread](http://docs.opencv.org/2.4/doc/tutorials/introduction/android_binary_package/dev_with_OCV_on_Android.html) walks you through how to do Android development with OpenCV.
-2. Change the variable *OPENCV_ANDROID_SDK_HOME* in *jni/Android.mk* to the path *<OpenCV-android-sdk>* above, in our project, add a reference to the OpenCV Java SDK in Project -> Properties -> Android -> Library -> Add select OpenCV Library, then strike command to finish native code building, and last, build this Android project.
+Run the command below to pull OpenCV module in Android Studio project, then build the project.
 ```sh
-$ cd jni
-$ ndk-build -j4
-$ cd ..
-$ ant debug
+$ git submodule update --init --recursive
 ```
 
 For Win32/Linux project, [cmake](https://cmake.org/download/) (CLI mode or GUI mode) is needed to generate native makefiles. Out-of-source build is recommended, as you can build multiple variants in separate directories. Compilers need to support some C++11 features, *Visual Studio* 2013 or newer works fine.
 ```sh
-$ cd jni
+$ cd iShow/src/main/cpp/jni
 $ mkdir build
 $ cd build
 $ cmake ..
