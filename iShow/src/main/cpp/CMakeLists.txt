@@ -138,7 +138,6 @@ if(NOT MSVC)
 endif()
 
 include_directories(${OpenCV_INCLUDE_DIR})
-include_directories(${CMAKE_SOURCE_DIR})
 
 # Java's header file is not hierarchical
 if(Java_FOUND)
@@ -175,14 +174,14 @@ endif()
 # The LINK_DIRECTORIES has to be before the ADD_EXECUTABLE. http://public.kitware.com/pipermail/cmake/2006-March/008599.html
 link_directories(${OPENCV_LIBDIR})
 
-set(HEAD_AND_SOURCE
+set(HEADER_AND_SOURCE
 	${PLATFORM_HEADER} ${PLATFORM_SOURCE}
 	${STASM_HEADER} ${STASM_SOURCE}
 	${VENUS_HEADER} ${VENUS_SOURCE}
 )
 
 if(MSVC)
-	set(HEAD_AND_SOURCE ${HEAD_AND_SOURCE} ${EXAMPLE_HEADER} ${EXAMPLE_SOURCE})
+	set(HEADER_AND_SOURCE ${HEAD_AND_SOURCE} ${EXAMPLE_HEADER} ${EXAMPLE_SOURCE})
 	add_executable(${PROJECT_NAME} ${HEAD_AND_SOURCE})
 else()
 	add_library(${PROJECT_NAME} SHARED ${HEAD_AND_SOURCE})

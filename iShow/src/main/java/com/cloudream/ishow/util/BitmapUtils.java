@@ -766,7 +766,7 @@ public final class BitmapUtils
 	 * Calculate the largest inSampleSize value that is a power of 2 and keeps both height and width
 	 * larger than the requested height and width.
 	 */
-	private static int calculateInSampleSize(int height, int width, int reqWidth, int reqHeight)
+	private static int calculateInSampleSize(int width, int height, int reqWidth, int reqHeight)
 	{
 		int inSampleSize = 1;
 
