@@ -386,7 +386,7 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 
 		Mat roi = dst(rect_with_margin).clone();
 		if(has_alpha)
-			cv::cvtColor(roi, roi, CV_RGBA2RGB);  // or CV_BGRA2BGR, just strip alpha.
+			cv::cvtColor(roi, roi, COLOR_RGBA2RGB);  // or COLOR_BGRA2BGR, just strip alpha.
 		Mat roi_mask = Feature::createMask(polygon);
 
 		Mat target_mask(rect_with_margin.height, rect_with_margin.width, CV_8UC1, Scalar::all(0));
@@ -461,7 +461,7 @@ void Makeup::applyBrow(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 #if 1
 		// This branch will overwrite alpha channel value if @p src is not opaque(255).
 		if(has_alpha)
-			cv::cvtColor(roi, roi, CV_RGB2RGBA);  // recover alpha with full value(255).
+			cv::cvtColor(roi, roi, COLOR_RGB2RGBA);  // recover alpha with full value(255).
 		roi.copyTo(dst(rect_with_margin), target_mask);
 #else
 		// This branch keeps alpha channel untouched, so it's preferable.
@@ -716,7 +716,7 @@ void Makeup::applyIris(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::P
 
 	cv::Mat mask2 = mask.clone();
 	if(mask2.channels() == 3)
-		cvtColor(mask2, mask2, CV_BGR2BGRA);
+		cvtColor(mask2, mask2, COLOR_BGR2BGRA);
 	mask2.convertTo(mask2, CV_32FC4, 1/255.0);
 
 	const Vec3f FROM_COLOR(1.0F, 1.0F, 1.0F);  // white

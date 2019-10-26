@@ -164,7 +164,7 @@ public class Makeup extends BitmapLayer {
 	private static native void nativeApplyLip      (Bitmap dst, Bitmap src, final PointF[] points, int color, float amount);
 	
 	static {
-		System.loadLibrary("opencv_java3");
+		System.loadLibrary("opencv_java4");
 		System.loadLibrary("stasm");
 		System.loadLibrary("venus");
 	}

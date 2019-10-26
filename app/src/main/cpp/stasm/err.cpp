@@ -27,6 +27,8 @@
 
 #include "stasm.h"
 
+#include "opencv2/core/core_c.h"  // for cvErrorStr
+
 namespace stasm
 {
 static char err_g[SBIG]; // err msg saved for retrieval by LastErr and stasm_lasterr

@@ -1,2 +1,9 @@
-include ':OpenCV'
+// def opencv_sdk='/home/martin/Android/opencv-4.1.1-android-sdk/OpenCV-android-sdk'
+// You can put declaration above into gradle.properties file instead (including file in HOME directory),
+// but without 'def' and apostrophe symbols ('): opencv_sdk=<path_to_opencv_android_sdk_rootdir>
+include ':opencv'
+project(':opencv').projectDir = new File(opencv_sdk + '/sdk')
+
 include ':app'
+
+

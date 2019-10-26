@@ -675,7 +675,7 @@ void ImgPrintf(         // printf on image
     int thickness = MAX(1, cvRound(img.rows > 1000? 2 * fontsize: fontsize));
 
     putText(img, s, cv::Point(cvRound(x), cvRound(y)),
-            CV_FONT_HERSHEY_SIMPLEX, fontsize, ToCvColor(color), thickness);
+            cv::FONT_HERSHEY_SIMPLEX, fontsize, ToCvColor(color), thickness);
 }
 
 static byte RgbToGray( // CIE conversion to gray using integer arithmetic
@@ -822,8 +822,8 @@ vec_Rect Detect(                            // detect faces or facial features
     // TODO If we don't allocate feats now we get a crash on mem release later.
 
     const int MAX_NFACES_IN_IMG = int(1e4); // arb, but big
-    vec_Rect feats(MAX_NFACES_IN_IMG);
-
+//    vec_Rect feats(MAX_NFACES_IN_IMG);
+    std::__ndk1::vector<cv::Rect_<int>> feats(MAX_NFACES_IN_IMG);
     // Note: This call to detectMultiScale causes the Peak Working Set
     // to jump to 160 MBytes (multiface2.jpg) versus less than 50 MBytes
     // for the rest of Stasm (Feb 2013).

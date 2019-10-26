@@ -255,7 +255,7 @@ public class Effect {
 	static {
 		// https://developer.android.com/ndk/guides/cpp-support.html
 //		System.loadLibrary("c++_shared");
-		System.loadLibrary("opencv_java3");
+		System.loadLibrary("opencv_java4");
 		System.loadLibrary("venus");
 	}
 }

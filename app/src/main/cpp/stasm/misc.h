@@ -8,7 +8,9 @@
 #include <string>
 #include <vector>
 #include "opencv2/core.hpp"
+#include "opencv2/core/types_c.h"  // for cvScalar
 #include "opencv2/objdetect.hpp"
+
 
 namespace stasm
 {

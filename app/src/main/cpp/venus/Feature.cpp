@@ -773,7 +773,7 @@ cv::Vec4f Feature::getSymmetryAxis(const std::vector<cv::Point2f>& points)
 	points_on_line.push_back((points[64] + points[68])/2);
 
 	cv::Vec4f line;  // use Least mean squares to fit a line
-	cv::fitLine(points_on_line, line, CV_DIST_L1, 0, 10.0, 0.01);
+	cv::fitLine(points_on_line, line, cv::DIST_L1, 0, 10.0, 0.01);
 #endif
 
 /*
@@ -1411,8 +1411,8 @@ cv::Mat Feature::maskSkinRegion(int width, int height, const std::vector<cv::Poi
 #endif
 
 	int radius = cvRound(venus::distance(points[57], points[59]));
-	circle(mask, points[55], radius, Scalar(0), CV_FILLED, LINE_AA);
-	circle(mask, points[57], radius, Scalar(0), CV_FILLED, LINE_AA);
+	circle(mask, points[55], radius, Scalar(0), cv::FILLED, LINE_AA);
+	circle(mask, points[57], radius, Scalar(0), cv::FILLED, LINE_AA);
 
 	// mouth region
 	int j = 0;

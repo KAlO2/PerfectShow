@@ -19,7 +19,7 @@
 			android:layout_height="wrap_content"
 			>
 
-			<com.cloudream.ishow.view.ColorPickerSquare
+			<com.wonderful.ishow.view.ColorPickerSquare
 				android:id="@+id/square"
 				android:layout_width="@dimen/color_picker_height"
 				android:layout_height="@dimen/color_picker_height"

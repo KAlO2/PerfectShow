@@ -1,14 +1,5 @@
 apply plugin: 'com.android.application'
 
-// OpenCV library directory, used to include path, which resides in ${OPENCV_HOME}/build/include/
-def opencvDir = System.getenv("OPENCV_HOME")
-def propertiesFile = project.rootProject.file('local.properties')
-if (propertiesFile.exists()) {
-    Properties properties = new Properties()
-    properties.load(propertiesFile.newDataInputStream())
-    opencvDir = properties.getProperty('opencv.dir')
-}
-
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -22,6 +13,13 @@ android {
 
         vectorDrawables.useSupportLibrary = true
 
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++11 -frtti -fexceptions"
+                arguments "-DOpenCV_DIR=" + opencv_sdk + "/sdk/native/jni" // , "-DANDROID_ARM_NEON=TRUE"
+            }
+        }
+        
         ndk {
             moduleName = 'venus'
             abiFilters 'armeabi-v7a', 'arm64-v8a'
@@ -32,12 +30,6 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
-        }
-    }
-
-    externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
         }
     }
 
@@ -65,7 +57,8 @@ android {
 }
 
 dependencies {
-    implementation project(':OpenCV')
+    implementation project(':opencv')
+
     implementation "com.android.support:support-v4:${rootProject.ext.supportLibVersion}"
     implementation "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
 

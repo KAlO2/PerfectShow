@@ -199,7 +199,7 @@ cv::Mat merge(const cv::Mat& rgb, const cv::Mat& alpha)
 	assert(rgb.channels() == 3 && alpha.channels() == 1);
 
 #if 1
-	cv::Mat r_g_b_a[3];
+	cv::Mat r_g_b_a[4];
 	cv::split(rgb, r_g_b_a);
 	r_g_b_a[3] = alpha;
 

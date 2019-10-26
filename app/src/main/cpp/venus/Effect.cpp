@@ -243,8 +243,8 @@ cv::Mat Effect::grayscale(const cv::Mat& image)
 	case 4: cvtColor(image, gray, CV_BGRA2GRAY); break;
 	case 3: cvtColor(image, gray, CV_BGR2GRAY);  break;
 #else
-	case 4: cvtColor(image, gray, CV_RGBA2GRAY); break;
-	case 3: cvtColor(image, gray, CV_RGB2GRAY);  break;
+	case 4: cvtColor(image, gray, COLOR_RGBA2GRAY); break;
+	case 3: cvtColor(image, gray, COLOR_RGB2GRAY);  break;
 #endif
 	case 1: image.copyTo(gray);                  break;
 	default:

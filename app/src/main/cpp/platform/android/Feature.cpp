@@ -20,7 +20,7 @@ jobjectArray JNICALL Java_com_wonderful_ishow_algorithm_Feature_nativeDetectFace
 	std::string classifier_dir = getNativeString(env, _classifier_dir);
 
 	cv::Mat gray;
-	cv::cvtColor(image, gray, CV_RGBA2GRAY);
+	cv::cvtColor(image, gray, COLOR_RGBA2GRAY);
 	unlockJavaBitmap(env, _image);
 
 	const std::vector<Point2f> points = Feature::detectFace(gray, image_name, classifier_dir);
@@ -48,7 +48,7 @@ jobjectArray JNICALL Java_com_wonderful_ishow_algorithm_Feature_nativeDetectFace
 	std::string classifier_dir = getNativeString(env, _classifier_dir);
 
 	cv::Mat gray;
-	cv::cvtColor(image, gray, CV_RGBA2GRAY);
+	cv::cvtColor(image, gray, COLOR_RGBA2GRAY);
 	unlockJavaBitmap(env, _image);
 
 	const std::vector<std::vector<Point2f>> faces = Feature::detectFaces(gray, image_name, classifier_dir);

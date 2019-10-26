@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@color/sky_blue"
     android:orientation="vertical"
-    tools:context="com.cloudream.ishow.app.GalleryActivity" >
+    tools:context="com.wonderful.ishow.app.GalleryActivity" >
 
     <include
         android:layout_width="match_parent"
