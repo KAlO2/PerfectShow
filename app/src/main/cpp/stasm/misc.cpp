@@ -822,8 +822,8 @@ vec_Rect Detect(                            // detect faces or facial features
     // TODO If we don't allocate feats now we get a crash on mem release later.
 
     const int MAX_NFACES_IN_IMG = int(1e4); // arb, but big
-//    vec_Rect feats(MAX_NFACES_IN_IMG);
-    std::__ndk1::vector<cv::Rect_<int>> feats(MAX_NFACES_IN_IMG);
+    vec_Rect feats(MAX_NFACES_IN_IMG);
+    
     // Note: This call to detectMultiScale causes the Peak Working Set
     // to jump to 160 MBytes (multiface2.jpg) versus less than 50 MBytes
     // for the rest of Stasm (Feb 2013).
