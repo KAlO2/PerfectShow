@@ -534,7 +534,7 @@ void Makeup::applyEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Po
 	constexpr int N = 41 - 34 + 1;
 	std::vector<Point2f> dst_points(N);
 
-	auto calcuateEyeParams = [](const Point2f& right, const Point2f& left) -> cv::Vec4f
+	auto calculateEyeParams = [](const Point2f& right, const Point2f& left) -> cv::Vec4f
 	{
 		Point2f pivot = (right + left)/2;
 		float radius = venus::distance(pivot, left);
@@ -547,7 +547,7 @@ void Makeup::applyEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Po
 		return Vec4f(pivot.x, pivot.y, radius, angle);
 	};
 
-	const Vec4f PARAMS = calcuateEyeParams(src_points[0], src_points[4]);
+	const Vec4f PARAMS = calculateEyeParams(src_points[0], src_points[4]);
 
 	for(int j = 0; j < 2; ++j)
 	{
@@ -566,7 +566,7 @@ void Makeup::applyEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Po
 				dst_points[i] = Point2f(sum - points[44 + i].x, points[44 + i].y);
 		}
 
-		Vec4f params = calcuateEyeParams(dst_points[0], dst_points[4]);
+		Vec4f params = calculateEyeParams(dst_points[0], dst_points[4]);
 		printf("pivot: (%f, %f), radius: %f, angle: %f\n", params[0], params[1], params[2], rad2deg(params[3]));
 
 		Size size(cosmetic.cols, cosmetic.rows);
@@ -611,14 +611,14 @@ void Makeup::applyEye(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Po
 	const Point2f LEFT(284, 287), RIGHT(633, 287);
 	const Point2f TOP(458, 213), BOTTOM(458, 362);
 	Point2f PIVOT, pivot;
-	Vec4f DISTANCE = Feature::calcuateDistance(PIVOT, LEFT, TOP, RIGHT, BOTTOM);
+	Vec4f DISTANCE = Feature::calculateDistance(PIVOT, LEFT, TOP, RIGHT, BOTTOM);
 
 	Feature feature(src, points);
 
 	for(int i = 0; i <= 1; ++i)
 	{
 		const bool is_right = (i == 0);
-		Vec4f distance = feature.calcuateEyeRadius(is_right);
+		Vec4f distance = feature.calculateEyeRadius(is_right);
 
 		Vec4f scale;
 		for(int i = 0; i < 4; ++i)  // sighs, no operator / overloaded for Vec4f.
@@ -852,7 +852,7 @@ void Makeup::applyLip(cv::Mat& dst, const cv::Mat& src, const std::vector<cv::Po
 	assert(!src.empty() && src.channels() == 4);  // only handles RGBA image
 
 	Feature feature(src, points);
-	Region region = feature.calculateLipshRegion();
+	Region region = feature.calculateLipsRegion();
 	const Mat& mask = region.mask;
 	const Point2f& pivot = region.pivot;
 	const int& rows = mask.rows, &cols = mask.cols;

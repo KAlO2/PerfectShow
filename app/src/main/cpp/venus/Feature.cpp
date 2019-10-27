@@ -149,7 +149,7 @@ const std::vector<Vec3b> Feature::triangle_indices
 	63-----72----71----70-----69
 	  \-----73---74----75-----/
 	   \80\              /76/
-		   \79---78---77/
+	       \79---78---77/
 */
 	// top lip
 	Vec3b(63, 64, 72),
@@ -543,10 +543,10 @@ std::vector<std::vector<cv::Point2f>> Feature::detectFaces(cv::Size2i* size, con
 {
 	cv::Mat image = cv::imread(image_name, cv::IMREAD_GRAYSCALE);
 	if(!image.data)
-    {
-        printf("Cannot load %s\n", image_name.c_str());
+	{
+		printf("Cannot load %s\n", image_name.c_str());
 		return {};
-    }
+	}
 
 	if(size != nullptr)
 		*size = Size2i(image.cols, image.rows);
@@ -557,7 +557,7 @@ std::vector<std::vector<cv::Point2f>> Feature::detectFaces(cv::Size2i* size, con
 void Feature::mark(Mat& image, const std::vector<Point2f>& points)
 {
 	const cv::Scalar text_color = CV_RGB(0, 255, 0);
-	const float font_scale = 0.42f;
+	const float font_scale = 0.42F;
 	int radius = 1;
 
 	Rect rect = cv::boundingRect(points);
@@ -594,7 +594,7 @@ void Feature::mark(Mat& image, const std::vector<Point2f>& points)
 
 void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& points)
 {
-	const float font_scale = 0.42f;
+	const float font_scale = 0.42F;
 	int offset = 2;
 
 	const Scalar COLOR0 = CV_RGB(0, 255, 0);  // green
@@ -609,7 +609,7 @@ void Feature::markWithIndices(cv::Mat& image, const std::vector<cv::Point2f>& po
 
 #if 1  // enable it to draw triangles
 	const Scalar COLOR1 = CV_RGB(0, 0, 255);  // red
-	for(const Vec3i& tri: triangle_indices)
+	for(const Vec3b& tri: triangle_indices)
 	{
 		for(int k = 0; k < 3; ++k)
 			assert(0 <= tri[k] && tri[k] < static_cast<int>(point_count));
@@ -868,7 +868,7 @@ cv::Mat Feature::maskPolygonSmooth(const cv::Rect2i& rect, const std::vector<cv:
 {
 	assert(level > 0);
 
-	Point2f sum(0.0f, 0.0f);
+	Point2f sum(0.0F, 0.0F);
 	for(const Point2f& point : points)
 		sum += point;
 	Point2f center = sum / static_cast<int>(points.size());
@@ -909,9 +909,9 @@ std::vector<cv::Point2f> Feature::calculateBrowPolygon(const std::vector<cv::Poi
 	assert(points.size() == COUNT);
 /*
 	Below are eye brow feature point indices:
-
-			  .--21--20\        /27--28--.
-		  _.-`          |      |          `-._
+	
+	          .--21--20\        /27--28--.
+	      _.-`          |      |          `-._
 	right 22--23--24--25`      `26--31--30--29  left
 */
 #if 0  // not precise branch
@@ -949,7 +949,7 @@ std::vector<cv::Point2f> Feature::calculateBrowPolygon(const std::vector<cv::Poi
 	Point2f diff = _25 - _21;
 	float r = std::sqrt(diff.x * diff.x + diff.y * diff.y);
 	diff /= r;
-	r = distance(_24, _25) * 0.81F;  // 0.81 seemes fine.
+	r = distance(_24, _25) * 0.81F;  // 0.81 seems fine.
 	polygon.push_back(_20 + r * diff);
 
 #endif
@@ -1235,7 +1235,7 @@ Region Feature::calculateEyeRegion(const std::vector<cv::Point2f>& points, const
 
 	Vec4f box = right?
 		Vec4f(points[38].x, points[36].y, points[34].x, points[40].y):
-	    Vec4f(points[44].x, points[46].y, points[48].x, points[50].y);
+		Vec4f(points[44].x, points[46].y, points[48].x, points[50].y);
 
 	Size2f size = calculateSize(box, line);
 
@@ -1326,7 +1326,7 @@ cv::RotatedRect Feature::calculateRectangle(float angle, const cv::Point2f& left
 	return RotatedRect(center, size, rad2deg(angle));
 }
 
-cv::Vec4f Feature::calcuateDistance(cv::Point2f& pivot, const cv::Point2f& left, const cv::Point2f& top, const cv::Point2f& right, const cv::Point2f& bottom)
+cv::Vec4f Feature::calculateDistance(cv::Point2f& pivot, const cv::Point2f& left, const cv::Point2f& top, const cv::Point2f& right, const cv::Point2f& bottom)
 {
 	assert(left.x < right.x && top.y < bottom.y);
 	assert(left.x <= top.x && top.x <= right.x && left.x <= bottom.x && bottom.x <= right.x);
@@ -1355,7 +1355,7 @@ cv::Vec4f Feature::calcuateDistance(cv::Point2f& pivot, const cv::Point2f& left,
 #endif
 }
 
-cv::Vec4f Feature::calcuateEyeRadius(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right)
+cv::Vec4f Feature::calculateEyeRadius(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right)
 {
 	const Point2f& eye_left   = points[right ? 38:44];
 	const Point2f& eye_top    = points[right ? 36:46];
@@ -1364,7 +1364,7 @@ cv::Vec4f Feature::calcuateEyeRadius(const std::vector<cv::Point2f>& points, con
 
 	(void)line;  // TODO need line for tune top and bottom point
 	Point2f pivot;
-	Vec4f distance = calcuateDistance(pivot, eye_left, eye_top, eye_right, eye_bottom);
+	Vec4f distance = calculateDistance(pivot, eye_left, eye_top, eye_right, eye_bottom);
 	return distance;
 }
 

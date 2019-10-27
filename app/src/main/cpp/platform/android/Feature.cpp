@@ -2,7 +2,7 @@
 
 #include "venus/Feature.h"
 
-#define LOG_TAG "Feature-JNI"
+static const char* LOG_TAG = "Feature-JNI";
 #include "jni_bridge.h"
 
 using namespace cv;
@@ -11,6 +11,7 @@ using namespace venus;
 jobjectArray JNICALL Java_com_wonderful_ishow_algorithm_Feature_nativeDetectFace(JNIEnv* env,
 		jclass clazz, jobject _image, jstring _image_name, jstring _classifier_dir)
 {
+	LOGV("%s", __func__);
 	AndroidBitmapInfo image_info;
 	uint32_t* pixels = lockJavaBitmap(env, _image, image_info);
 	assert(pixels != nullptr);

@@ -449,7 +449,7 @@ void applyLip(const std::string& image_name)
 	float amount = 0.80F;
 	const uint32_t color = 0x556722BF;
 #if 0
-	RoiInfo lips = calcuateLipsRegionInfo(points);
+	RoiInfo lips = calculateLipsRegionInfo(points);
 
 	Rect lips_region(lips.origin, lips.mask.size());
 

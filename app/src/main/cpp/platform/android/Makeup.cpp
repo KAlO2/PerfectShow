@@ -1,6 +1,6 @@
 #include "platform/android/Makeup.h"
 
-#define LOG_TAG "Makeup-JNI"
+static const char* LOG_TAG = "Makeup-JNI";
 #include "platform/android/jni_bridge.h"
 
 #include "venus/compiler.h"

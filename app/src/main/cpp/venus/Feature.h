@@ -32,7 +32,7 @@ private:
 	static Region calculateEyeRegion(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right);
 	static Region calculateLipsRegion(const std::vector<cv::Point2f>& points, const cv::Vec4f& line);
 
-	static cv::Vec4f calcuateEyeRadius(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right);
+	static cv::Vec4f calculateEyeRadius(const std::vector<cv::Point2f>& points, const cv::Vec4f& line, bool right);
 
 public:
 	Feature(const cv::Mat& image, const std::vector<cv::Point2f>& points);
@@ -115,7 +115,7 @@ public:
 
 	Region calculateBrowRegion(bool right) const { return calculateBrowRegion(points, line, right);  }
 	Region calculateEyeRegion(bool right)  const { return calculateEyeRegion(points, line, right);   }
-	Region calculateLipshRegion()          const { return calculateLipsRegion(points, line); }
+	Region calculateLipsRegion()           const { return calculateLipsRegion(points, line); }
 	Region calculateTeethRegion()          const;
 
 	static cv::RotatedRect calculateRectangle(float angle, const cv::Point2f& left, const cv::Point2f& top, const cv::Point2f& right, const cv::Point2f& bottom);
@@ -124,9 +124,9 @@ public:
 	 * Given four points, calculate the intersection point of the two lines (left-right and top-bottom).
 	 * @see <a href="https://en.wikipedia.org/wiki/Line–line_intersection">Line–line intersection</a>
 	 */
-	static cv::Vec4f calcuateDistance(cv::Point2f& pivot, const cv::Point2f& left, const cv::Point2f& top, const cv::Point2f& right, const cv::Point2f& bottom);
+	static cv::Vec4f calculateDistance(cv::Point2f& pivot, const cv::Point2f& left, const cv::Point2f& top, const cv::Point2f& right, const cv::Point2f& bottom);
 
-	cv::Vec4f calcuateEyeRadius(bool right) const { return calcuateEyeRadius(points, line, right); }
+	cv::Vec4f calculateEyeRadius(bool right) const { return calculateEyeRadius(points, line, right); }
 
 	/**
 	 * Mask skin region through the feature points detected.
