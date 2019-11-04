@@ -10,7 +10,7 @@
 
 using namespace venus;
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeApplyWhirlPinch
+void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeApplyWhirlPinch
 	(JNIEnv* env, jclass clazz, jobject _bitmap, jobject _pivot, jfloat whirl, jfloat pinch, jfloat radius)
 {
 	AndroidBitmapInfo info;
@@ -24,7 +24,7 @@ void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeApplyWhirlPinch
 	unlockJavaBitmap(env, _bitmap);
 }
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeApplyWhirlPinch2
+void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeApplyWhirlPinch2
 	(JNIEnv* env, jclass clazz, jobject _bitmap, jfloat whirl, jfloat pinch, jfloat radius)
 {
 	AndroidBitmapInfo info;
@@ -37,7 +37,7 @@ void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeApplyWhirlPinch2
 	unlockJavaBitmap(env, _bitmap);
 }
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeDistort
+void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeDistort
 	(JNIEnv* env, jclass clazz, jobject _bitmap, jobject _point0, jobject _point1, jfloat strength, jint type)
 {
 	AndroidBitmapInfo info;
@@ -52,7 +52,7 @@ void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeDistort
 	unlockJavaBitmap(env, _bitmap);
 }
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeCatmullRomSpline
+void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeCatmullRomSpline
 	(JNIEnv * env, jclass clazz, jobject _result, jfloat t, jobject _p0, jobject _p1, jobject _p2, jobject _p3)
 {
 	cv::Point2f p0 = getNativePoint(env, _p0);
@@ -65,7 +65,7 @@ void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeCatmullRomSpline
 	setJavaPoint(env, _result, result);
 }
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeTone(JNIEnv* env,
+void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeTone(JNIEnv* env,
 		jclass clazz, jobject _bitmap, jint color, jfloat amount)
 {
 	assert(0.0f <= amount && amount <= 1.0f);
@@ -105,7 +105,7 @@ void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeTone(JNIEnv* env,
 	unlockJavaBitmap(env, _bitmap);
 }
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeGrayToAlpha(JNIEnv* env,
+void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeGrayToAlpha(JNIEnv* env,
 		jclass clazz, jobject _src_bitmap, jobject _dst_bitmap)
 {
 	AndroidBitmapInfo src_info, dst_info;
@@ -136,7 +136,7 @@ void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeGrayToAlpha(JNIEnv*
 	unlockJavaBitmap(env, _src_bitmap);
 }
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeSelectContiguousRegionByColor(JNIEnv *env,
+void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeSelectContiguousRegionByColor(JNIEnv *env,
 		jclass clazz, jobject _mask, jobject _image, jint _color, jint _select_criterion, jfloat threshold, jboolean antialias, jboolean select_transparent)
 {
 	AndroidBitmapInfo image_info;

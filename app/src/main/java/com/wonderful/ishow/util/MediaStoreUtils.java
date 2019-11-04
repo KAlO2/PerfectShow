@@ -3,6 +3,7 @@ package com.wonderful.ishow.util;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -20,8 +21,18 @@ public class MediaStoreUtils {
 		throw new AssertionError("No MediaStoreUtils instances for you!");
 	}
 	
+	// https://developer.android.com/training/camera/photobasics#TaskGallery
+	public static void scanFile(Context context, @NonNull String path) {
+		scanFile(context, Uri.fromFile(new File(path)));
+	}
 	
-	public static String getPathFromUri(Context context, @NonNull Uri uri) {
+	public static void scanFile(Context context, @NonNull Uri uri) {
+		Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+		intent.setData(uri);
+		context.sendBroadcast(intent);
+	}
+	
+	public static String getPathFromUri(Context context, Uri uri) {
 		int SDK_INT = Build.VERSION.SDK_INT;
 		if(SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
 			// No longer supported

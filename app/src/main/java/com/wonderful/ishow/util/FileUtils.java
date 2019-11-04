@@ -12,9 +12,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
-import android.support.annotation.RawRes;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
@@ -31,6 +29,8 @@ import java.util.Comparator;
 public class FileUtils {
 	private static final String TAG = FileUtils.class.getSimpleName();
 	private static final boolean DEBUG = false; // Set to true to enable logging
+	
+	public static final String APPLICATION_NAME = "PerfectShow";
 
 	public static final String MIME_TYPE_AUDIO = "audio/*";
 	public static final String MIME_TYPE_TEXT  = "text/*";
@@ -39,7 +39,15 @@ public class FileUtils {
 	public static final String MIME_TYPE_APP   = "application/*";
 
 	public static final String HIDDEN_PREFIX = ".";
-
+	
+	// image suffixes
+	public static final String SUFFIX_BMP = ".bmp";
+	public static final String SUFFIX_JPEG= ".jpeg";
+	public static final String SUFFIX_JPG = ".jpg";
+	public static final String SUFFIX_PNG = ".png";
+	public static final String SUFFIX_GIF = ".gif";
+	public static final String SUFFIX_WEBP= ".webp";
+	
 	/**
 	 * private constructor to enforce Singleton pattern
 	 */
@@ -66,9 +74,18 @@ public class FileUtils {
 			
 			return resFile.getAbsolutePath();
 		} catch (IOException e) {
-			e.printStackTrace();
-			throw new RuntimeException("");
+			String message = "failed to export resource";
+			Log.e(TAG, message, e);
+			throw new RuntimeException(message);
 		}
+	}
+	
+	public static File getPictureDirectory() {
+		File parentDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+		File workingDirectory = new File(parentDirectory, APPLICATION_NAME);
+		if(!workingDirectory.exists())
+			workingDirectory.mkdirs();
+		return workingDirectory;
 	}
 	
 	/**
@@ -323,7 +340,7 @@ public class FileUtils {
 				}
 			}
 		}
-		return String.valueOf(dec.format(fileSize) + suffix);
+		return dec.format(fileSize) + suffix;
 	}
 
 	/**

@@ -171,6 +171,7 @@
 	<string name="permission_read_external_storage">Storage read permission is required to pick files.</string>
 	<string name="permission_write_external_storage">Storage write permission is required to save the image.</string>
 	<string name="format_s_result_d_d">%1$s Result (%2$dx%3$d)</string>
+	<string name="cannot_retrieve_selected_image">Cannot retrieve selected image</string>
 	
 	<!-- MainActivity -->
 	<string name="collage">Collage</string>

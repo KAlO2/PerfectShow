@@ -46,6 +46,12 @@ public class Feature {
 	private PointF centerPoint;  // face center
 	private PointF downVector;   // face up direction, note that Y axis is top down.
 	
+	static {
+		System.loadLibrary("c++_shared");
+		System.loadLibrary("opencv_java4");
+		System.loadLibrary("venus");
+	}
+	
 	public Feature(@NonNull Bitmap image, @NonNull PointF[] points) {
 		this.image = image;
 		this.points = points;
@@ -59,22 +65,22 @@ public class Feature {
 	}
 	
 	private static String loadClassifier(Context context) {
+		String OPENCV_DIR = "OpenCV";
 		if(BuildConfig.DEBUG) {
 			String fullName = context.getResources().getResourceName(R.raw.haarcascade_frontalface_alt2);
 			Log.i(TAG, "fullName: " + fullName);
 			String resName = fullName.substring(fullName.lastIndexOf("/") + 1);
 			Log.i(TAG, "resName: " + resName);
 			
-			// Enter "OpenCV_data", you will get "/data/data/<PACKAGE_NAME>/app_OpenCV_data", why a "app_" prefix?
-			File resDir = context.getDir("OpenCV_data", Context.MODE_PRIVATE);
+			// Enter "OpenCV", you will get "/data/data/<PACKAGE_NAME>/app_OpenCV", why a "app_" prefix?
+			File resDir = context.getDir(OPENCV_DIR, Context.MODE_PRIVATE);
 			Log.i(TAG, "resDir: " + resDir.getAbsolutePath());
 		}
 		
-		String opencvDir = "OpenCV";
-		String path = FileUtils.exportResource(context, R.raw.haarcascade_frontalface_alt2, opencvDir);
-		FileUtils.exportResource(context, R.raw.haarcascade_mcs_lefteye, opencvDir);
-		FileUtils.exportResource(context, R.raw.haarcascade_mcs_mouth, opencvDir);
-		FileUtils.exportResource(context, R.raw.haarcascade_mcs_righteye, opencvDir);
+		String path = FileUtils.exportResource(context, R.raw.haarcascade_frontalface_alt2, OPENCV_DIR);
+		FileUtils.exportResource(context, R.raw.haarcascade_mcs_lefteye, OPENCV_DIR);
+		FileUtils.exportResource(context, R.raw.haarcascade_mcs_mouth, OPENCV_DIR);
+		FileUtils.exportResource(context, R.raw.haarcascade_mcs_righteye, OPENCV_DIR);
 		String classifierDir = path.substring(0, path.lastIndexOf('/'));
 		Log.d(TAG, "cascade data directory: " + classifierDir);
 		
@@ -431,5 +437,4 @@ public class Feature {
 	private static native PointF[][] nativeDetectFaces(Bitmap image, String imageName, String classifierDir);
 	private static native PointF[]   nativeGetSymmetryAxis(PointF[] points);
 	
-
 }

@@ -252,10 +252,4 @@ public class Effect {
 	private static native void nativeSelectContiguousRegionByColor(Bitmap mask, Bitmap image, int color, int select_criterion,
 			float threshold, boolean antialias, boolean select_transparent);
 	
-	static {
-		// https://developer.android.com/ndk/guides/cpp-support.html
-//		System.loadLibrary("c++_shared");
-		System.loadLibrary("opencv_java4");
-		System.loadLibrary("venus");
-	}
 }

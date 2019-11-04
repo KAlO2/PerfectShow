@@ -1,7 +1,5 @@
 package com.wonderful.ishow.app;
 
-import com.wonderful.ishow.R;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -10,9 +8,11 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.StringRes;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
+
+import com.wonderful.ishow.R;
 
 abstract class BaseActivity extends Activity {
 	protected static final int PERMISSION_READ_EXTERNAL_STORAGE = 1;
@@ -23,32 +23,34 @@ abstract class BaseActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		
 	}
-
+	
+	protected void requestPermission(final String permission, @StringRes int messageId, final int requestCode) {
+		requestPermission(permission, getString(messageId), requestCode);
+	}
+	
 	/**
 	 * Requests given permission. If the permission has been denied previously, a Dialog will prompt
 	 * the user to grant the permission, otherwise it is requested directly.
 	 */
 	protected void requestPermission(final String permission, String message, final int requestCode) {
-		if(ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-			if(ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
-				// Show an explanation to the user *asynchronously* -- don't block
-				// this thread waiting for the user's response! After the user
-				// sees the explanation, try again to request the permission.
-				new AlertDialog.Builder(this)
-					.setTitle(R.string.permission_request)
-					.setMessage(message)
-					.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							requestPermissions(new String[]{ permission }, requestCode);
-						}
-					})
-					.setNegativeButton(android.R.string.cancel, null)
-					.show();
-			}
-		    else {  // No explanation needed, we can request the permission.
-				ActivityCompat.requestPermissions(this, new String[]{permission}, requestCode);
-			}
+		if(ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+			// Show an explanation to the user *asynchronously* -- don't block
+			// this thread waiting for the user's response! After the user
+			// sees the explanation, try again to request the permission.
+			new AlertDialog.Builder(this)
+				.setTitle(R.string.permission_request)
+				.setMessage(message)
+				.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						ActivityCompat.requestPermissions(BaseActivity.this, new String[]{ permission }, requestCode);
+					}
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+		}
+		else {  // No explanation needed, we can request the permission.
+			ActivityCompat.requestPermissions(this, new String[]{permission}, requestCode);
 		}
 	}
 	

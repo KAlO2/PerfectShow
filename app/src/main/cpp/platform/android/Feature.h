@@ -14,7 +14,7 @@ extern "C" {
  * Method:    nativeDetectFace
  * Signature: (Landroid/graphics/Bitmap;Ljava/lang/String;Ljava/lang/String;)[Landroid/graphics/PointF;
  */
-JNIEXPORT jobjectArray JNICALL Java_com_wonderful_ishow_algorithm_Feature_nativeDetectFace
+JNIEXPORT jobjectArray JNICALL Java_com_wonderful_ishow_makeup_Feature_nativeDetectFace
   (JNIEnv *, jclass, jobject, jstring, jstring);
 
 /*
@@ -22,7 +22,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_wonderful_ishow_algorithm_Feature_native
  * Method:    nativeDetectFaces
  * Signature: (Landroid/graphics/Bitmap;Ljava/lang/String;Ljava/lang/String;)[[Landroid/graphics/PointF;
  */
-JNIEXPORT jobjectArray JNICALL Java_com_wonderful_ishow_algorithm_Feature_nativeDetectFaces
+JNIEXPORT jobjectArray JNICALL Java_com_wonderful_ishow_makeup_Feature_nativeDetectFaces
   (JNIEnv *, jclass, jobject, jstring, jstring);
 
 /*
@@ -30,7 +30,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_wonderful_ishow_algorithm_Feature_native
  * Method:    nativeGetSymmetryAxis
  * Signature: ([Landroid/graphics/PointF;)[Landroid/graphics/PointF;
  */
-JNIEXPORT jobjectArray JNICALL Java_com_wonderful_ishow_algorithm_Feature_nativeGetSymmetryAxis
+JNIEXPORT jobjectArray JNICALL Java_com_wonderful_ishow_makeup_Feature_nativeGetSymmetryAxis
   (JNIEnv *, jclass, jobjectArray);
 
 #ifdef __cplusplus

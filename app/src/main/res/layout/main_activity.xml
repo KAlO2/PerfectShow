@@ -3,7 +3,7 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:orientation="vertical"
-	tools:context="com.wonderfull.ishow.app.MainActivity"
+	tools:context="com.wonderful.ishow.app.MainActivity"
 	>
 
 	<TableLayout
@@ -18,20 +18,22 @@
 			android:layout_margin="8dp"
 			android:weightSum="1.0"
 			>
-
-			<Button
-				style="@style/Widget.Button.MainActivity"
-				android:id="@+id/collage"
-				android:text="@string/collage"
-				/>
-
+			
 			<Button
 				style="@style/Widget.Button.MainActivity"
 				android:id="@+id/crop"
 				android:text="@string/crop"
 				/>
-		</TableRow>
+			
+			<Button
+				style="@style/Widget.Button.MainActivity"
+				android:id="@+id/collage"
+				android:text="@string/collage"
+				android:visibility="invisible"
+				/>
 
+		</TableRow>
+<!--
 		<TableRow
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
@@ -51,7 +53,7 @@
 				android:text="@string/color"
 				/>
 		</TableRow>
-
+-->
 		<TableRow
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
@@ -68,6 +70,7 @@
 			style="@style/Widget.Button.MainActivity"
 			android:id="@+id/effect"
 			android:text="@string/effect"
+			android:visibility="invisible"
 			/>
 		</TableRow>
 		

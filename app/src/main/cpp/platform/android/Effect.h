@@ -14,7 +14,7 @@ extern "C" {
  * Method:    nativeApplyWhirlPinch
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Point;FFF)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeApplyWhirlPinch
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeApplyWhirlPinch
   (JNIEnv *, jclass, jobject, jobject, jfloat, jfloat, jfloat);
 
 /*
@@ -22,7 +22,7 @@ JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeApplyWhir
  * Method:    nativeApplyWhirlPinch2
  * Signature: (Landroid/graphics/Bitmap;FFF)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeApplyWhirlPinch2
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeApplyWhirlPinch2
   (JNIEnv *, jclass, jobject, jfloat, jfloat, jfloat);
 
 /*
@@ -30,7 +30,7 @@ JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeApplyWhir
  * Method:    nativeDistort
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/PointF;Landroid/graphics/PointF;FI)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeDistort
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeDistort
   (JNIEnv *, jclass, jobject, jobject, jobject, jfloat, jint);
 
 /*
@@ -38,7 +38,7 @@ JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeDistort
  * Method:    nativeCatmullRomSpline
  * Signature: (Landroid/graphics/PointF;FLandroid/graphics/PointF;Landroid/graphics/PointF;Landroid/graphics/PointF;Landroid/graphics/PointF;)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeCatmullRomSpline
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeCatmullRomSpline
   (JNIEnv *, jclass, jobject, jfloat, jobject, jobject, jobject, jobject);
 
 /*
@@ -46,7 +46,7 @@ JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeCatmullRo
  * Method:    nativeTone
  * Signature: (Landroid/graphics/Bitmap;IF)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeTone
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeTone
   (JNIEnv *, jclass, jobject, jint, jfloat);
 
 /*
@@ -54,7 +54,7 @@ JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeTone
  * Method:    nativeGrayToAlpha
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeGrayToAlpha
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeGrayToAlpha
   (JNIEnv *, jclass, jobject, jobject);
 
 /*
@@ -62,7 +62,7 @@ JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeGrayToAlp
  * Method:    nativeColorToAlpha
  * Signature: (ILandroid/graphics/Bitmap;Landroid/graphics/Bitmap;)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeColorToAlpha
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeColorToAlpha
   (JNIEnv *, jclass, jint, jobject, jobject);
 
 /*
@@ -70,7 +70,7 @@ JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeColorToAl
  * Method:    nativeSelectContiguousRegionByColor
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;IIFZZ)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Effect_nativeSelectContiguousRegionByColor
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Effect_nativeSelectContiguousRegionByColor
   (JNIEnv *, jclass, jobject, jobject, jint, jint, jfloat, jboolean, jboolean);
 
 #ifdef __cplusplus

@@ -28,7 +28,7 @@ using namespace venus;
 	unlockJavaBitmap(env, _dst);                                           \
 
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyBrow(JNIEnv* env,
+void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyBrow(JNIEnv* env,
 		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jobject _mask, jint _color, jfloat amount)
 {
 	PROLOGUE_ENTER
@@ -46,7 +46,7 @@ void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyBrow(JNIEnv* e
 	PROLOGUE_EXIT
 }
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyEye(JNIEnv* env,
+void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyEye(JNIEnv* env,
 		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jobject _cosmetic, jfloat amount)
 {
 	PROLOGUE_ENTER
@@ -61,7 +61,7 @@ void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyEye(JNIEnv* en
 	PROLOGUE_EXIT
 }
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyEyeLash(JNIEnv* env,
+void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyEyeLash(JNIEnv* env,
 		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jobject _mask, jint _color, jfloat amount)
 {
 	PROLOGUE_ENTER
@@ -79,7 +79,7 @@ void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyEyeLash(JNIEnv
 	PROLOGUE_EXIT
 }
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyEyeShadow(JNIEnv* env,
+void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyEyeShadow(JNIEnv* env,
 		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jobjectArray _masks, jintArray _colors, jfloat amount)
 {
 	PROLOGUE_ENTER
@@ -121,7 +121,7 @@ void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyEyeShadow(JNIE
 	PROLOGUE_EXIT
 }
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyIris(JNIEnv* env,
+void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyIris(JNIEnv* env,
 		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jobject _iris, jfloat amount)
 {
 	PROLOGUE_ENTER
@@ -137,7 +137,7 @@ void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyIris(JNIEnv* e
 	PROLOGUE_EXIT
 }
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyBlush(JNIEnv* env,
+void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyBlush(JNIEnv* env,
 		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jint _shape, jint _color, jfloat amount)
 {
 	PROLOGUE_ENTER
@@ -152,7 +152,7 @@ void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyBlush(JNIEnv* 
 	PROLOGUE_EXIT
 }
 
-void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyLip(JNIEnv* env,
+void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyLip(JNIEnv* env,
 		jclass clazz, jobject _dst, jobject _src, jobjectArray _points, jint _color, jfloat amount)
 {
 	PROLOGUE_ENTER

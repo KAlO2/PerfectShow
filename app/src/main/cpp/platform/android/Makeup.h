@@ -12,7 +12,7 @@ extern "C" {
  * Method:    nativeApplyBrow
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;Landroid/graphics/Bitmap;IF)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyBrow
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyBrow
   (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobject, jint, jfloat);
 
 /*
@@ -20,7 +20,7 @@ JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyBrow
  * Method:    nativeApplyEye
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;Landroid/graphics/Bitmap;F)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyEye
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyEye
   (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobject, jfloat);
 
 /*
@@ -28,7 +28,7 @@ JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyEye
  * Method:    nativeApplyEyeLash
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;Landroid/graphics/Bitmap;IF)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyEyeLash
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyEyeLash
   (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobject, jint, jfloat);
 
 /*
@@ -36,7 +36,7 @@ JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyEyeL
  * Method:    nativeApplyEyeShadow
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;[Landroid/graphics/Bitmap;[IF)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyEyeShadow
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyEyeShadow
   (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobjectArray, jintArray, jfloat);
 
 /*
@@ -44,7 +44,7 @@ JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyEyeS
  * Method:    nativeApplyIris
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;Landroid/graphics/Bitmap;F)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyIris
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyIris
   (JNIEnv *, jclass, jobject, jobject, jobjectArray, jobject, jfloat);
 
 /*
@@ -52,7 +52,7 @@ JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyIris
  * Method:    nativeApplyBlush
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;IIF)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyBlush
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyBlush
   (JNIEnv *, jclass, jobject, jobject, jobjectArray, jint, jint, jfloat);
 
 /*
@@ -60,7 +60,7 @@ JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyBlus
  * Method:    nativeApplyLip
  * Signature: (Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;[Landroid/graphics/PointF;IF)V
  */
-JNIEXPORT void JNICALL Java_com_wonderful_ishow_algorithm_Makeup_nativeApplyLip
+JNIEXPORT void JNICALL Java_com_wonderful_ishow_makeup_Makeup_nativeApplyLip
   (JNIEnv *, jclass, jobject, jobject, jobjectArray, jint, jfloat);
 
 #ifdef __cplusplus
