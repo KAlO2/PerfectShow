@@ -11,18 +11,19 @@ download [OpenCV 4](https://opencv.org/releases/) and extract it somewhere. Ther
 
 
 # Screenshot
-<img src="./doc/seamless-cloning.gif" alt="seamless cloning" width="35%" height="35%">
-<img src="./doc/ui-makeup.jpg" alt="makeup UI" width="35%" height="35%">
+<img src="./doc/seamless-cloning.gif" alt="seamless cloning" width="40%" height="40%">
+<img src="./doc/ui-makeup.jpg" alt="makeup UI" width="40%" height="40%">
 
 
 # Contact
-If you like this project, share your appreciation by following me in [GitHub](https://github.com/KAlO2).
-If you have any problems about this project, you can file an issue [here](https://github.com/KAlO2/PerfectShow/issues).
+If you like this project, share your appreciation by following me in [GitHub](https://github.com/KAlO2).  
+~~If you have any problems about this project, you can file an issue [here](https://github.com/KAlO2/PerfectShow/issues).~~  
+This repository is not currently maintained.
 
 
 # License
 ```
-Copyright© 2016-2019  Martin Taylor
+Copyright© 2016-2020  Martin Taylor
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
