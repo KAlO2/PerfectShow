@@ -133,7 +133,6 @@ const std::vector<Vec3b> Feature::triangle_indices
 	Vec3b(59, 52, 58),
 	Vec3b(59, 58, 69),
 	Vec3b(59, 69, 68),
-        
 
 	Vec3b( 4, 63, 80),
 	Vec3b(65, 60, 66),
@@ -367,7 +366,7 @@ static std::vector<cv::Point2f> process(float landmarks[stasm_NLANDMARKS * 2])
 
 #if 0
 	points.reserve(stasm_NLANDMARKS);
-    for(int i = 0; i < stasm_NLANDMARKS; i++)
+	for(int i = 0; i < stasm_NLANDMARKS; i++)
 	{
 		printf("Point(%d, %d),\n", (int)landmarks[i*2], (int)landmarks[i*2+1]);
 		points.push_back(Point2f(landmarks[i*2], landmarks[i*2+1]));
@@ -483,17 +482,17 @@ std::vector<cv::Point2f> Feature::detectFace(const cv::Mat& image, const std::st
 
 #else  // use stasm_search_single function
 	int foundface;
-    float landmarks[stasm_NLANDMARKS * 2]; // x, y coords (note the 2)
+	float landmarks[stasm_NLANDMARKS * 2]; // x, y coords (note the 2)
 	const char* image_path = tag.c_str();
-    if(!stasm_search_single(&foundface, landmarks,
+	if(!stasm_search_single(&foundface, landmarks,
 			reinterpret_cast<const char*>(image.data), image.cols, image.rows,
 			image_path, classifier_dir.c_str()))
-    {
-        printf("Error in stasm_search_single: %s\n", stasm_lasterr());
+	{
+		printf("Error in stasm_search_single: %s\n", stasm_lasterr());
 		return {};
-    }
+	}
 
-    if(!foundface)
+	if(!foundface)
 	{
 		printf("No face found in %s\n", image_path);
 		return {};
@@ -523,7 +522,7 @@ std::vector<std::vector<cv::Point2f>> Feature::detectFaces(const cv::Mat& image,
 	{
 		int found_face;
 		if(!stasm_search_auto(&found_face, landmarks))
-             printf("stasm_search_auto failed: %s\n", stasm_lasterr());
+			printf("stasm_search_auto failed: %s\n", stasm_lasterr());
 
 		if(!found_face)
 			break;
@@ -533,7 +532,7 @@ std::vector<std::vector<cv::Point2f>> Feature::detectFaces(const cv::Mat& image,
 #endif
 		// Stasm doesn't detect iris precisely, post-processing feature points for fine result.
 //		correctIris(image, points);
-    }
+	}
 
 	sort(faces);  // sort multiple faces in area descending order
 	return faces;
@@ -717,7 +716,7 @@ cv::Vec4f Feature::getSymmetryAxis(const std::vector<cv::Point2f>& points)
 
 #if 0  // An alternative, but not so accurate branch.
 	// right eye index 42, left eye index 48.
-	// Make sure that right eye is one the right side. (no pun intended)
+	// Make sure that right eye is on the right side. (no pun intended)
 	assert(points[48].x - points[42].x > 1/* pixel */);
 
 	cv::Point2f middle = (points[48] + points[42].x)/2;
@@ -788,7 +787,7 @@ cv::Vec4f Feature::getSymmetryAxis(const std::vector<cv::Point2f>& points)
 	dx*(x0 - xq) + dx^2 + dy * (y0 - yq) + dy^2 = 0
 	(dx^2 + dy^2)*t = dx*(xq - x0) + dy*(yq - y0)
 	t = (dx*(xq - x0) + dy*(yq - y0)) / (dx^2 + dy^2);
-*/	
+*/
 	Point2f center = (points[0] + points[12]) / 2;
 	float t = (line[0] * (center.x - line[2]) + line[1] * (center.y - line[3])) / (line[0] * line[0] + line[1] * line[1]);
 	line[2] += line[0] * t;  // center.x = line[2] + line[0] * t;
@@ -991,12 +990,11 @@ std::vector<cv::Point2f> Feature::calculateEyePolygon(const std::vector<cv::Poin
 /*
 	Below are eye feature point indices:
 
-
-				36                    46
-			 37    35              45    47
+	            36                    46
+	         37    35              45    47
 	right  38   42   34 -------- 44   43   48   left
-			 39    41              51    49
-				40                    50
+	         39    41              51    49
+	            40                    50
 
 */
 	// right sequential index: { 34, 35, 36, 37, 38, 39, 40, 41 };
@@ -1140,7 +1138,7 @@ std::vector<cv::Point2f> Feature::calculateLipPolygon(const std::vector<cv::Poin
 	Below are lips feature point indices:
 	
                   /64\    /66\    /68\
-                 /    \65/    \67/    \   
+                 /    \65/    \67/    \
                 /                      \
               63-----72----71----70-----69
                 \-----73---74----75-----/
@@ -1292,7 +1290,7 @@ Region Feature::calculateTeethRegion() const
 	assert(image.channels() <= 4);
 	cv::split(image, rgba);
 */
-	// TODO come up with a robust method
+	// TODO: needs to come up with a robust method
 //	Mat mask;
 	assert(image.depth() == CV_8U);
 	cv::threshold(image, mask, threshold, 255, THRESH_BINARY);

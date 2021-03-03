@@ -80,7 +80,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 			startActivityForResult(intent, requestCode);
 		}
 	}
-	
+
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
@@ -96,13 +96,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 		Uri uri = data.getData();
 		switch(requestCode) {
 		case REQUEST_IMAGE_CROP:
-//			startActivity(new Intent(this, com.yalantis.ucrop.UCropActivity.class));
 			if(uri != null) {
 				UCrop.Options options = new UCrop.Options();
 				options.setCompressionFormat(Bitmap.CompressFormat.PNG);
 				
 				File dir = FileUtils.getPictureDirectory();
-				String filename = FormatUtils.formatTime() + "cropped" + FileUtils.SUFFIX_PNG;
+				String filename = FormatUtils.formatTime() + ".cropped" + FileUtils.SUFFIX_PNG;
 				Uri destinationUri = Uri.fromFile(new File(dir, filename));
 				UCrop.of(uri, destinationUri)
 //						.withAspectRatio(16, 9)

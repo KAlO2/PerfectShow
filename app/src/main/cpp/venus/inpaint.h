@@ -37,29 +37,29 @@ class TemplateMatchCandidates
 {
 private:
 	cv::Mat _image;
-    std::vector<cv::Mat1i> _integrals;
-    std::vector<cv::Rect>  _blocks;
-    cv::Size _templateSize;
-    cv::Size _partitionSize;
+	std::vector<cv::Mat1i> _integrals;
+	std::vector<cv::Rect>  _blocks;
+	cv::Size _templateSize;
+	cv::Size _partitionSize;
 
 private:
 
-    /** Subdivides a size into a rectangle of blocks. */
-    void computeBlockRects(cv::Size size, cv::Size partitions, std::vector<cv::Rect> &rects);
+	/** Subdivides a size into a rectangle of blocks. */
+	void computeBlockRects(cv::Size size, cv::Size partitions, std::vector<cv::Rect> &rects);
 
-    /** Reject blocks depending on the template mask. */
-    void removeInvalidBlocks(const cv::Mat &templMask, std::vector<cv::Rect> &rects);
+	/** Reject blocks depending on the template mask. */
+	void removeInvalidBlocks(const cv::Mat &templMask, std::vector<cv::Rect> &rects);
 
-    /** Calculate the weak classifiers for the template, taking the mask into account. */
-    void weakClassifiersForTemplate(const cv::Mat &templ, const cv::Mat &templMask, const std::vector<cv::Rect> &rects, cv::Mat1i &classifiers, cv::Scalar &mean);
+	/** Calculate the weak classifiers for the template, taking the mask into account. */
+	void weakClassifiersForTemplate(const cv::Mat &templ, const cv::Mat &templMask, const std::vector<cv::Rect> &rects, cv::Mat1i &classifiers, cv::Scalar &mean);
 
-    /** Compare the template classifiers to the classifiers generated from the given template position. */
-    unsigned char compareWeakClassifiers(const cv::Mat1i &i, int x, int y, const cv::Size &templSize, const std::vector<cv::Rect> &blocks, const int *compareTo, float templateMean, float maxMeanDiff, int maxWeakErrors);
+	/** Compare the template classifiers to the classifiers generated from the given template position. */
+	unsigned char compareWeakClassifiers(const cv::Mat1i &i, int x, int y, const cv::Size &templSize, const std::vector<cv::Rect> &blocks, const int *compareTo, float templateMean, float maxMeanDiff, int maxWeakErrors);
 
 public:
 	/** Set the source image. */
 	void setSourceImage(const cv::Mat &image);
-        
+	
 	/** Set the template size. */
 	inline void setTemplateSize(const cv::Size &templateSize) { _templateSize = templateSize; }
 
@@ -83,41 +83,40 @@ public:
 };
 
 
-/** 
+/*
 	Implementation of the exemplar based inpainting algorithm described in
 	"Object Removal by Exemplar-Based Inpainting", A. Criminisi et. al. 
-            
+	
 	Changes made by the author with respect to the original paper:
 		- the template match error is calculated based on larger patch sizes than those
 			used to infill. The reason behind this is to compare a larger portion of source
 			and target regions and thus to avoid visual artefacts.
-      
+		
 		- the search for the best matching spot of the patch position to be inpainted
 			is accelerated by TemplateMatchCandidates.
 
 	Please note edge cases (i.e regions on the image border) are crudely handled by simply 
 	discarding them.
-
 */
 class Inpainter
 {
 private:
 	struct UserSpecified
 	{
-        cv::Mat image;
-        cv::Mat sourceMask;
-        cv::Mat targetMask;
-        int patchSize;
+		cv::Mat image;
+		cv::Mat sourceMask;
+		cv::Mat targetMask;
+		int patchSize;
 
-        UserSpecified():
-			patchSize(9)
+		UserSpecified():
+				patchSize(9)
 		{
 		}
-    };
+	};
 
-    UserSpecified _input;
-	
-    TemplateMatchCandidates _tmc;
+	UserSpecified _input;
+
+	TemplateMatchCandidates _tmc;
 	cv::Mat _image, _candidates;
 	cv::Mat1b _targetRegion, _borderRegion, _sourceRegion;
 	cv::Mat1f _isophoteX, _isophoteY, _confidence, _borderGradX, _borderGradY;
@@ -149,7 +148,7 @@ public:
 	/** Set the image to be inpainted. */
 	inline void setSourceImage(const cv::Mat &bgrImage) { _input.image = bgrImage; }
 
-    /** Set the mask that describes the region inpainting can copy from. */
+	/** Set the mask that describes the region inpainting can copy from. */
 	inline void setSourceMask(const cv::Mat &mask) { _input.sourceMask = mask; }
 
 	/** Set the mask that describes the region to be inpainted. */
@@ -170,7 +169,7 @@ public:
 	/** Access the current state of the inpainted image. */
 	const cv::Mat& image() const { return _image; }
 
-    /** Access the current state of the target region. */
+	/** Access the current state of the target region. */
 	const cv::Mat& targetRegion() const { return _targetRegion; }
 };
 

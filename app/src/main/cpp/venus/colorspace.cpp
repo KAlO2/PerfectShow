@@ -19,11 +19,11 @@ void rgb2hsv(const float* rgb, float* hsv)
 	v = max;
 	float delta = max - min;
 	if(delta > 0.0001F)
-    {
+	{
 		s = delta / max;
 
 		if(r == max)
-        {
+		{
 			h = (g - b) / delta;
 			if(h < 0.0F)
 				h += 6.0F;
@@ -50,7 +50,7 @@ void hsv2rgb(const float* hsv, float* rgb)
 	if(s == 0.0F)
 		b = g = r = v;
 	else
-    {
+	{
 		float hue = h;
 		if(hue == 1.0F)
 			hue = 0.0F;

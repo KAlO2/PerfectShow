@@ -23,8 +23,8 @@ namespace venus {
 // bilinear interpolation
 template <typename T, int N>
 cv::Vec<T, N> interpolate(const Mat& image,
-	const int& x0, const int& y0, const int& x1, const int& y1,
-	const float& wx, const float& wy)
+		const int& x0, const int& y0, const int& x1, const int& y1,
+		const float& wx, const float& wy)
 {
 	using Vector = cv::Vec<T, N>;
 
@@ -351,18 +351,18 @@ float Effect::mapColorBalance(float value, float lightness, float shadows, float
 	 */
 	const float a = 0.25F, b = 1.00F/3, scale = 0.70F;
 	
-//	constexpr // g++ pass, but clang fails with error: constexpr variable 'clamp_01' must be initialized by a constant expression.
-	auto clamp_01 = [](float x) -> float { return clamp<float>(x, 0, 1); };
+//	constexpr // g++ pass, but clang fails with error: constexpr variable 'saturate' must be initialized by a constant expression.
+	auto saturate = [](float x) -> float { return clamp<float>(x, 0, 1); };
 
-	shadows = shadows * clamp_01((lightness - b) / -a + 0.5F) * scale;
-	midtones = midtones * clamp_01((lightness - b) /  a + 0.5F) *
-			clamp_01((lightness + b - 1) / -a + 0.5F) * scale;
-	highlights = highlights * clamp_01((lightness + b - 1) / a + 0.5F) * scale;
+	shadows = shadows * saturate((lightness - b) / -a + 0.5F) * scale;
+	midtones = midtones * saturate((lightness - b) /  a + 0.5F) *
+			saturate((lightness + b - 1) / -a + 0.5F) * scale;
+	highlights = highlights * saturate((lightness + b - 1) / a + 0.5F) * scale;
 	
 	value += shadows;
 	value += midtones;
 	value += highlights;
-	value = clamp_01(value);
+	value = saturate(value);
 	
 	return value;
 }

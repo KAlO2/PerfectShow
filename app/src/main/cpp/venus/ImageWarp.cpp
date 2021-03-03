@@ -8,12 +8,12 @@ using namespace cv;
 namespace venus {
 
 ImageWarp::ImageWarp(int grid_size):
-	grid_size(grid_size)
+		grid_size(grid_size)
 {
 }
 
 ImageWarp::ImageWarp():
-ImageWarp(5)
+		ImageWarp(5)
 {
 }
 
@@ -56,7 +56,7 @@ cv::Mat ImageWarp::genNewImage(const cv::Mat& src, float amount)
 
 			nx = clamp(nx, 0.0F, static_cast<float>(src_size.width - 1));
 			ny = clamp(ny, 0.0F, static_cast<float>(src_size.height - 1));
-   
+
 			int x0 = int(nx), y0 = int(ny);
 			int x1 = std::ceil(nx), y1 = std::ceil(ny);
 			

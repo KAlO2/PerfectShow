@@ -63,7 +63,7 @@ public:
 	}
 
 	/**
-     * Inset the rectangle by offset. If offset is positive, then the sides are moved inwards, making 
+	 * Inset the rectangle by offset. If offset is positive, then the sides are moved inwards, making 
 	 * the rectangle narrower. If offset is negative, then the sides are moved outwards, making the 
 	 * rectangle wider.
 	 *

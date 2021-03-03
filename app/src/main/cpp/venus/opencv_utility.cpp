@@ -105,25 +105,25 @@ bool lineIntersection(const cv::Point2f& a1, const cv::Point2f& b1, const cv::Po
 		cv::Point2f* intersection)
 {
 	float A1 = b1.y - a1.y;
-    float B1 = a1.x - b1.x;
-    float C1 = a1.x * A1 + a1.y * B1;
+	float B1 = a1.x - b1.x;
+	float C1 = a1.x * A1 + a1.y * B1;
 
-    float A2 = b2.y - a2.y;
-    float B2 = a2.x - b2.x;
-    float C2 = a2.x * A2 + a2.y * B2;
+	float A2 = b2.y - a2.y;
+	float B2 = a2.x - b2.x;
+	float C2 = a2.x * A2 + a2.y * B2;
 
-    float det = A1*B2 - A2*B1;
+	float det = A1*B2 - A2*B1;
 
 	if(isZero(det))
 		return false;
 
-    if(intersection != nullptr)
+	if(intersection != nullptr)
 	{
-        intersection->x = (C1 * B2 - C2 * B1) / det;
-        intersection->y = (C2 * A1 - C1 * A2) / det;
-    }
+		intersection->x = (C1 * B2 - C2 * B1) / det;
+		intersection->y = (C2 * A1 - C1 * A2) / det;
+	}
 
-    return true;
+	return true;
 }
 
 /*

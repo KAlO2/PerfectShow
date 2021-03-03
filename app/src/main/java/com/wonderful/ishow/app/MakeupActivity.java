@@ -268,7 +268,7 @@ public class MakeupActivity extends BaseActivity implements View.OnClickListener
 		debugMark.setOnCheckedChangeListener((CompoundButton buttonView, boolean isChecked) -> {
 			Bitmap mark = makeup.markFeaturePoints();
 			iv_image.setImageBitmap(isChecked ? mark : makeup.getIntermediateImage());
-	   });
+		});
 	}
 	
 	private void initData() {

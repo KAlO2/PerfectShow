@@ -13,9 +13,9 @@ using namespace cv;
 namespace venus {
 
 Region::Region(cv::Point2f& pivot, cv::Size2f& size, cv::Mat& mask):
-	pivot(pivot),
-	size(size),
-	mask(mask)
+		pivot(pivot),
+		size(size),
+		mask(mask)
 {
 }
 
@@ -370,12 +370,12 @@ cv::Mat Region::transform(cv::Size& size, cv::Point2f& pivot, const float& angle
 */
 	float c = std::cos(angle), s = std::sin(angle);
 
-    Mat affine(2, 3, CV_32F);
-    float* m = affine.ptr<float>();
+	Mat affine(2, 3, CV_32F);
+	float* m = affine.ptr<float>();
 
-    m[0] = c * scale[0];  m[1] =-s * scale[1];  m[2] = m[0] * -pivot.x + m[1] * -pivot.y;
-    m[3] = s * scale[0];  m[4] = c * scale[1];  m[5] = m[3] * -pivot.x + m[4] * -pivot.y;
-    
+	m[0] = c * scale[0];  m[1] =-s * scale[1];  m[2] = m[0] * -pivot.x + m[1] * -pivot.y;
+	m[3] = s * scale[0];  m[4] = c * scale[1];  m[5] = m[3] * -pivot.x + m[4] * -pivot.y;
+
 	assert(size.width > 1 && size.height > 1);  // in case underflow
 	if(size.width <= 1 && size.height <= 1)
 	{
